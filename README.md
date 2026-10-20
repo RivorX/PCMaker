@@ -1,26 +1,38 @@
 # PCMaker
 
-Szkielet aplikacji Next.js do zarządzania zgłoszeniami awarii i serwisem sprzętu.
+PCMaker łączy konfigurator komputerów z przygotowaniem zgłoszenia serwisowego. Pierwszy przyrost jest frontendowym szkieletem Next.js: można ręcznie opisać podzespoły, sprawdzić podstawowe zależności socket/DDR oraz zapisać wersję roboczą lokalnie w przeglądarce. Formularz serwisowy działa tak samo i nie udaje wysłanego zgłoszenia.
 
-```text
-src/
-  app/          # strona startowa, układ i style
-  components/   # komponenty interfejsu
-  lib/          # wspólne funkcje
-  types/        # typy TypeScript
-public/         # pliki statyczne
-database/       # przyszłe pliki związane z bazą danych
-```
+Źródła ofert sklepów, logowanie i baza danych nie są jeszcze podłączone. Aplikacja celowo nie pokazuje przykładowych cen ani fikcyjnych sklepów. Stan integracji jest dostępny pod `GET /api/v1/integrations`, a `GET /api/v1/offers` zwraca `503 source_not_configured` do czasu uzyskania prawdziwego dostępu do API. Kontrakty opisano w [docs/api-contract.md](docs/api-contract.md).
 
 ## Uruchomienie
 
-Wymagany Node.js 20.9 lub nowszy.
+Wymagany jest Node.js 20.9 lub nowszy.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Otwórz <http://localhost:3000>. `npm run build` tworzy wersję produkcyjną, a `npm start` ją uruchamia.
+Otwórz <http://localhost:3000>. Kontrole jakości:
 
-PostgreSQL nie jest jeszcze podłączony. `.env.example` zawiera wyłącznie wzór serwerowej zmiennej `DATABASE_URL`.
+```bash
+npm run typecheck
+npm run build
+```
+
+## Struktura pierwszego przyrostu
+
+```text
+src/app/                 routing, shell i endpointy API
+src/components/          interfejs konfiguratora i serwisu
+src/lib/drafts.ts        wersjonowane, walidowane drafty localStorage
+src/lib/compatibility.ts czyste reguły socket i typu pamięci
+src/types/api.ts         wspólne typy kontraktów HTTP
+docs/api-contract.md     kontrakt dla przyszłego backendu ofert
+```
+
+Draft ma wersję w kluczu `pcmaker:configuration-draft:v1` albo `pcmaker:service-draft:v1`. Odczyt odrzuca uszkodzony, niezgodny lub nadmiernie duży kształt danych, a zapis lokalny jest sygnalizowany użytkownikowi. Nie jest to jeszcze zapis serwerowy.
+
+## Granice odpowiedzialności
+
+Ten przyrost nie instaluje SDK Firebase, nie modyfikuje modelu bazy, nie dodaje logowania i nie tworzy endpointów mutujących. Te granice pozostają do uzgodnienia z osobami odpowiedzialnymi za bazę, uwierzytelnianie, testy i deployment.
