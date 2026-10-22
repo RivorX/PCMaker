@@ -1,0 +1,9 @@
+name: pcmaker
+
+services:
+  pcmaker:
+    build: .
+    image: pcmaker
+    container_name: pcmaker
+    ports:
+      - "3000:3000"
