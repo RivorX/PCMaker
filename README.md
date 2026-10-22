@@ -20,6 +20,22 @@ npm run typecheck
 npm run build
 ```
 
+## Docker
+
+Zbuduj obraz z katalogu głównego projektu:
+
+```bash
+docker build -t pcmaker .
+```
+
+Utwórz i uruchom kontener z mapowaniem portu `3000`:
+
+```bash
+docker run -d --name pcmaker -p 3000:3000 pcmaker
+```
+
+Aplikacja będzie dostępna pod adresem <http://localhost:3000>. Logi sprawdzisz poleceniem `docker logs -f pcmaker`, a kontener zatrzymasz przez `docker stop pcmaker`. Aby go później usunąć, użyj `docker rm pcmaker`.
+
 ## Struktura pierwszego przyrostu
 
 ```text
