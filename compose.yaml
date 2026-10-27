@@ -5,5 +5,7 @@ services:
     build: .
     image: pcmaker
     container_name: pcmaker
+    env_file:
+      - .env.local
     ports:
       - "3000:3000"
