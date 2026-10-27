@@ -1,0 +1,6 @@
+connectorId: "default"
+generate:
+  javascriptSdk:
+    outputDir: "../../src/lib/dataconnect-generated"
+    package: "@pcmaker/dataconnect"
+    packageJsonDir: "../../"

@@ -1,0 +1,92 @@
+# ==============================================================================
+# Queries dla Firebase Data Connect (Projekt PCMaker)
+# ==============================================================================
+
+# Pobranie listy komponentów (opcjonalnie filtrowane po typie)
+query ListComponents($type: String) @auth(level: PUBLIC) {
+  components(where: { componentType: { eq: $type } }) {
+    id
+    name
+    manufacturer
+    model
+    componentType
+    description
+    price
+    performanceScore
+    productUrl
+  }
+}
+
+# Pobranie pojedynczego komponentu ze specyfikacjami
+query GetComponentById($id: UUID!) @auth(level: PUBLIC) {
+  component(id: $id) {
+    id
+    name
+    manufacturer
+    model
+    componentType
+    description
+    price
+    performanceScore
+    productUrl
+  }
+}
+
+# Pobranie listy dostępnych typów usług serwisowych
+query ListServiceTypes @auth(level: PUBLIC) {
+  serviceTypes(where: { isActive: { eq: true } }) {
+    id
+    name
+    description
+    basePrice
+    completionDate
+  }
+}
+
+# Pobranie zgłoszeń serwisowych
+query ListServiceTickets @auth(level: PUBLIC) {
+  serviceTickets(orderBy: [{ createdAt: DESC }]) {
+    id
+    ticketNumber
+    title
+    description
+    deviceName
+    deviceSerialNumber
+    priority
+    status
+    estimatedCost
+    finalCost
+    createdAt
+  }
+}
+
+# Pobranie szczegółów pojedynczego zgłoszenia z komentarzami i historią
+query GetServiceTicketById($id: UUID!) @auth(level: PUBLIC) {
+  serviceTicket(id: $id) {
+    id
+    ticketNumber
+    title
+    description
+    deviceName
+    deviceSerialNumber
+    priority
+    status
+    estimatedCost
+    finalCost
+    createdAt
+    updatedAt
+    completedAt
+  }
+}
+
+# Pobranie publicznych konfiguracji PC
+query ListPublicConfigurations @auth(level: PUBLIC) {
+  pcConfigurations(where: { isPublic: { eq: true } }, orderBy: [{ createdAt: DESC }]) {
+    id
+    name
+    description
+    totalPrice
+    estimatedPerformance
+    createdAt
+  }
+}

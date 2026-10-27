@@ -1,0 +1,106 @@
+# ==============================================================================
+# Mutations dla Firebase Data Connect (Projekt PCMaker)
+# ==============================================================================
+
+# Tworzenie nowego użytkownika
+mutation CreateUser(
+  $firstName: String!
+  $lastName: String!
+  $email: String!
+  $password: String!
+  $phone: String
+  $role: UserRole = CLIENT
+) @auth(level: PUBLIC) {
+  user_insert(
+    data: {
+      firstName: $firstName
+      lastName: $lastName
+      email: $email
+      password: $password
+      phone: $phone
+      role: $role
+    }
+  )
+}
+
+# Utworzenie nowego zgłoszenia serwisowego
+mutation CreateServiceTicket(
+  $ticketNumber: String!
+  $clientId: UUID!
+  $serviceTypeId: UUID!
+  $title: String!
+  $description: String!
+  $deviceName: String
+  $deviceSerialNumber: String
+  $priority: TicketPriority = NORMAL
+) @auth(level: PUBLIC) {
+  serviceTicket_insert(
+    data: {
+      ticketNumber: $ticketNumber
+      clientId: $clientId
+      serviceTypeId: $serviceTypeId
+      title: $title
+      description: $description
+      deviceName: $deviceName
+      deviceSerialNumber: $deviceSerialNumber
+      priority: $priority
+    }
+  )
+}
+
+# Dodanie komentarza do zgłoszenia serwisowego
+mutation AddTicketComment(
+  $ticketId: UUID!
+  $authorId: UUID!
+  $content: String!
+  $isInternal: Boolean = false
+) @auth(level: PUBLIC) {
+  ticketComment_insert(
+    data: {
+      ticketId: $ticketId
+      authorId: $authorId
+      content: $content
+      isInternal: $isInternal
+    }
+  )
+}
+
+# Zapis nowej konfiguracji PC
+mutation CreatePcConfiguration(
+  $userId: UUID!
+  $name: String!
+  $description: String
+  $totalPrice: Float = 0.0
+  $estimatedPerformance: Float
+  $isPublic: Boolean = false
+) @auth(level: PUBLIC) {
+  pcConfiguration_insert(
+    data: {
+      userId: $userId
+      name: $name
+      description: $description
+      totalPrice: $totalPrice
+      estimatedPerformance: $estimatedPerformance
+      isPublic: $isPublic
+    }
+  )
+}
+
+# Dodanie wybranego komponentu do zestawu PC
+mutation AddConfigurationComponent(
+  $configurationId: UUID!
+  $componentId: UUID!
+  $quantity: Int = 1
+  $priceAtSelection: Float!
+  $isSelected: Boolean = true
+) @auth(level: PUBLIC) {
+  configurationComponent_insert(
+    data: {
+      configurationId: $configurationId
+      componentId: $componentId
+      quantity: $quantity
+      priceAtSelection: $priceAtSelection
+      isSelected: $isSelected
+    }
+  )
+}

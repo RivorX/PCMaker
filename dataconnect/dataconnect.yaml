@@ -1,0 +1,11 @@
+specVersion: "v1"
+serviceId: "pcmaker-service"
+location: "europe-central2"
+schema:
+  source: "./schema"
+datasource:
+  postgresql:
+    database: "fdcdb"
+    cloudSql:
+      instanceId: "pcmaker-instance"
+connectorDirs: ["./connector"]

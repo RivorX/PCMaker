@@ -1,0 +1,188 @@
+# ==============================================================================
+# Firebase Data Connect Schema (GraphQL SDL)
+# Projekt: pcmaker-b0b0a
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# ENUMY (Typy wyliczeniowe)
+# ------------------------------------------------------------------------------
+
+enum UserRole {
+  CLIENT
+  TECHNICIAN
+  ADMIN
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  NEW
+  ACCEPTED
+  IN_PROGRESS
+  WAITING_FOR_PARTS
+  COMPLETED
+  CANCELLED
+}
+
+enum RecommendationType {
+  LOWER_PRICE
+  HIGHER_PERFORMANCE
+  BETTER_VALUE
+}
+
+# ------------------------------------------------------------------------------
+# TABELE I RELACJE
+# ------------------------------------------------------------------------------
+
+# 1. Tabela użytkowników
+type User @table(name: "users") {
+  id: UUID! @default(expr: "uuidV4()")
+  firstName: String! @col(name: "first_name", dataType: "varchar(100)")
+  lastName: String! @col(name: "last_name", dataType: "varchar(100)")
+  email: String! @unique @col(name: "email", dataType: "varchar(255)")
+  password: String! @col(name: "password", dataType: "varchar(255)")
+  phone: String @col(name: "phone", dataType: "varchar(20)")
+  role: UserRole! @default(value: CLIENT)
+  isActive: Boolean! @default(value: true) @col(name: "is_active")
+  createdAt: Timestamp! @default(expr: "request.time") @col(name: "created_at")
+  updatedAt: Timestamp @col(name: "updated_at")
+}
+
+# 2. Tabela typów usług
+type ServiceType @table(name: "service_types") {
+  id: UUID! @default(expr: "uuidV4()")
+  name: String! @unique @col(name: "name", dataType: "varchar(100)")
+  description: String
+  basePrice: Float! @default(value: 0.0) @col(name: "base_price", dataType: "decimal(10,2)")
+  completionDate: Date @col(name: "completion_date")
+  isActive: Boolean! @default(value: true) @col(name: "is_active")
+}
+
+# 3. Tabela zgłoszeń serwisowych
+type ServiceTicket @table(name: "service_tickets") {
+  id: UUID! @default(expr: "uuidV4()")
+  ticketNumber: String! @unique @col(name: "ticket_number", dataType: "varchar(30)")
+  client: User! @ref @col(name: "client_id")
+  technician: User @ref @col(name: "technician_id")
+  serviceType: ServiceType! @ref @col(name: "service_type_id")
+  title: String! @col(name: "title", dataType: "varchar(200)")
+  description: String!
+  deviceName: String @col(name: "device_name", dataType: "varchar(200)")
+  deviceSerialNumber: String @col(name: "device_serial_number", dataType: "varchar(100)")
+  priority: TicketPriority! @default(value: NORMAL)
+  status: TicketStatus! @default(value: NEW)
+  estimatedCost: Float @col(name: "estimated_cost", dataType: "decimal(10,2)")
+  finalCost: Float @col(name: "final_cost", dataType: "decimal(10,2)")
+  createdAt: Timestamp! @default(expr: "request.time") @col(name: "created_at")
+  updatedAt: Timestamp @col(name: "updated_at")
+  completedAt: Timestamp @col(name: "completed_at")
+}
+
+# 4. Historia zmian statusu zgłoszenia
+type TicketStatusHistory @table(name: "ticket_status_history") {
+  id: UUID! @default(expr: "uuidV4()")
+  ticket: ServiceTicket! @ref @col(name: "ticket_id")
+  changedBy: User! @ref @col(name: "changed_by")
+  oldStatus: TicketStatus @col(name: "old_status")
+  newStatus: TicketStatus! @col(name: "new_status")
+  comment: String
+  changedAt: Timestamp! @default(expr: "request.time") @col(name: "changed_at")
+}
+
+# 5. Komentarze do zgłoszeń
+type TicketComment @table(name: "ticket_comments") {
+  id: UUID! @default(expr: "uuidV4()")
+  ticket: ServiceTicket! @ref @col(name: "ticket_id")
+  author: User! @ref @col(name: "author_id")
+  content: String!
+  isInternal: Boolean! @default(value: false) @col(name: "is_internal")
+  createdAt: Timestamp! @default(expr: "request.time") @col(name: "created_at")
+}
+
+# 6. Załączniki do zgłoszeń
+type TicketAttachment @table(name: "ticket_attachments") {
+  id: UUID! @default(expr: "uuidV4()")
+  ticket: ServiceTicket! @ref @col(name: "ticket_id")
+  uploadedBy: User! @ref @col(name: "uploaded_by")
+  fileName: String! @col(name: "file_name", dataType: "varchar(255)")
+  filePath: String! @col(name: "file_path", dataType: "varchar(500)")
+  mimeType: String @col(name: "mime_type", dataType: "varchar(100)")
+  uploadedAt: Timestamp! @default(expr: "request.time") @col(name: "uploaded_at")
+}
+
+# 7. Części komputerowe (komponenty)
+type Component @table(name: "components")
+  @unique(fields: ["manufacturer", "model"]) {
+  id: UUID! @default(expr: "uuidV4()")
+  name: String! @col(name: "name", dataType: "varchar(200)")
+  manufacturer: String @col(name: "manufacturer", dataType: "varchar(100)")
+  model: String @col(name: "model", dataType: "varchar(150)")
+  componentType: String! @index @col(name: "component_type", dataType: "varchar(255)")
+  description: String
+  price: Float! @col(name: "price", dataType: "decimal(10,2)")
+  performanceScore: Float @col(name: "performance_score", dataType: "decimal(8,2)")
+  productUrl: String @col(name: "product_url", dataType: "varchar(500)")
+}
+
+# 8. Specyfikacje techniczne komponentów
+type ComponentSpecification @table(name: "component_specifications")
+  @unique(fields: ["component", "specificationName"]) {
+  id: UUID! @default(expr: "uuidV4()")
+  component: Component! @ref @col(name: "component_id")
+  specificationName: String! @col(name: "specification_name", dataType: "varchar(100)")
+  specificationValue: String! @col(name: "specification_value", dataType: "varchar(255)")
+}
+
+# 9. Kompatybilność między komponentami
+type ComponentCompatibility @table(name: "component_compatibilities")
+  @unique(fields: ["component", "compatibleComponent"]) {
+  id: UUID! @default(expr: "uuidV4()")
+  component: Component! @ref @col(name: "component_id")
+  compatibleComponent: Component! @ref @col(name: "compatible_component_id")
+  compatibilityType: String! @col(name: "compatibility_type", dataType: "varchar(100)")
+  description: String
+  isCompatible: Boolean! @default(value: true) @col(name: "is_compatible")
+  checkedAt: Timestamp @col(name: "checked_at")
+}
+
+# 10. Konfiguracje zestawów PC
+type PcConfiguration @table(name: "pc_configurations") {
+  id: UUID! @default(expr: "uuidV4()")
+  user: User! @ref @col(name: "user_id")
+  name: String! @col(name: "name", dataType: "varchar(200)")
+  description: String
+  totalPrice: Float! @default(value: 0.0) @col(name: "total_price", dataType: "decimal(12,2)")
+  estimatedPerformance: Float @col(name: "estimated_performance", dataType: "decimal(10,2)")
+  isPublic: Boolean! @default(value: false) @col(name: "is_public")
+  createdAt: Timestamp! @default(expr: "request.time") @col(name: "created_at")
+  updatedAt: Timestamp @col(name: "updated_at")
+}
+
+# 11. Komponenty w konfiguracji PC
+type ConfigurationComponent @table(name: "configuration_components")
+  @unique(fields: ["configuration", "component"]) {
+  id: UUID! @default(expr: "uuidV4()")
+  configuration: PcConfiguration! @ref @col(name: "configuration_id")
+  component: Component! @ref @col(name: "component_id")
+  quantity: Int! @default(value: 1)
+  priceAtSelection: Float! @col(name: "price_at_selection", dataType: "decimal(10,2)")
+  isSelected: Boolean! @default(value: true) @col(name: "is_selected")
+}
+
+# 12. Rekomendacje alternatywnych komponentów
+type ComponentRecommendation @table(name: "component_recommendations")
+  @unique(fields: ["sourceComponent", "recommendedComponent"]) {
+  id: UUID! @default(expr: "uuidV4()")
+  sourceComponent: Component! @ref @col(name: "source_component_id")
+  recommendedComponent: Component! @ref @col(name: "recommended_component_id")
+  recommendationType: RecommendationType! @col(name: "recommendation_type")
+  reason: String
+  priceDifference: Float @col(name: "price_difference", dataType: "decimal(10,2)")
+  performanceDifference: Float @col(name: "performance_difference", dataType: "decimal(10,2)")
+  createdAt: Timestamp! @default(expr: "request.time") @col(name: "created_at")
+}
