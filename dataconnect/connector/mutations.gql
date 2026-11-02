@@ -10,7 +10,7 @@ mutation CreateUser(
   $password: String!
   $phone: String
   $role: UserRole = CLIENT
-) @auth(level: PUBLIC) {
+) @auth(level: PUBLIC, insecureReason: "Public registration operation.") {
   user_insert(
     data: {
       firstName: $firstName
@@ -33,7 +33,7 @@ mutation CreateServiceTicket(
   $deviceName: String
   $deviceSerialNumber: String
   $priority: TicketPriority = NORMAL
-) @auth(level: PUBLIC) {
+) @auth(level: PUBLIC, insecureReason: "Public ticket submission.") {
   serviceTicket_insert(
     data: {
       ticketNumber: $ticketNumber
@@ -54,7 +54,7 @@ mutation AddTicketComment(
   $authorId: UUID!
   $content: String!
   $isInternal: Boolean = false
-) @auth(level: PUBLIC) {
+) @auth(level: PUBLIC, insecureReason: "Public ticket comments.") {
   ticketComment_insert(
     data: {
       ticketId: $ticketId
@@ -73,7 +73,7 @@ mutation CreatePcConfiguration(
   $totalPrice: Float = 0.0
   $estimatedPerformance: Float
   $isPublic: Boolean = false
-) @auth(level: PUBLIC) {
+) @auth(level: PUBLIC, insecureReason: "Public PC config creation.") {
   pcConfiguration_insert(
     data: {
       userId: $userId
@@ -93,7 +93,7 @@ mutation AddConfigurationComponent(
   $quantity: Int = 1
   $priceAtSelection: Float!
   $isSelected: Boolean = true
-) @auth(level: PUBLIC) {
+) @auth(level: PUBLIC, insecureReason: "Public adding component to config.") {
   configurationComponent_insert(
     data: {
       configurationId: $configurationId

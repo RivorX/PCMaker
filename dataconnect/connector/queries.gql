@@ -3,7 +3,7 @@
 # ==============================================================================
 
 # Pobranie listy komponentów (opcjonalnie filtrowane po typie)
-query ListComponents($type: String) @auth(level: PUBLIC) {
+query ListComponents($type: String) @auth(level: PUBLIC, insecureReason: "Publicly accessible components directory.") {
   components(where: { componentType: { eq: $type } }) {
     id
     name
@@ -18,7 +18,7 @@ query ListComponents($type: String) @auth(level: PUBLIC) {
 }
 
 # Pobranie pojedynczego komponentu ze specyfikacjami
-query GetComponentById($id: UUID!) @auth(level: PUBLIC) {
+query GetComponentById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Publicly accessible component details.") {
   component(id: $id) {
     id
     name
@@ -33,7 +33,7 @@ query GetComponentById($id: UUID!) @auth(level: PUBLIC) {
 }
 
 # Pobranie listy dostępnych typów usług serwisowych
-query ListServiceTypes @auth(level: PUBLIC) {
+query ListServiceTypes @auth(level: PUBLIC, insecureReason: "Publicly accessible service types.") {
   serviceTypes(where: { isActive: { eq: true } }) {
     id
     name
@@ -44,7 +44,7 @@ query ListServiceTypes @auth(level: PUBLIC) {
 }
 
 # Pobranie zgłoszeń serwisowych
-query ListServiceTickets @auth(level: PUBLIC) {
+query ListServiceTickets @auth(level: PUBLIC, insecureReason: "Publicly accessible tickets for demo.") {
   serviceTickets(orderBy: [{ createdAt: DESC }]) {
     id
     ticketNumber
@@ -61,7 +61,7 @@ query ListServiceTickets @auth(level: PUBLIC) {
 }
 
 # Pobranie szczegółów pojedynczego zgłoszenia z komentarzami i historią
-query GetServiceTicketById($id: UUID!) @auth(level: PUBLIC) {
+query GetServiceTicketById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Publicly accessible ticket details for demo.") {
   serviceTicket(id: $id) {
     id
     ticketNumber
@@ -80,7 +80,7 @@ query GetServiceTicketById($id: UUID!) @auth(level: PUBLIC) {
 }
 
 # Pobranie publicznych konfiguracji PC
-query ListPublicConfigurations @auth(level: PUBLIC) {
+query ListPublicConfigurations @auth(level: PUBLIC, insecureReason: "Publicly accessible PC configurations.") {
   pcConfigurations(where: { isPublic: { eq: true } }, orderBy: [{ createdAt: DESC }]) {
     id
     name

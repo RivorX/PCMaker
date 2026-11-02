@@ -67,9 +67,9 @@ type ServiceType @table(name: "service_types") {
 type ServiceTicket @table(name: "service_tickets") {
   id: UUID! @default(expr: "uuidV4()")
   ticketNumber: String! @unique @col(name: "ticket_number", dataType: "varchar(30)")
-  client: User! @ref @col(name: "client_id")
-  technician: User @ref @col(name: "technician_id")
-  serviceType: ServiceType! @ref @col(name: "service_type_id")
+  client: User!
+  technician: User
+  serviceType: ServiceType!
   title: String! @col(name: "title", dataType: "varchar(200)")
   description: String!
   deviceName: String @col(name: "device_name", dataType: "varchar(200)")
@@ -86,8 +86,8 @@ type ServiceTicket @table(name: "service_tickets") {
 # 4. Historia zmian statusu zgłoszenia
 type TicketStatusHistory @table(name: "ticket_status_history") {
   id: UUID! @default(expr: "uuidV4()")
-  ticket: ServiceTicket! @ref @col(name: "ticket_id")
-  changedBy: User! @ref @col(name: "changed_by")
+  ticket: ServiceTicket!
+  changedBy: User!
   oldStatus: TicketStatus @col(name: "old_status")
   newStatus: TicketStatus! @col(name: "new_status")
   comment: String
@@ -97,8 +97,8 @@ type TicketStatusHistory @table(name: "ticket_status_history") {
 # 5. Komentarze do zgłoszeń
 type TicketComment @table(name: "ticket_comments") {
   id: UUID! @default(expr: "uuidV4()")
-  ticket: ServiceTicket! @ref @col(name: "ticket_id")
-  author: User! @ref @col(name: "author_id")
+  ticket: ServiceTicket!
+  author: User!
   content: String!
   isInternal: Boolean! @default(value: false) @col(name: "is_internal")
   createdAt: Timestamp! @default(expr: "request.time") @col(name: "created_at")
@@ -107,8 +107,8 @@ type TicketComment @table(name: "ticket_comments") {
 # 6. Załączniki do zgłoszeń
 type TicketAttachment @table(name: "ticket_attachments") {
   id: UUID! @default(expr: "uuidV4()")
-  ticket: ServiceTicket! @ref @col(name: "ticket_id")
-  uploadedBy: User! @ref @col(name: "uploaded_by")
+  ticket: ServiceTicket!
+  uploadedBy: User!
   fileName: String! @col(name: "file_name", dataType: "varchar(255)")
   filePath: String! @col(name: "file_path", dataType: "varchar(500)")
   mimeType: String @col(name: "mime_type", dataType: "varchar(100)")
@@ -133,7 +133,7 @@ type Component @table(name: "components")
 type ComponentSpecification @table(name: "component_specifications")
   @unique(fields: ["component", "specificationName"]) {
   id: UUID! @default(expr: "uuidV4()")
-  component: Component! @ref @col(name: "component_id")
+  component: Component!
   specificationName: String! @col(name: "specification_name", dataType: "varchar(100)")
   specificationValue: String! @col(name: "specification_value", dataType: "varchar(255)")
 }
@@ -142,8 +142,8 @@ type ComponentSpecification @table(name: "component_specifications")
 type ComponentCompatibility @table(name: "component_compatibilities")
   @unique(fields: ["component", "compatibleComponent"]) {
   id: UUID! @default(expr: "uuidV4()")
-  component: Component! @ref @col(name: "component_id")
-  compatibleComponent: Component! @ref @col(name: "compatible_component_id")
+  component: Component!
+  compatibleComponent: Component!
   compatibilityType: String! @col(name: "compatibility_type", dataType: "varchar(100)")
   description: String
   isCompatible: Boolean! @default(value: true) @col(name: "is_compatible")
@@ -153,7 +153,7 @@ type ComponentCompatibility @table(name: "component_compatibilities")
 # 10. Konfiguracje zestawów PC
 type PcConfiguration @table(name: "pc_configurations") {
   id: UUID! @default(expr: "uuidV4()")
-  user: User! @ref @col(name: "user_id")
+  user: User!
   name: String! @col(name: "name", dataType: "varchar(200)")
   description: String
   totalPrice: Float! @default(value: 0.0) @col(name: "total_price", dataType: "decimal(12,2)")
@@ -167,8 +167,8 @@ type PcConfiguration @table(name: "pc_configurations") {
 type ConfigurationComponent @table(name: "configuration_components")
   @unique(fields: ["configuration", "component"]) {
   id: UUID! @default(expr: "uuidV4()")
-  configuration: PcConfiguration! @ref @col(name: "configuration_id")
-  component: Component! @ref @col(name: "component_id")
+  configuration: PcConfiguration!
+  component: Component!
   quantity: Int! @default(value: 1)
   priceAtSelection: Float! @col(name: "price_at_selection", dataType: "decimal(10,2)")
   isSelected: Boolean! @default(value: true) @col(name: "is_selected")
@@ -178,8 +178,8 @@ type ConfigurationComponent @table(name: "configuration_components")
 type ComponentRecommendation @table(name: "component_recommendations")
   @unique(fields: ["sourceComponent", "recommendedComponent"]) {
   id: UUID! @default(expr: "uuidV4()")
-  sourceComponent: Component! @ref @col(name: "source_component_id")
-  recommendedComponent: Component! @ref @col(name: "recommended_component_id")
+  sourceComponent: Component!
+  recommendedComponent: Component!
   recommendationType: RecommendationType! @col(name: "recommendation_type")
   reason: String
   priceDifference: Float @col(name: "price_difference", dataType: "decimal(10,2)")
