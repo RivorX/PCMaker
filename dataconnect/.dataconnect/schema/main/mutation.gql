@@ -1,0 +1,1346 @@
+extend type Mutation {
+  """
+  ✨ Insert a single `Component` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  component_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Component_Data!
+  ): Component_KeyOutput! @fdc_generated(from: "Component", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `ComponentCompatibility` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  componentCompatibility_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ComponentCompatibility_Data!
+  ): ComponentCompatibility_KeyOutput! @fdc_generated(from: "ComponentCompatibility", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `ComponentRecommendation` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  componentRecommendation_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ComponentRecommendation_Data!
+  ): ComponentRecommendation_KeyOutput! @fdc_generated(from: "ComponentRecommendation", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `ComponentSpecification` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  componentSpecification_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ComponentSpecification_Data!
+  ): ComponentSpecification_KeyOutput! @fdc_generated(from: "ComponentSpecification", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `ConfigurationComponent` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  configurationComponent_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ConfigurationComponent_Data!
+  ): ConfigurationComponent_KeyOutput! @fdc_generated(from: "ConfigurationComponent", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `PcConfiguration` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  pcConfiguration_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: PcConfiguration_Data!
+  ): PcConfiguration_KeyOutput! @fdc_generated(from: "PcConfiguration", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `ServiceTicket` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  serviceTicket_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ServiceTicket_Data!
+  ): ServiceTicket_KeyOutput! @fdc_generated(from: "ServiceTicket", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `ServiceType` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  serviceType_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ServiceType_Data!
+  ): ServiceType_KeyOutput! @fdc_generated(from: "ServiceType", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `TicketAttachment` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  ticketAttachment_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: TicketAttachment_Data!
+  ): TicketAttachment_KeyOutput! @fdc_generated(from: "TicketAttachment", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `TicketComment` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  ticketComment_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: TicketComment_Data!
+  ): TicketComment_KeyOutput! @fdc_generated(from: "TicketComment", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `TicketStatusHistory` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  ticketStatusHistory_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: TicketStatusHistory_Data!
+  ): TicketStatusHistory_KeyOutput! @fdc_generated(from: "TicketStatusHistory", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `User` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert `Component` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  component_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Component_Data!]!
+  ): [Component_KeyOutput!]! @fdc_generated(from: "Component", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ComponentCompatibility` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  componentCompatibility_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ComponentCompatibility_Data!]!
+  ): [ComponentCompatibility_KeyOutput!]! @fdc_generated(from: "ComponentCompatibility", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ComponentRecommendation` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  componentRecommendation_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ComponentRecommendation_Data!]!
+  ): [ComponentRecommendation_KeyOutput!]! @fdc_generated(from: "ComponentRecommendation", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ComponentSpecification` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  componentSpecification_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ComponentSpecification_Data!]!
+  ): [ComponentSpecification_KeyOutput!]! @fdc_generated(from: "ComponentSpecification", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ConfigurationComponent` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  configurationComponent_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ConfigurationComponent_Data!]!
+  ): [ConfigurationComponent_KeyOutput!]! @fdc_generated(from: "ConfigurationComponent", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `PcConfiguration` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  pcConfiguration_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [PcConfiguration_Data!]!
+  ): [PcConfiguration_KeyOutput!]! @fdc_generated(from: "PcConfiguration", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ServiceTicket` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  serviceTicket_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ServiceTicket_Data!]!
+  ): [ServiceTicket_KeyOutput!]! @fdc_generated(from: "ServiceTicket", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ServiceType` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  serviceType_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ServiceType_Data!]!
+  ): [ServiceType_KeyOutput!]! @fdc_generated(from: "ServiceType", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `TicketAttachment` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  ticketAttachment_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [TicketAttachment_Data!]!
+  ): [TicketAttachment_KeyOutput!]! @fdc_generated(from: "TicketAttachment", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `TicketComment` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  ticketComment_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [TicketComment_Data!]!
+  ): [TicketComment_KeyOutput!]! @fdc_generated(from: "TicketComment", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `TicketStatusHistory` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  ticketStatusHistory_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [TicketStatusHistory_Data!]!
+  ): [TicketStatusHistory_KeyOutput!]! @fdc_generated(from: "TicketStatusHistory", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `User` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert or update a single `Component` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Component`.
+  """
+  component_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Component_Data!
+  ): Component_KeyOutput! @fdc_generated(from: "Component", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `ComponentCompatibility` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ComponentCompatibility`.
+  """
+  componentCompatibility_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ComponentCompatibility_Data!
+  ): ComponentCompatibility_KeyOutput! @fdc_generated(from: "ComponentCompatibility", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `ComponentRecommendation` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ComponentRecommendation`.
+  """
+  componentRecommendation_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ComponentRecommendation_Data!
+  ): ComponentRecommendation_KeyOutput! @fdc_generated(from: "ComponentRecommendation", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `ComponentSpecification` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ComponentSpecification`.
+  """
+  componentSpecification_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ComponentSpecification_Data!
+  ): ComponentSpecification_KeyOutput! @fdc_generated(from: "ComponentSpecification", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `ConfigurationComponent` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ConfigurationComponent`.
+  """
+  configurationComponent_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ConfigurationComponent_Data!
+  ): ConfigurationComponent_KeyOutput! @fdc_generated(from: "ConfigurationComponent", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `PcConfiguration` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PcConfiguration`.
+  """
+  pcConfiguration_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: PcConfiguration_Data!
+  ): PcConfiguration_KeyOutput! @fdc_generated(from: "PcConfiguration", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `ServiceTicket` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ServiceTicket`.
+  """
+  serviceTicket_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ServiceTicket_Data!
+  ): ServiceTicket_KeyOutput! @fdc_generated(from: "ServiceTicket", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `ServiceType` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ServiceType`.
+  """
+  serviceType_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ServiceType_Data!
+  ): ServiceType_KeyOutput! @fdc_generated(from: "ServiceType", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `TicketAttachment` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `TicketAttachment`.
+  """
+  ticketAttachment_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: TicketAttachment_Data!
+  ): TicketAttachment_KeyOutput! @fdc_generated(from: "TicketAttachment", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `TicketComment` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `TicketComment`.
+  """
+  ticketComment_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: TicketComment_Data!
+  ): TicketComment_KeyOutput! @fdc_generated(from: "TicketComment", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `TicketStatusHistory` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `TicketStatusHistory`.
+  """
+  ticketStatusHistory_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: TicketStatusHistory_Data!
+  ): TicketStatusHistory_KeyOutput! @fdc_generated(from: "TicketStatusHistory", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `User` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update `Component` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Component`.
+  """
+  component_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Component_Data!]!
+  ): [Component_KeyOutput!]! @fdc_generated(from: "Component", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ComponentCompatibility` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ComponentCompatibility`.
+  """
+  componentCompatibility_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ComponentCompatibility_Data!]!
+  ): [ComponentCompatibility_KeyOutput!]! @fdc_generated(from: "ComponentCompatibility", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ComponentRecommendation` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ComponentRecommendation`.
+  """
+  componentRecommendation_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ComponentRecommendation_Data!]!
+  ): [ComponentRecommendation_KeyOutput!]! @fdc_generated(from: "ComponentRecommendation", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ComponentSpecification` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ComponentSpecification`.
+  """
+  componentSpecification_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ComponentSpecification_Data!]!
+  ): [ComponentSpecification_KeyOutput!]! @fdc_generated(from: "ComponentSpecification", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ConfigurationComponent` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ConfigurationComponent`.
+  """
+  configurationComponent_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ConfigurationComponent_Data!]!
+  ): [ConfigurationComponent_KeyOutput!]! @fdc_generated(from: "ConfigurationComponent", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `PcConfiguration` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PcConfiguration`.
+  """
+  pcConfiguration_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [PcConfiguration_Data!]!
+  ): [PcConfiguration_KeyOutput!]! @fdc_generated(from: "PcConfiguration", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ServiceTicket` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ServiceTicket`.
+  """
+  serviceTicket_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ServiceTicket_Data!]!
+  ): [ServiceTicket_KeyOutput!]! @fdc_generated(from: "ServiceTicket", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ServiceType` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ServiceType`.
+  """
+  serviceType_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ServiceType_Data!]!
+  ): [ServiceType_KeyOutput!]! @fdc_generated(from: "ServiceType", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `TicketAttachment` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `TicketAttachment`.
+  """
+  ticketAttachment_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [TicketAttachment_Data!]!
+  ): [TicketAttachment_KeyOutput!]! @fdc_generated(from: "TicketAttachment", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `TicketComment` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `TicketComment`.
+  """
+  ticketComment_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [TicketComment_Data!]!
+  ): [TicketComment_KeyOutput!]! @fdc_generated(from: "TicketComment", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `TicketStatusHistory` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `TicketStatusHistory`.
+  """
+  ticketStatusHistory_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [TicketStatusHistory_Data!]!
+  ): [TicketStatusHistory_KeyOutput!]! @fdc_generated(from: "TicketStatusHistory", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `User` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Update a single `Component` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Component` or `null` if not found.
+  """
+  component_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Component_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Component_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Component_Data!
+  ): Component_KeyOutput @fdc_generated(from: "Component", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ComponentCompatibility` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ComponentCompatibility` or `null` if not found.
+  """
+  componentCompatibility_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ComponentCompatibility_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ComponentCompatibility_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ComponentCompatibility_Data!
+  ): ComponentCompatibility_KeyOutput @fdc_generated(from: "ComponentCompatibility", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ComponentRecommendation` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ComponentRecommendation` or `null` if not found.
+  """
+  componentRecommendation_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ComponentRecommendation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ComponentRecommendation_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ComponentRecommendation_Data!
+  ): ComponentRecommendation_KeyOutput @fdc_generated(from: "ComponentRecommendation", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ComponentSpecification` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ComponentSpecification` or `null` if not found.
+  """
+  componentSpecification_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ComponentSpecification_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ComponentSpecification_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ComponentSpecification_Data!
+  ): ComponentSpecification_KeyOutput @fdc_generated(from: "ComponentSpecification", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ConfigurationComponent` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ConfigurationComponent` or `null` if not found.
+  """
+  configurationComponent_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ConfigurationComponent_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ConfigurationComponent_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ConfigurationComponent_Data!
+  ): ConfigurationComponent_KeyOutput @fdc_generated(from: "ConfigurationComponent", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `PcConfiguration` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PcConfiguration` or `null` if not found.
+  """
+  pcConfiguration_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PcConfiguration_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PcConfiguration_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: PcConfiguration_Data!
+  ): PcConfiguration_KeyOutput @fdc_generated(from: "PcConfiguration", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ServiceTicket` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ServiceTicket` or `null` if not found.
+  """
+  serviceTicket_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ServiceTicket_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ServiceTicket_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ServiceTicket_Data!
+  ): ServiceTicket_KeyOutput @fdc_generated(from: "ServiceTicket", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ServiceType` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ServiceType` or `null` if not found.
+  """
+  serviceType_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ServiceType_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ServiceType_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ServiceType_Data!
+  ): ServiceType_KeyOutput @fdc_generated(from: "ServiceType", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `TicketAttachment` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `TicketAttachment` or `null` if not found.
+  """
+  ticketAttachment_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TicketAttachment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TicketAttachment_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: TicketAttachment_Data!
+  ): TicketAttachment_KeyOutput @fdc_generated(from: "TicketAttachment", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `TicketComment` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `TicketComment` or `null` if not found.
+  """
+  ticketComment_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TicketComment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TicketComment_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: TicketComment_Data!
+  ): TicketComment_KeyOutput @fdc_generated(from: "TicketComment", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `TicketStatusHistory` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `TicketStatusHistory` or `null` if not found.
+  """
+  ticketStatusHistory_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TicketStatusHistory_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TicketStatusHistory_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: TicketStatusHistory_Data!
+  ): TicketStatusHistory_KeyOutput @fdc_generated(from: "TicketStatusHistory", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `User` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `User` or `null` if not found.
+  """
+  user_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: User_Data!
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update `Component` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  component_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Component_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Component_Data!
+  ): Int! @fdc_generated(from: "Component", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `ComponentCompatibility` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  componentCompatibility_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ComponentCompatibility_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ComponentCompatibility_Data!
+  ): Int! @fdc_generated(from: "ComponentCompatibility", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `ComponentRecommendation` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  componentRecommendation_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ComponentRecommendation_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ComponentRecommendation_Data!
+  ): Int! @fdc_generated(from: "ComponentRecommendation", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `ComponentSpecification` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  componentSpecification_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ComponentSpecification_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ComponentSpecification_Data!
+  ): Int! @fdc_generated(from: "ComponentSpecification", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `ConfigurationComponent` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  configurationComponent_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ConfigurationComponent_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ConfigurationComponent_Data!
+  ): Int! @fdc_generated(from: "ConfigurationComponent", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `PcConfiguration` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  pcConfiguration_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: PcConfiguration_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: PcConfiguration_Data!
+  ): Int! @fdc_generated(from: "PcConfiguration", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `ServiceTicket` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  serviceTicket_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ServiceTicket_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ServiceTicket_Data!
+  ): Int! @fdc_generated(from: "ServiceTicket", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `ServiceType` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  serviceType_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ServiceType_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ServiceType_Data!
+  ): Int! @fdc_generated(from: "ServiceType", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `TicketAttachment` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  ticketAttachment_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: TicketAttachment_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: TicketAttachment_Data!
+  ): Int! @fdc_generated(from: "TicketAttachment", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `TicketComment` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  ticketComment_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: TicketComment_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: TicketComment_Data!
+  ): Int! @fdc_generated(from: "TicketComment", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `TicketStatusHistory` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  ticketStatusHistory_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: TicketStatusHistory_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: TicketStatusHistory_Data!
+  ): Int! @fdc_generated(from: "TicketStatusHistory", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `User` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  user_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: User_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: User_Data!
+  ): Int! @fdc_generated(from: "User", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Delete a single `Component` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  component_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Component_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Component_FirstRow
+  ): Component_KeyOutput @fdc_generated(from: "Component", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ComponentCompatibility` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  componentCompatibility_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ComponentCompatibility_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ComponentCompatibility_FirstRow
+  ): ComponentCompatibility_KeyOutput @fdc_generated(from: "ComponentCompatibility", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ComponentRecommendation` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  componentRecommendation_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ComponentRecommendation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ComponentRecommendation_FirstRow
+  ): ComponentRecommendation_KeyOutput @fdc_generated(from: "ComponentRecommendation", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ComponentSpecification` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  componentSpecification_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ComponentSpecification_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ComponentSpecification_FirstRow
+  ): ComponentSpecification_KeyOutput @fdc_generated(from: "ComponentSpecification", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ConfigurationComponent` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  configurationComponent_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ConfigurationComponent_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ConfigurationComponent_FirstRow
+  ): ConfigurationComponent_KeyOutput @fdc_generated(from: "ConfigurationComponent", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `PcConfiguration` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  pcConfiguration_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PcConfiguration_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PcConfiguration_FirstRow
+  ): PcConfiguration_KeyOutput @fdc_generated(from: "PcConfiguration", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ServiceTicket` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  serviceTicket_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ServiceTicket_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ServiceTicket_FirstRow
+  ): ServiceTicket_KeyOutput @fdc_generated(from: "ServiceTicket", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ServiceType` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  serviceType_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ServiceType_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ServiceType_FirstRow
+  ): ServiceType_KeyOutput @fdc_generated(from: "ServiceType", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `TicketAttachment` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  ticketAttachment_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TicketAttachment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TicketAttachment_FirstRow
+  ): TicketAttachment_KeyOutput @fdc_generated(from: "TicketAttachment", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `TicketComment` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  ticketComment_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TicketComment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TicketComment_FirstRow
+  ): TicketComment_KeyOutput @fdc_generated(from: "TicketComment", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `TicketStatusHistory` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  ticketStatusHistory_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TicketStatusHistory_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TicketStatusHistory_FirstRow
+  ): TicketStatusHistory_KeyOutput @fdc_generated(from: "TicketStatusHistory", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `User` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  user_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete `Component` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  component_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Component_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Component", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ComponentCompatibility` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  componentCompatibility_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ComponentCompatibility_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ComponentCompatibility", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ComponentRecommendation` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  componentRecommendation_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ComponentRecommendation_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ComponentRecommendation", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ComponentSpecification` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  componentSpecification_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ComponentSpecification_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ComponentSpecification", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ConfigurationComponent` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  configurationComponent_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ConfigurationComponent_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ConfigurationComponent", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `PcConfiguration` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  pcConfiguration_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: PcConfiguration_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "PcConfiguration", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ServiceTicket` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  serviceTicket_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ServiceTicket_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ServiceTicket", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ServiceType` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  serviceType_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ServiceType_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ServiceType", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `TicketAttachment` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  ticketAttachment_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: TicketAttachment_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "TicketAttachment", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `TicketComment` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  ticketComment_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: TicketComment_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "TicketComment", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `TicketStatusHistory` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  ticketStatusHistory_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: TicketStatusHistory_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "TicketStatusHistory", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `User` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  user_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: User_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "User", purpose: DELETE_MULTIPLE)
+}

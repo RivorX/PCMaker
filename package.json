@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@pcmaker/dataconnect": "file:src/lib/dataconnect-generated",
     "firebase": "^13.1.0",
     "jose": "^6.2.13",
     "next": "16.4.2",

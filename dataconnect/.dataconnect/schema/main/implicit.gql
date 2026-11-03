@@ -1,0 +1,86 @@
+extend type ComponentCompatibility {
+  """
+  ✨ Implicit foreign key field based on `ComponentCompatibility`.`compatibleComponent`. It must match the value of `Component`.`id`. See `@ref` for how to customize it.
+  """
+  compatibleComponentId: UUID! @fdc_generated(from: "ComponentCompatibility.compatibleComponent", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ComponentCompatibility`.`component`. It must match the value of `Component`.`id`. See `@ref` for how to customize it.
+  """
+  componentId: UUID! @fdc_generated(from: "ComponentCompatibility.component", purpose: IMPLICIT_REF_FIELD)
+}
+extend type ComponentRecommendation {
+  """
+  ✨ Implicit foreign key field based on `ComponentRecommendation`.`recommendedComponent`. It must match the value of `Component`.`id`. See `@ref` for how to customize it.
+  """
+  recommendedComponentId: UUID! @fdc_generated(from: "ComponentRecommendation.recommendedComponent", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ComponentRecommendation`.`sourceComponent`. It must match the value of `Component`.`id`. See `@ref` for how to customize it.
+  """
+  sourceComponentId: UUID! @fdc_generated(from: "ComponentRecommendation.sourceComponent", purpose: IMPLICIT_REF_FIELD)
+}
+extend type ComponentSpecification {
+  """
+  ✨ Implicit foreign key field based on `ComponentSpecification`.`component`. It must match the value of `Component`.`id`. See `@ref` for how to customize it.
+  """
+  componentId: UUID! @fdc_generated(from: "ComponentSpecification.component", purpose: IMPLICIT_REF_FIELD)
+}
+extend type ConfigurationComponent {
+  """
+  ✨ Implicit foreign key field based on `ConfigurationComponent`.`component`. It must match the value of `Component`.`id`. See `@ref` for how to customize it.
+  """
+  componentId: UUID! @fdc_generated(from: "ConfigurationComponent.component", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ConfigurationComponent`.`configuration`. It must match the value of `PcConfiguration`.`id`. See `@ref` for how to customize it.
+  """
+  configurationId: UUID! @fdc_generated(from: "ConfigurationComponent.configuration", purpose: IMPLICIT_REF_FIELD)
+}
+extend type PcConfiguration {
+  """
+  ✨ Implicit foreign key field based on `PcConfiguration`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: UUID! @fdc_generated(from: "PcConfiguration.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type ServiceTicket {
+  """
+  ✨ Implicit foreign key field based on `ServiceTicket`.`client`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  clientId: UUID! @fdc_generated(from: "ServiceTicket.client", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ServiceTicket`.`serviceType`. It must match the value of `ServiceType`.`id`. See `@ref` for how to customize it.
+  """
+  serviceTypeId: UUID! @fdc_generated(from: "ServiceTicket.serviceType", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ServiceTicket`.`technician`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  technicianId: UUID @fdc_generated(from: "ServiceTicket.technician", purpose: IMPLICIT_REF_FIELD)
+}
+extend type TicketAttachment {
+  """
+  ✨ Implicit foreign key field based on `TicketAttachment`.`ticket`. It must match the value of `ServiceTicket`.`id`. See `@ref` for how to customize it.
+  """
+  ticketId: UUID! @fdc_generated(from: "TicketAttachment.ticket", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `TicketAttachment`.`uploadedBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  uploadedById: UUID! @fdc_generated(from: "TicketAttachment.uploadedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type TicketComment {
+  """
+  ✨ Implicit foreign key field based on `TicketComment`.`author`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  authorId: UUID! @fdc_generated(from: "TicketComment.author", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `TicketComment`.`ticket`. It must match the value of `ServiceTicket`.`id`. See `@ref` for how to customize it.
+  """
+  ticketId: UUID! @fdc_generated(from: "TicketComment.ticket", purpose: IMPLICIT_REF_FIELD)
+}
+extend type TicketStatusHistory {
+  """
+  ✨ Implicit foreign key field based on `TicketStatusHistory`.`changedBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  changedById: UUID! @fdc_generated(from: "TicketStatusHistory.changedBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `TicketStatusHistory`.`ticket`. It must match the value of `ServiceTicket`.`id`. See `@ref` for how to customize it.
+  """
+  ticketId: UUID! @fdc_generated(from: "TicketStatusHistory.ticket", purpose: IMPLICIT_REF_FIELD)
+}

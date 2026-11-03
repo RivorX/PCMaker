@@ -1,0 +1,4972 @@
+"""
+✨ `Component_KeyOutput` returns the primary key fields of table type `Component`.
+
+It has the same format as `Component_Key`, but is only used as mutation return value.
+"""
+scalar Component_KeyOutput
+"""
+✨ `ComponentCompatibility_KeyOutput` returns the primary key fields of table type `ComponentCompatibility`.
+
+It has the same format as `ComponentCompatibility_Key`, but is only used as mutation return value.
+"""
+scalar ComponentCompatibility_KeyOutput
+"""
+✨ `ComponentRecommendation_KeyOutput` returns the primary key fields of table type `ComponentRecommendation`.
+
+It has the same format as `ComponentRecommendation_Key`, but is only used as mutation return value.
+"""
+scalar ComponentRecommendation_KeyOutput
+"""
+✨ `ComponentSpecification_KeyOutput` returns the primary key fields of table type `ComponentSpecification`.
+
+It has the same format as `ComponentSpecification_Key`, but is only used as mutation return value.
+"""
+scalar ComponentSpecification_KeyOutput
+"""
+✨ `ConfigurationComponent_KeyOutput` returns the primary key fields of table type `ConfigurationComponent`.
+
+It has the same format as `ConfigurationComponent_Key`, but is only used as mutation return value.
+"""
+scalar ConfigurationComponent_KeyOutput
+"""
+✨ `PcConfiguration_KeyOutput` returns the primary key fields of table type `PcConfiguration`.
+
+It has the same format as `PcConfiguration_Key`, but is only used as mutation return value.
+"""
+scalar PcConfiguration_KeyOutput
+"""
+✨ `RecommendationType_Expr` is a server value variant of enum type `RecommendationType`.
+
+It accepts a CEL expression.
+"""
+scalar RecommendationType_Expr
+"""
+✨ `ServiceTicket_KeyOutput` returns the primary key fields of table type `ServiceTicket`.
+
+It has the same format as `ServiceTicket_Key`, but is only used as mutation return value.
+"""
+scalar ServiceTicket_KeyOutput
+"""
+✨ `ServiceType_KeyOutput` returns the primary key fields of table type `ServiceType`.
+
+It has the same format as `ServiceType_Key`, but is only used as mutation return value.
+"""
+scalar ServiceType_KeyOutput
+"""
+✨ `TicketAttachment_KeyOutput` returns the primary key fields of table type `TicketAttachment`.
+
+It has the same format as `TicketAttachment_Key`, but is only used as mutation return value.
+"""
+scalar TicketAttachment_KeyOutput
+"""
+✨ `TicketComment_KeyOutput` returns the primary key fields of table type `TicketComment`.
+
+It has the same format as `TicketComment_Key`, but is only used as mutation return value.
+"""
+scalar TicketComment_KeyOutput
+"""
+✨ `TicketPriority_Expr` is a server value variant of enum type `TicketPriority`.
+
+It accepts a CEL expression.
+"""
+scalar TicketPriority_Expr
+"""
+✨ `TicketStatus_Expr` is a server value variant of enum type `TicketStatus`.
+
+It accepts a CEL expression.
+"""
+scalar TicketStatus_Expr
+"""
+✨ `TicketStatusHistory_KeyOutput` returns the primary key fields of table type `TicketStatusHistory`.
+
+It has the same format as `TicketStatusHistory_Key`, but is only used as mutation return value.
+"""
+scalar TicketStatusHistory_KeyOutput
+"""
+✨ `User_KeyOutput` returns the primary key fields of table type `User`.
+
+It has the same format as `User_Key`, but is only used as mutation return value.
+"""
+scalar User_KeyOutput
+"""
+✨ `UserRole_Expr` is a server value variant of enum type `UserRole`.
+
+It accepts a CEL expression.
+"""
+scalar UserRole_Expr
+"""
+✨ Generated data input type for table 'Component'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Component_Data {
+  """
+  ✨ Generated from Field `Component`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Component`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Component`.`componentType` of type `String!`
+  """
+  componentType: String
+  """
+  ✨ `_expr` server value variant of `componentType` (✨ Generated from Field `Component`.`componentType` of type `String!`)
+  """
+  componentType_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Component`.`description` of type `String`
+  """
+  description: String
+  """
+  ✨ `_expr` server value variant of `description` (✨ Generated from Field `Component`.`description` of type `String`)
+  """
+  description_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Component`.`manufacturer` of type `String`
+  """
+  manufacturer: String
+  """
+  ✨ `_expr` server value variant of `manufacturer` (✨ Generated from Field `Component`.`manufacturer` of type `String`)
+  """
+  manufacturer_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Component`.`model` of type `String`
+  """
+  model: String
+  """
+  ✨ `_expr` server value variant of `model` (✨ Generated from Field `Component`.`model` of type `String`)
+  """
+  model_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Component`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `Component`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Component`.`performanceScore` of type `Float`
+  """
+  performanceScore: Float
+  """
+  ✨ `_expr` server value variant of `performanceScore` (✨ Generated from Field `Component`.`performanceScore` of type `Float`)
+  """
+  performanceScore_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `performanceScore` (✨ Generated from Field `Component`.`performanceScore` of type `Float`)
+  """
+  performanceScore_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Component`.`price` of type `Float!`
+  """
+  price: Float
+  """
+  ✨ `_expr` server value variant of `price` (✨ Generated from Field `Component`.`price` of type `Float!`)
+  """
+  price_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `price` (✨ Generated from Field `Component`.`price` of type `Float!`)
+  """
+  price_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Component`.`productUrl` of type `String`
+  """
+  productUrl: String
+  """
+  ✨ `_expr` server value variant of `productUrl` (✨ Generated from Field `Component`.`productUrl` of type `String`)
+  """
+  productUrl_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Component`.`componentCompatibilities_on_compatibleComponent` of type `[ComponentCompatibility!]!`
+  """
+  componentCompatibilities_on_compatibleComponent: [ComponentCompatibility_Data!]
+  """
+  ✨ Generated from Field `Component`.`componentCompatibilities_on_component` of type `[ComponentCompatibility!]!`
+  """
+  componentCompatibilities_on_component: [ComponentCompatibility_Data!]
+  """
+  ✨ Generated from Field `Component`.`componentRecommendations_on_recommendedComponent` of type `[ComponentRecommendation!]!`
+  """
+  componentRecommendations_on_recommendedComponent: [ComponentRecommendation_Data!]
+  """
+  ✨ Generated from Field `Component`.`componentRecommendations_on_sourceComponent` of type `[ComponentRecommendation!]!`
+  """
+  componentRecommendations_on_sourceComponent: [ComponentRecommendation_Data!]
+  """
+  ✨ Generated from Field `Component`.`componentSpecifications_on_component` of type `[ComponentSpecification!]!`
+  """
+  componentSpecifications_on_component: [ComponentSpecification_Data!]
+  """
+  ✨ Generated from Field `Component`.`configurationComponents_on_component` of type `[ConfigurationComponent!]!`
+  """
+  configurationComponents_on_component: [ConfigurationComponent_Data!]
+}
+"""
+✨ Generated filter input type for table 'Component'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Component_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Component_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Component_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Component_Filter!]
+  """
+  ✨ Generated from Field `Component`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Component`.`componentType` of type `String!`
+  """
+  componentType: String_Filter
+  """
+  ✨ Generated from Field `Component`.`description` of type `String`
+  """
+  description: String_Filter
+  """
+  ✨ Generated from Field `Component`.`manufacturer` of type `String`
+  """
+  manufacturer: String_Filter
+  """
+  ✨ Generated from Field `Component`.`model` of type `String`
+  """
+  model: String_Filter
+  """
+  ✨ Generated from Field `Component`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `Component`.`performanceScore` of type `Float`
+  """
+  performanceScore: Float_Filter
+  """
+  ✨ Generated from Field `Component`.`price` of type `Float!`
+  """
+  price: Float_Filter
+  """
+  ✨ Generated from Field `Component`.`productUrl` of type `String`
+  """
+  productUrl: String_Filter
+  """
+  ✨ Generated from Field `Component`.`componentCompatibilities_on_compatibleComponent` of type `[ComponentCompatibility!]!`
+  """
+  componentCompatibilities_on_compatibleComponent: ComponentCompatibility_ListFilter
+  """
+  ✨ Generated from Field `Component`.`componentCompatibilities_on_component` of type `[ComponentCompatibility!]!`
+  """
+  componentCompatibilities_on_component: ComponentCompatibility_ListFilter
+  """
+  ✨ Generated from Field `Component`.`componentRecommendations_on_recommendedComponent` of type `[ComponentRecommendation!]!`
+  """
+  componentRecommendations_on_recommendedComponent: ComponentRecommendation_ListFilter
+  """
+  ✨ Generated from Field `Component`.`componentRecommendations_on_sourceComponent` of type `[ComponentRecommendation!]!`
+  """
+  componentRecommendations_on_sourceComponent: ComponentRecommendation_ListFilter
+  """
+  ✨ Generated from Field `Component`.`componentSpecifications_on_component` of type `[ComponentSpecification!]!`
+  """
+  componentSpecifications_on_component: ComponentSpecification_ListFilter
+  """
+  ✨ Generated from Field `Component`.`configurationComponents_on_component` of type `[ConfigurationComponent!]!`
+  """
+  configurationComponents_on_component: ConfigurationComponent_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'Component'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Component_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Component_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Component_Filter
+}
+"""
+✨ Generated having input type for table 'Component'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Component_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Component_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Component_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Component_Having!]
+  """
+  ✨ Generated from Field `Component`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Component`.`componentType_count` of type `Int!`
+  """
+  componentType_count: Int_Filter
+  """
+  ✨ Generated from Field `Component`.`description_count` of type `Int!`
+  """
+  description_count: Int_Filter
+  """
+  ✨ Generated from Field `Component`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Component`.`manufacturer_count` of type `Int!`
+  """
+  manufacturer_count: Int_Filter
+  """
+  ✨ Generated from Field `Component`.`model_count` of type `Int!`
+  """
+  model_count: Int_Filter
+  """
+  ✨ Generated from Field `Component`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `Component`.`performanceScore_count` of type `Int!`
+  """
+  performanceScore_count: Int_Filter
+  """
+  ✨ Generated from Field `Component`.`price_count` of type `Int!`
+  """
+  price_count: Int_Filter
+  """
+  ✨ Generated from Field `Component`.`productUrl_count` of type `Int!`
+  """
+  productUrl_count: Int_Filter
+  """
+  ✨ Generated from Field `Component`.`performanceScore_sum` of type `Float`
+  """
+  performanceScore_sum: Float_Filter
+  """
+  ✨ Generated from Field `Component`.`price_sum` of type `Float`
+  """
+  price_sum: Float_Filter
+  """
+  ✨ Generated from Field `Component`.`performanceScore_avg` of type `Float`
+  """
+  performanceScore_avg: Float_Filter
+  """
+  ✨ Generated from Field `Component`.`price_avg` of type `Float`
+  """
+  price_avg: Float_Filter
+  """
+  ✨ Generated from Field `Component`.`performanceScore_min` of type `Float`
+  """
+  performanceScore_min: Float_Filter
+  """
+  ✨ Generated from Field `Component`.`price_min` of type `Float`
+  """
+  price_min: Float_Filter
+  """
+  ✨ Generated from Field `Component`.`performanceScore_max` of type `Float`
+  """
+  performanceScore_max: Float_Filter
+  """
+  ✨ Generated from Field `Component`.`price_max` of type `Float`
+  """
+  price_max: Float_Filter
+}
+"""
+✨ Generated key input type for table 'Component'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Component_Key {
+  """
+  ✨ Generated from Field `Component`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Component`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Component'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Component_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Component_Filter
+}
+"""
+✨ Generated order input type for table 'Component'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Component_Order {
+  """
+  ✨ Generated from Field `Component`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`componentType` of type `String!`
+  """
+  componentType: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`description` of type `String`
+  """
+  description: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`manufacturer` of type `String`
+  """
+  manufacturer: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`model` of type `String`
+  """
+  model: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`performanceScore` of type `Float`
+  """
+  performanceScore: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`price` of type `Float!`
+  """
+  price: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`productUrl` of type `String`
+  """
+  productUrl: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`componentType_count` of type `Int!`
+  """
+  componentType_count: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`description_count` of type `Int!`
+  """
+  description_count: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`manufacturer_count` of type `Int!`
+  """
+  manufacturer_count: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`model_count` of type `Int!`
+  """
+  model_count: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`performanceScore_count` of type `Int!`
+  """
+  performanceScore_count: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`price_count` of type `Int!`
+  """
+  price_count: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`productUrl_count` of type `Int!`
+  """
+  productUrl_count: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`performanceScore_sum` of type `Float`
+  """
+  performanceScore_sum: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`price_sum` of type `Float`
+  """
+  price_sum: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`performanceScore_avg` of type `Float`
+  """
+  performanceScore_avg: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`price_avg` of type `Float`
+  """
+  price_avg: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`performanceScore_min` of type `Float`
+  """
+  performanceScore_min: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`price_min` of type `Float`
+  """
+  price_min: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`performanceScore_max` of type `Float`
+  """
+  performanceScore_max: OrderDirection
+  """
+  ✨ Generated from Field `Component`.`price_max` of type `Float`
+  """
+  price_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'ComponentCompatibility'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input ComponentCompatibility_Data {
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ComponentCompatibility`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibleComponentId` of type `UUID!`
+  """
+  compatibleComponentId: UUID
+  """
+  ✨ `_expr` server value variant of `compatibleComponentId` (✨ Generated from Field `ComponentCompatibility`.`compatibleComponentId` of type `UUID!`)
+  """
+  compatibleComponentId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`componentId` of type `UUID!`
+  """
+  componentId: UUID
+  """
+  ✨ `_expr` server value variant of `componentId` (✨ Generated from Field `ComponentCompatibility`.`componentId` of type `UUID!`)
+  """
+  componentId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibleComponent` of type `Component!`
+  """
+  compatibleComponent: Component_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`component` of type `Component!`
+  """
+  component: Component_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`checkedAt` of type `Timestamp`
+  """
+  checkedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `checkedAt` (✨ Generated from Field `ComponentCompatibility`.`checkedAt` of type `Timestamp`)
+  """
+  checkedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `checkedAt` (✨ Generated from Field `ComponentCompatibility`.`checkedAt` of type `Timestamp`)
+  """
+  checkedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `checkedAt` (✨ Generated from Field `ComponentCompatibility`.`checkedAt` of type `Timestamp`)
+  """
+  checkedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibilityType` of type `String!`
+  """
+  compatibilityType: String
+  """
+  ✨ `_expr` server value variant of `compatibilityType` (✨ Generated from Field `ComponentCompatibility`.`compatibilityType` of type `String!`)
+  """
+  compatibilityType_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`description` of type `String`
+  """
+  description: String
+  """
+  ✨ `_expr` server value variant of `description` (✨ Generated from Field `ComponentCompatibility`.`description` of type `String`)
+  """
+  description_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`isCompatible` of type `Boolean!`
+  """
+  isCompatible: Boolean
+  """
+  ✨ `_expr` server value variant of `isCompatible` (✨ Generated from Field `ComponentCompatibility`.`isCompatible` of type `Boolean!`)
+  """
+  isCompatible_expr: Boolean_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'ComponentCompatibility'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ComponentCompatibility_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [ComponentCompatibility_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: ComponentCompatibility_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [ComponentCompatibility_Filter!]
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibleComponentId` of type `UUID!`
+  """
+  compatibleComponentId: UUID_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`componentId` of type `UUID!`
+  """
+  componentId: UUID_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibleComponent` of type `Component!`
+  """
+  compatibleComponent: Component_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`component` of type `Component!`
+  """
+  component: Component_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`checkedAt` of type `Timestamp`
+  """
+  checkedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibilityType` of type `String!`
+  """
+  compatibilityType: String_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`description` of type `String`
+  """
+  description: String_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`isCompatible` of type `Boolean!`
+  """
+  isCompatible: Boolean_Filter
+}
+"""
+✨ Generated first-row input type for table 'ComponentCompatibility'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input ComponentCompatibility_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [ComponentCompatibility_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: ComponentCompatibility_Filter
+}
+"""
+✨ Generated having input type for table 'ComponentCompatibility'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ComponentCompatibility_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [ComponentCompatibility_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: ComponentCompatibility_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [ComponentCompatibility_Having!]
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`checkedAt_count` of type `Int!`
+  """
+  checkedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibilityType_count` of type `Int!`
+  """
+  compatibilityType_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibleComponentId_count` of type `Int!`
+  """
+  compatibleComponentId_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`componentId_count` of type `Int!`
+  """
+  componentId_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`description_count` of type `Int!`
+  """
+  description_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`isCompatible_count` of type `Int!`
+  """
+  isCompatible_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`checkedAt_min` of type `Timestamp`
+  """
+  checkedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`checkedAt_max` of type `Timestamp`
+  """
+  checkedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'ComponentCompatibility'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input ComponentCompatibility_Key {
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ComponentCompatibility`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'ComponentCompatibility'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input ComponentCompatibility_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: ComponentCompatibility_Filter
+}
+"""
+✨ Generated order input type for table 'ComponentCompatibility'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input ComponentCompatibility_Order {
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibleComponentId` of type `UUID!`
+  """
+  compatibleComponentId: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`componentId` of type `UUID!`
+  """
+  componentId: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibleComponent` of type `Component!`
+  """
+  compatibleComponent: Component_Order
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`component` of type `Component!`
+  """
+  component: Component_Order
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`checkedAt` of type `Timestamp`
+  """
+  checkedAt: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibilityType` of type `String!`
+  """
+  compatibilityType: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`description` of type `String`
+  """
+  description: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`isCompatible` of type `Boolean!`
+  """
+  isCompatible: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`checkedAt_count` of type `Int!`
+  """
+  checkedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibilityType_count` of type `Int!`
+  """
+  compatibilityType_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`compatibleComponentId_count` of type `Int!`
+  """
+  compatibleComponentId_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`componentId_count` of type `Int!`
+  """
+  componentId_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`description_count` of type `Int!`
+  """
+  description_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`isCompatible_count` of type `Int!`
+  """
+  isCompatible_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`checkedAt_min` of type `Timestamp`
+  """
+  checkedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `ComponentCompatibility`.`checkedAt_max` of type `Timestamp`
+  """
+  checkedAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'ComponentRecommendation'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input ComponentRecommendation_Data {
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ComponentRecommendation`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendedComponentId` of type `UUID!`
+  """
+  recommendedComponentId: UUID
+  """
+  ✨ `_expr` server value variant of `recommendedComponentId` (✨ Generated from Field `ComponentRecommendation`.`recommendedComponentId` of type `UUID!`)
+  """
+  recommendedComponentId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`sourceComponentId` of type `UUID!`
+  """
+  sourceComponentId: UUID
+  """
+  ✨ `_expr` server value variant of `sourceComponentId` (✨ Generated from Field `ComponentRecommendation`.`sourceComponentId` of type `UUID!`)
+  """
+  sourceComponentId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendedComponent` of type `Component!`
+  """
+  recommendedComponent: Component_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`sourceComponent` of type `Component!`
+  """
+  sourceComponent: Component_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `ComponentRecommendation`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `ComponentRecommendation`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `ComponentRecommendation`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference` of type `Float`
+  """
+  performanceDifference: Float
+  """
+  ✨ `_expr` server value variant of `performanceDifference` (✨ Generated from Field `ComponentRecommendation`.`performanceDifference` of type `Float`)
+  """
+  performanceDifference_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `performanceDifference` (✨ Generated from Field `ComponentRecommendation`.`performanceDifference` of type `Float`)
+  """
+  performanceDifference_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference` of type `Float`
+  """
+  priceDifference: Float
+  """
+  ✨ `_expr` server value variant of `priceDifference` (✨ Generated from Field `ComponentRecommendation`.`priceDifference` of type `Float`)
+  """
+  priceDifference_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `priceDifference` (✨ Generated from Field `ComponentRecommendation`.`priceDifference` of type `Float`)
+  """
+  priceDifference_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`reason` of type `String`
+  """
+  reason: String
+  """
+  ✨ `_expr` server value variant of `reason` (✨ Generated from Field `ComponentRecommendation`.`reason` of type `String`)
+  """
+  reason_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendationType` of type `RecommendationType!`
+  """
+  recommendationType: RecommendationType
+  """
+  ✨ `_expr` server value variant of `recommendationType` (✨ Generated from Field `ComponentRecommendation`.`recommendationType` of type `RecommendationType!`)
+  """
+  recommendationType_expr: RecommendationType_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'ComponentRecommendation'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ComponentRecommendation_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [ComponentRecommendation_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: ComponentRecommendation_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [ComponentRecommendation_Filter!]
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendedComponentId` of type `UUID!`
+  """
+  recommendedComponentId: UUID_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`sourceComponentId` of type `UUID!`
+  """
+  sourceComponentId: UUID_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendedComponent` of type `Component!`
+  """
+  recommendedComponent: Component_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`sourceComponent` of type `Component!`
+  """
+  sourceComponent: Component_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference` of type `Float`
+  """
+  performanceDifference: Float_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference` of type `Float`
+  """
+  priceDifference: Float_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`reason` of type `String`
+  """
+  reason: String_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendationType` of type `RecommendationType!`
+  """
+  recommendationType: RecommendationType_Filter
+}
+"""
+✨ Generated first-row input type for table 'ComponentRecommendation'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input ComponentRecommendation_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [ComponentRecommendation_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: ComponentRecommendation_Filter
+}
+"""
+✨ Generated having input type for table 'ComponentRecommendation'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ComponentRecommendation_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [ComponentRecommendation_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: ComponentRecommendation_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [ComponentRecommendation_Having!]
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference_count` of type `Int!`
+  """
+  performanceDifference_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference_count` of type `Int!`
+  """
+  priceDifference_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`reason_count` of type `Int!`
+  """
+  reason_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendationType_count` of type `Int!`
+  """
+  recommendationType_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendedComponentId_count` of type `Int!`
+  """
+  recommendedComponentId_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`sourceComponentId_count` of type `Int!`
+  """
+  sourceComponentId_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference_sum` of type `Float`
+  """
+  performanceDifference_sum: Float_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference_sum` of type `Float`
+  """
+  priceDifference_sum: Float_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference_avg` of type `Float`
+  """
+  performanceDifference_avg: Float_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference_avg` of type `Float`
+  """
+  priceDifference_avg: Float_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference_min` of type `Float`
+  """
+  performanceDifference_min: Float_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference_min` of type `Float`
+  """
+  priceDifference_min: Float_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference_max` of type `Float`
+  """
+  performanceDifference_max: Float_Filter
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference_max` of type `Float`
+  """
+  priceDifference_max: Float_Filter
+}
+"""
+✨ Generated key input type for table 'ComponentRecommendation'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input ComponentRecommendation_Key {
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ComponentRecommendation`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'ComponentRecommendation'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input ComponentRecommendation_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: ComponentRecommendation_Filter
+}
+"""
+✨ Generated order input type for table 'ComponentRecommendation'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input ComponentRecommendation_Order {
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendedComponentId` of type `UUID!`
+  """
+  recommendedComponentId: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`sourceComponentId` of type `UUID!`
+  """
+  sourceComponentId: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendedComponent` of type `Component!`
+  """
+  recommendedComponent: Component_Order
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`sourceComponent` of type `Component!`
+  """
+  sourceComponent: Component_Order
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference` of type `Float`
+  """
+  performanceDifference: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference` of type `Float`
+  """
+  priceDifference: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`reason` of type `String`
+  """
+  reason: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendationType` of type `RecommendationType!`
+  """
+  recommendationType: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference_count` of type `Int!`
+  """
+  performanceDifference_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference_count` of type `Int!`
+  """
+  priceDifference_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`reason_count` of type `Int!`
+  """
+  reason_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendationType_count` of type `Int!`
+  """
+  recommendationType_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`recommendedComponentId_count` of type `Int!`
+  """
+  recommendedComponentId_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`sourceComponentId_count` of type `Int!`
+  """
+  sourceComponentId_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference_sum` of type `Float`
+  """
+  performanceDifference_sum: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference_sum` of type `Float`
+  """
+  priceDifference_sum: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference_avg` of type `Float`
+  """
+  performanceDifference_avg: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference_avg` of type `Float`
+  """
+  priceDifference_avg: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference_min` of type `Float`
+  """
+  performanceDifference_min: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference_min` of type `Float`
+  """
+  priceDifference_min: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`performanceDifference_max` of type `Float`
+  """
+  performanceDifference_max: OrderDirection
+  """
+  ✨ Generated from Field `ComponentRecommendation`.`priceDifference_max` of type `Float`
+  """
+  priceDifference_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'ComponentSpecification'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input ComponentSpecification_Data {
+  """
+  ✨ Generated from Field `ComponentSpecification`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ComponentSpecification`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentSpecification`.`componentId` of type `UUID!`
+  """
+  componentId: UUID
+  """
+  ✨ `_expr` server value variant of `componentId` (✨ Generated from Field `ComponentSpecification`.`componentId` of type `UUID!`)
+  """
+  componentId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentSpecification`.`component` of type `Component!`
+  """
+  component: Component_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentSpecification`.`specificationName` of type `String!`
+  """
+  specificationName: String
+  """
+  ✨ `_expr` server value variant of `specificationName` (✨ Generated from Field `ComponentSpecification`.`specificationName` of type `String!`)
+  """
+  specificationName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ComponentSpecification`.`specificationValue` of type `String!`
+  """
+  specificationValue: String
+  """
+  ✨ `_expr` server value variant of `specificationValue` (✨ Generated from Field `ComponentSpecification`.`specificationValue` of type `String!`)
+  """
+  specificationValue_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'ComponentSpecification'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ComponentSpecification_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [ComponentSpecification_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: ComponentSpecification_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [ComponentSpecification_Filter!]
+  """
+  ✨ Generated from Field `ComponentSpecification`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `ComponentSpecification`.`componentId` of type `UUID!`
+  """
+  componentId: UUID_Filter
+  """
+  ✨ Generated from Field `ComponentSpecification`.`component` of type `Component!`
+  """
+  component: Component_Filter
+  """
+  ✨ Generated from Field `ComponentSpecification`.`specificationName` of type `String!`
+  """
+  specificationName: String_Filter
+  """
+  ✨ Generated from Field `ComponentSpecification`.`specificationValue` of type `String!`
+  """
+  specificationValue: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'ComponentSpecification'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input ComponentSpecification_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [ComponentSpecification_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: ComponentSpecification_Filter
+}
+"""
+✨ Generated having input type for table 'ComponentSpecification'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ComponentSpecification_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [ComponentSpecification_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: ComponentSpecification_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [ComponentSpecification_Having!]
+  """
+  ✨ Generated from Field `ComponentSpecification`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentSpecification`.`componentId_count` of type `Int!`
+  """
+  componentId_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentSpecification`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentSpecification`.`specificationName_count` of type `Int!`
+  """
+  specificationName_count: Int_Filter
+  """
+  ✨ Generated from Field `ComponentSpecification`.`specificationValue_count` of type `Int!`
+  """
+  specificationValue_count: Int_Filter
+}
+"""
+✨ Generated key input type for table 'ComponentSpecification'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input ComponentSpecification_Key {
+  """
+  ✨ Generated from Field `ComponentSpecification`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ComponentSpecification`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'ComponentSpecification'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input ComponentSpecification_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: ComponentSpecification_Filter
+}
+"""
+✨ Generated order input type for table 'ComponentSpecification'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input ComponentSpecification_Order {
+  """
+  ✨ Generated from Field `ComponentSpecification`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `ComponentSpecification`.`componentId` of type `UUID!`
+  """
+  componentId: OrderDirection
+  """
+  ✨ Generated from Field `ComponentSpecification`.`component` of type `Component!`
+  """
+  component: Component_Order
+  """
+  ✨ Generated from Field `ComponentSpecification`.`specificationName` of type `String!`
+  """
+  specificationName: OrderDirection
+  """
+  ✨ Generated from Field `ComponentSpecification`.`specificationValue` of type `String!`
+  """
+  specificationValue: OrderDirection
+  """
+  ✨ Generated from Field `ComponentSpecification`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentSpecification`.`componentId_count` of type `Int!`
+  """
+  componentId_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentSpecification`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentSpecification`.`specificationName_count` of type `Int!`
+  """
+  specificationName_count: OrderDirection
+  """
+  ✨ Generated from Field `ComponentSpecification`.`specificationValue_count` of type `Int!`
+  """
+  specificationValue_count: OrderDirection
+}
+"""
+✨ Generated data input type for table 'ConfigurationComponent'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input ConfigurationComponent_Data {
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ConfigurationComponent`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`componentId` of type `UUID!`
+  """
+  componentId: UUID
+  """
+  ✨ `_expr` server value variant of `componentId` (✨ Generated from Field `ConfigurationComponent`.`componentId` of type `UUID!`)
+  """
+  componentId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`configurationId` of type `UUID!`
+  """
+  configurationId: UUID
+  """
+  ✨ `_expr` server value variant of `configurationId` (✨ Generated from Field `ConfigurationComponent`.`configurationId` of type `UUID!`)
+  """
+  configurationId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`component` of type `Component!`
+  """
+  component: Component_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`configuration` of type `PcConfiguration!`
+  """
+  configuration: PcConfiguration_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`isSelected` of type `Boolean!`
+  """
+  isSelected: Boolean
+  """
+  ✨ `_expr` server value variant of `isSelected` (✨ Generated from Field `ConfigurationComponent`.`isSelected` of type `Boolean!`)
+  """
+  isSelected_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection` of type `Float!`
+  """
+  priceAtSelection: Float
+  """
+  ✨ `_expr` server value variant of `priceAtSelection` (✨ Generated from Field `ConfigurationComponent`.`priceAtSelection` of type `Float!`)
+  """
+  priceAtSelection_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `priceAtSelection` (✨ Generated from Field `ConfigurationComponent`.`priceAtSelection` of type `Float!`)
+  """
+  priceAtSelection_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity` of type `Int!`
+  """
+  quantity: Int
+  """
+  ✨ `_expr` server value variant of `quantity` (✨ Generated from Field `ConfigurationComponent`.`quantity` of type `Int!`)
+  """
+  quantity_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `quantity` (✨ Generated from Field `ConfigurationComponent`.`quantity` of type `Int!`)
+  """
+  quantity_update: [Int_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'ConfigurationComponent'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ConfigurationComponent_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [ConfigurationComponent_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: ConfigurationComponent_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [ConfigurationComponent_Filter!]
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`componentId` of type `UUID!`
+  """
+  componentId: UUID_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`configurationId` of type `UUID!`
+  """
+  configurationId: UUID_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`component` of type `Component!`
+  """
+  component: Component_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`configuration` of type `PcConfiguration!`
+  """
+  configuration: PcConfiguration_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`isSelected` of type `Boolean!`
+  """
+  isSelected: Boolean_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection` of type `Float!`
+  """
+  priceAtSelection: Float_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity` of type `Int!`
+  """
+  quantity: Int_Filter
+}
+"""
+✨ Generated first-row input type for table 'ConfigurationComponent'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input ConfigurationComponent_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [ConfigurationComponent_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: ConfigurationComponent_Filter
+}
+"""
+✨ Generated having input type for table 'ConfigurationComponent'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ConfigurationComponent_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [ConfigurationComponent_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: ConfigurationComponent_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [ConfigurationComponent_Having!]
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`componentId_count` of type `Int!`
+  """
+  componentId_count: Int_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`configurationId_count` of type `Int!`
+  """
+  configurationId_count: Int_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`isSelected_count` of type `Int!`
+  """
+  isSelected_count: Int_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection_count` of type `Int!`
+  """
+  priceAtSelection_count: Int_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity_count` of type `Int!`
+  """
+  quantity_count: Int_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection_sum` of type `Float`
+  """
+  priceAtSelection_sum: Float_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity_sum` of type `Int`
+  """
+  quantity_sum: Int_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection_avg` of type `Float`
+  """
+  priceAtSelection_avg: Float_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity_avg` of type `Float`
+  """
+  quantity_avg: Float_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection_min` of type `Float`
+  """
+  priceAtSelection_min: Float_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity_min` of type `Int`
+  """
+  quantity_min: Int_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection_max` of type `Float`
+  """
+  priceAtSelection_max: Float_Filter
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity_max` of type `Int`
+  """
+  quantity_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'ConfigurationComponent'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input ConfigurationComponent_Key {
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ConfigurationComponent`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'ConfigurationComponent'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input ConfigurationComponent_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: ConfigurationComponent_Filter
+}
+"""
+✨ Generated order input type for table 'ConfigurationComponent'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input ConfigurationComponent_Order {
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`componentId` of type `UUID!`
+  """
+  componentId: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`configurationId` of type `UUID!`
+  """
+  configurationId: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`component` of type `Component!`
+  """
+  component: Component_Order
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`configuration` of type `PcConfiguration!`
+  """
+  configuration: PcConfiguration_Order
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`isSelected` of type `Boolean!`
+  """
+  isSelected: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection` of type `Float!`
+  """
+  priceAtSelection: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity` of type `Int!`
+  """
+  quantity: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`componentId_count` of type `Int!`
+  """
+  componentId_count: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`configurationId_count` of type `Int!`
+  """
+  configurationId_count: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`isSelected_count` of type `Int!`
+  """
+  isSelected_count: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection_count` of type `Int!`
+  """
+  priceAtSelection_count: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity_count` of type `Int!`
+  """
+  quantity_count: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection_sum` of type `Float`
+  """
+  priceAtSelection_sum: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity_sum` of type `Int`
+  """
+  quantity_sum: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection_avg` of type `Float`
+  """
+  priceAtSelection_avg: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity_avg` of type `Float`
+  """
+  quantity_avg: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection_min` of type `Float`
+  """
+  priceAtSelection_min: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity_min` of type `Int`
+  """
+  quantity_min: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`priceAtSelection_max` of type `Float`
+  """
+  priceAtSelection_max: OrderDirection
+  """
+  ✨ Generated from Field `ConfigurationComponent`.`quantity_max` of type `Int`
+  """
+  quantity_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'PcConfiguration'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input PcConfiguration_Data {
+  """
+  ✨ Generated from Field `PcConfiguration`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `PcConfiguration`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PcConfiguration`.`userId` of type `UUID!`
+  """
+  userId: UUID
+  """
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `PcConfiguration`.`userId` of type `UUID!`)
+  """
+  userId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PcConfiguration`.`user` of type `User!`
+  """
+  user: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PcConfiguration`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `PcConfiguration`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `PcConfiguration`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `PcConfiguration`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PcConfiguration`.`description` of type `String`
+  """
+  description: String
+  """
+  ✨ `_expr` server value variant of `description` (✨ Generated from Field `PcConfiguration`.`description` of type `String`)
+  """
+  description_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance` of type `Float`
+  """
+  estimatedPerformance: Float
+  """
+  ✨ `_expr` server value variant of `estimatedPerformance` (✨ Generated from Field `PcConfiguration`.`estimatedPerformance` of type `Float`)
+  """
+  estimatedPerformance_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `estimatedPerformance` (✨ Generated from Field `PcConfiguration`.`estimatedPerformance` of type `Float`)
+  """
+  estimatedPerformance_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PcConfiguration`.`isPublic` of type `Boolean!`
+  """
+  isPublic: Boolean
+  """
+  ✨ `_expr` server value variant of `isPublic` (✨ Generated from Field `PcConfiguration`.`isPublic` of type `Boolean!`)
+  """
+  isPublic_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PcConfiguration`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `PcConfiguration`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice` of type `Float!`
+  """
+  totalPrice: Float
+  """
+  ✨ `_expr` server value variant of `totalPrice` (✨ Generated from Field `PcConfiguration`.`totalPrice` of type `Float!`)
+  """
+  totalPrice_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `totalPrice` (✨ Generated from Field `PcConfiguration`.`totalPrice` of type `Float!`)
+  """
+  totalPrice_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PcConfiguration`.`updatedAt` of type `Timestamp`
+  """
+  updatedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `PcConfiguration`.`updatedAt` of type `Timestamp`)
+  """
+  updatedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `updatedAt` (✨ Generated from Field `PcConfiguration`.`updatedAt` of type `Timestamp`)
+  """
+  updatedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `PcConfiguration`.`updatedAt` of type `Timestamp`)
+  """
+  updatedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PcConfiguration`.`configurationComponents_on_configuration` of type `[ConfigurationComponent!]!`
+  """
+  configurationComponents_on_configuration: [ConfigurationComponent_Data!]
+}
+"""
+✨ Generated filter input type for table 'PcConfiguration'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input PcConfiguration_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [PcConfiguration_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: PcConfiguration_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [PcConfiguration_Filter!]
+  """
+  ✨ Generated from Field `PcConfiguration`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`userId` of type `UUID!`
+  """
+  userId: UUID_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`user` of type `User!`
+  """
+  user: User_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`description` of type `String`
+  """
+  description: String_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance` of type `Float`
+  """
+  estimatedPerformance: Float_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`isPublic` of type `Boolean!`
+  """
+  isPublic: Boolean_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice` of type `Float!`
+  """
+  totalPrice: Float_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`updatedAt` of type `Timestamp`
+  """
+  updatedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`configurationComponents_on_configuration` of type `[ConfigurationComponent!]!`
+  """
+  configurationComponents_on_configuration: ConfigurationComponent_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'PcConfiguration'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input PcConfiguration_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [PcConfiguration_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: PcConfiguration_Filter
+}
+"""
+✨ Generated having input type for table 'PcConfiguration'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input PcConfiguration_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [PcConfiguration_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: PcConfiguration_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [PcConfiguration_Having!]
+  """
+  ✨ Generated from Field `PcConfiguration`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`description_count` of type `Int!`
+  """
+  description_count: Int_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance_count` of type `Int!`
+  """
+  estimatedPerformance_count: Int_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`isPublic_count` of type `Int!`
+  """
+  isPublic_count: Int_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice_count` of type `Int!`
+  """
+  totalPrice_count: Int_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`userId_count` of type `Int!`
+  """
+  userId_count: Int_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance_sum` of type `Float`
+  """
+  estimatedPerformance_sum: Float_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice_sum` of type `Float`
+  """
+  totalPrice_sum: Float_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance_avg` of type `Float`
+  """
+  estimatedPerformance_avg: Float_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice_avg` of type `Float`
+  """
+  totalPrice_avg: Float_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance_min` of type `Float`
+  """
+  estimatedPerformance_min: Float_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice_min` of type `Float`
+  """
+  totalPrice_min: Float_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance_max` of type `Float`
+  """
+  estimatedPerformance_max: Float_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice_max` of type `Float`
+  """
+  totalPrice_max: Float_Filter
+  """
+  ✨ Generated from Field `PcConfiguration`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'PcConfiguration'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input PcConfiguration_Key {
+  """
+  ✨ Generated from Field `PcConfiguration`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `PcConfiguration`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'PcConfiguration'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input PcConfiguration_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: PcConfiguration_Filter
+}
+"""
+✨ Generated order input type for table 'PcConfiguration'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input PcConfiguration_Order {
+  """
+  ✨ Generated from Field `PcConfiguration`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`userId` of type `UUID!`
+  """
+  userId: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`user` of type `User!`
+  """
+  user: User_Order
+  """
+  ✨ Generated from Field `PcConfiguration`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`description` of type `String`
+  """
+  description: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance` of type `Float`
+  """
+  estimatedPerformance: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`isPublic` of type `Boolean!`
+  """
+  isPublic: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice` of type `Float!`
+  """
+  totalPrice: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`updatedAt` of type `Timestamp`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`description_count` of type `Int!`
+  """
+  description_count: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance_count` of type `Int!`
+  """
+  estimatedPerformance_count: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`isPublic_count` of type `Int!`
+  """
+  isPublic_count: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice_count` of type `Int!`
+  """
+  totalPrice_count: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`userId_count` of type `Int!`
+  """
+  userId_count: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance_sum` of type `Float`
+  """
+  estimatedPerformance_sum: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice_sum` of type `Float`
+  """
+  totalPrice_sum: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance_avg` of type `Float`
+  """
+  estimatedPerformance_avg: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice_avg` of type `Float`
+  """
+  totalPrice_avg: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance_min` of type `Float`
+  """
+  estimatedPerformance_min: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice_min` of type `Float`
+  """
+  totalPrice_min: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`estimatedPerformance_max` of type `Float`
+  """
+  estimatedPerformance_max: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`totalPrice_max` of type `Float`
+  """
+  totalPrice_max: OrderDirection
+  """
+  ✨ Generated from Field `PcConfiguration`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: OrderDirection
+}
+"""
+✨ Generated filter input type for table 'RecommendationType'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input RecommendationType_Filter {
+  """
+  Match if field is exactly equal to provided value.
+  """
+  eq: RecommendationType
+  """
+  ✨ `_expr` server value variant of `eq` (Match if field is exactly equal to provided value.)
+  """
+  eq_expr: RecommendationType_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is not equal to provided value.
+  """
+  ne: RecommendationType
+  """
+  ✨ `_expr` server value variant of `ne` (Match if field is not equal to provided value.)
+  """
+  ne_expr: RecommendationType_Expr @fdc_forbiddenInVariables
+  """
+  When true, match if field `IS NULL`. When false, match if field is `NOT NULL`.
+  """
+  isNull: Boolean
+  """
+  Match if field value is among the provided list of values.
+  """
+  in: [RecommendationType!]
+  """
+  Match if field value is not among the provided list of values.
+  """
+  nin: [RecommendationType!]
+  """
+  Match if field value is greater than the provided value, based on index ordering of supported enum values.
+  """
+  gt: RecommendationType
+  """
+  ✨ `_expr` server value variant of `gt` (Match if field value is greater than the provided value, based on index ordering of supported enum values.)
+  """
+  gt_expr: RecommendationType_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is greater than or equal to the provided value.
+  """
+  ge: RecommendationType
+  """
+  ✨ `_expr` server value variant of `ge` (Match if field is greater than or equal to the provided value.)
+  """
+  ge_expr: RecommendationType_Expr @fdc_forbiddenInVariables
+  """
+  Match if field value is less than the provided value, based on index ordering of supported enum values.
+  """
+  lt: RecommendationType
+  """
+  ✨ `_expr` server value variant of `lt` (Match if field value is less than the provided value, based on index ordering of supported enum values.)
+  """
+  lt_expr: RecommendationType_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is less than or equal to the provided value, based on index ordering of supported enum values.
+  """
+  le: RecommendationType
+  """
+  ✨ `_expr` server value variant of `le` (Match if field is less than or equal to the provided value, based on index ordering of supported enum values.)
+  """
+  le_expr: RecommendationType_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'RecommendationType'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input RecommendationType_ListFilter {
+  """
+  Match if list field contains the provided value as a member.
+  """
+  includes: RecommendationType
+  """
+  ✨ `_expr` server value variant of `includes` (Match if list field contains the provided value as a member.)
+  """
+  includes_expr: RecommendationType_Expr @fdc_forbiddenInVariables
+  """
+  Match if list field contains all of the provided values as members.
+  """
+  includesAll: [RecommendationType!]
+  """
+  Match if list field does not contain the provided value as a member.
+  """
+  excludes: RecommendationType
+  """
+  ✨ `_expr` server value variant of `excludes` (Match if list field does not contain the provided value as a member.)
+  """
+  excludes_expr: RecommendationType_Expr @fdc_forbiddenInVariables
+  """
+  Match if list field does not contain any of the provided values as members.
+  """
+  excludesAll: [RecommendationType!]
+  """
+  The desired number of enum values that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: RecommendationType_Filter
+}
+"""
+✨ Generated data input type for table 'ServiceTicket'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input ServiceTicket_Data {
+  """
+  ✨ Generated from Field `ServiceTicket`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ServiceTicket`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`clientId` of type `UUID!`
+  """
+  clientId: UUID
+  """
+  ✨ `_expr` server value variant of `clientId` (✨ Generated from Field `ServiceTicket`.`clientId` of type `UUID!`)
+  """
+  clientId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`serviceTypeId` of type `UUID!`
+  """
+  serviceTypeId: UUID
+  """
+  ✨ `_expr` server value variant of `serviceTypeId` (✨ Generated from Field `ServiceTicket`.`serviceTypeId` of type `UUID!`)
+  """
+  serviceTypeId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`technicianId` of type `UUID`
+  """
+  technicianId: UUID
+  """
+  ✨ `_expr` server value variant of `technicianId` (✨ Generated from Field `ServiceTicket`.`technicianId` of type `UUID`)
+  """
+  technicianId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`client` of type `User!`
+  """
+  client: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`serviceType` of type `ServiceType!`
+  """
+  serviceType: ServiceType_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`technician` of type `User`
+  """
+  technician: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`completedAt` of type `Timestamp`
+  """
+  completedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `completedAt` (✨ Generated from Field `ServiceTicket`.`completedAt` of type `Timestamp`)
+  """
+  completedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `completedAt` (✨ Generated from Field `ServiceTicket`.`completedAt` of type `Timestamp`)
+  """
+  completedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `completedAt` (✨ Generated from Field `ServiceTicket`.`completedAt` of type `Timestamp`)
+  """
+  completedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `ServiceTicket`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `ServiceTicket`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `ServiceTicket`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`description` of type `String!`
+  """
+  description: String
+  """
+  ✨ `_expr` server value variant of `description` (✨ Generated from Field `ServiceTicket`.`description` of type `String!`)
+  """
+  description_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`deviceName` of type `String`
+  """
+  deviceName: String
+  """
+  ✨ `_expr` server value variant of `deviceName` (✨ Generated from Field `ServiceTicket`.`deviceName` of type `String`)
+  """
+  deviceName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`deviceSerialNumber` of type `String`
+  """
+  deviceSerialNumber: String
+  """
+  ✨ `_expr` server value variant of `deviceSerialNumber` (✨ Generated from Field `ServiceTicket`.`deviceSerialNumber` of type `String`)
+  """
+  deviceSerialNumber_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost` of type `Float`
+  """
+  estimatedCost: Float
+  """
+  ✨ `_expr` server value variant of `estimatedCost` (✨ Generated from Field `ServiceTicket`.`estimatedCost` of type `Float`)
+  """
+  estimatedCost_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `estimatedCost` (✨ Generated from Field `ServiceTicket`.`estimatedCost` of type `Float`)
+  """
+  estimatedCost_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost` of type `Float`
+  """
+  finalCost: Float
+  """
+  ✨ `_expr` server value variant of `finalCost` (✨ Generated from Field `ServiceTicket`.`finalCost` of type `Float`)
+  """
+  finalCost_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `finalCost` (✨ Generated from Field `ServiceTicket`.`finalCost` of type `Float`)
+  """
+  finalCost_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`priority` of type `TicketPriority!`
+  """
+  priority: TicketPriority
+  """
+  ✨ `_expr` server value variant of `priority` (✨ Generated from Field `ServiceTicket`.`priority` of type `TicketPriority!`)
+  """
+  priority_expr: TicketPriority_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`status` of type `TicketStatus!`
+  """
+  status: TicketStatus
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `ServiceTicket`.`status` of type `TicketStatus!`)
+  """
+  status_expr: TicketStatus_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`ticketNumber` of type `String!`
+  """
+  ticketNumber: String
+  """
+  ✨ `_expr` server value variant of `ticketNumber` (✨ Generated from Field `ServiceTicket`.`ticketNumber` of type `String!`)
+  """
+  ticketNumber_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`title` of type `String!`
+  """
+  title: String
+  """
+  ✨ `_expr` server value variant of `title` (✨ Generated from Field `ServiceTicket`.`title` of type `String!`)
+  """
+  title_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`updatedAt` of type `Timestamp`
+  """
+  updatedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `ServiceTicket`.`updatedAt` of type `Timestamp`)
+  """
+  updatedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `updatedAt` (✨ Generated from Field `ServiceTicket`.`updatedAt` of type `Timestamp`)
+  """
+  updatedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `ServiceTicket`.`updatedAt` of type `Timestamp`)
+  """
+  updatedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceTicket`.`ticketAttachments_on_ticket` of type `[TicketAttachment!]!`
+  """
+  ticketAttachments_on_ticket: [TicketAttachment_Data!]
+  """
+  ✨ Generated from Field `ServiceTicket`.`ticketComments_on_ticket` of type `[TicketComment!]!`
+  """
+  ticketComments_on_ticket: [TicketComment_Data!]
+  """
+  ✨ Generated from Field `ServiceTicket`.`ticketStatusHistories_on_ticket` of type `[TicketStatusHistory!]!`
+  """
+  ticketStatusHistories_on_ticket: [TicketStatusHistory_Data!]
+}
+"""
+✨ Generated filter input type for table 'ServiceTicket'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ServiceTicket_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [ServiceTicket_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: ServiceTicket_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [ServiceTicket_Filter!]
+  """
+  ✨ Generated from Field `ServiceTicket`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`clientId` of type `UUID!`
+  """
+  clientId: UUID_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`serviceTypeId` of type `UUID!`
+  """
+  serviceTypeId: UUID_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`technicianId` of type `UUID`
+  """
+  technicianId: UUID_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`client` of type `User!`
+  """
+  client: User_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`serviceType` of type `ServiceType!`
+  """
+  serviceType: ServiceType_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`technician` of type `User`
+  """
+  technician: User_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`completedAt` of type `Timestamp`
+  """
+  completedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`description` of type `String!`
+  """
+  description: String_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`deviceName` of type `String`
+  """
+  deviceName: String_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`deviceSerialNumber` of type `String`
+  """
+  deviceSerialNumber: String_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost` of type `Float`
+  """
+  estimatedCost: Float_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost` of type `Float`
+  """
+  finalCost: Float_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`priority` of type `TicketPriority!`
+  """
+  priority: TicketPriority_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`status` of type `TicketStatus!`
+  """
+  status: TicketStatus_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`ticketNumber` of type `String!`
+  """
+  ticketNumber: String_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`title` of type `String!`
+  """
+  title: String_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`updatedAt` of type `Timestamp`
+  """
+  updatedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`ticketAttachments_on_ticket` of type `[TicketAttachment!]!`
+  """
+  ticketAttachments_on_ticket: TicketAttachment_ListFilter
+  """
+  ✨ Generated from Field `ServiceTicket`.`ticketComments_on_ticket` of type `[TicketComment!]!`
+  """
+  ticketComments_on_ticket: TicketComment_ListFilter
+  """
+  ✨ Generated from Field `ServiceTicket`.`ticketStatusHistories_on_ticket` of type `[TicketStatusHistory!]!`
+  """
+  ticketStatusHistories_on_ticket: TicketStatusHistory_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'ServiceTicket'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input ServiceTicket_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [ServiceTicket_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: ServiceTicket_Filter
+}
+"""
+✨ Generated having input type for table 'ServiceTicket'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ServiceTicket_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [ServiceTicket_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: ServiceTicket_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [ServiceTicket_Having!]
+  """
+  ✨ Generated from Field `ServiceTicket`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`clientId_count` of type `Int!`
+  """
+  clientId_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`completedAt_count` of type `Int!`
+  """
+  completedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`description_count` of type `Int!`
+  """
+  description_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`deviceName_count` of type `Int!`
+  """
+  deviceName_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`deviceSerialNumber_count` of type `Int!`
+  """
+  deviceSerialNumber_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost_count` of type `Int!`
+  """
+  estimatedCost_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost_count` of type `Int!`
+  """
+  finalCost_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`priority_count` of type `Int!`
+  """
+  priority_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`serviceTypeId_count` of type `Int!`
+  """
+  serviceTypeId_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`technicianId_count` of type `Int!`
+  """
+  technicianId_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`ticketNumber_count` of type `Int!`
+  """
+  ticketNumber_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`title_count` of type `Int!`
+  """
+  title_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost_sum` of type `Float`
+  """
+  estimatedCost_sum: Float_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost_sum` of type `Float`
+  """
+  finalCost_sum: Float_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost_avg` of type `Float`
+  """
+  estimatedCost_avg: Float_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost_avg` of type `Float`
+  """
+  finalCost_avg: Float_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`completedAt_min` of type `Timestamp`
+  """
+  completedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost_min` of type `Float`
+  """
+  estimatedCost_min: Float_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost_min` of type `Float`
+  """
+  finalCost_min: Float_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`completedAt_max` of type `Timestamp`
+  """
+  completedAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost_max` of type `Float`
+  """
+  estimatedCost_max: Float_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost_max` of type `Float`
+  """
+  finalCost_max: Float_Filter
+  """
+  ✨ Generated from Field `ServiceTicket`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'ServiceTicket'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input ServiceTicket_Key {
+  """
+  ✨ Generated from Field `ServiceTicket`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ServiceTicket`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'ServiceTicket'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input ServiceTicket_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: ServiceTicket_Filter
+}
+"""
+✨ Generated order input type for table 'ServiceTicket'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input ServiceTicket_Order {
+  """
+  ✨ Generated from Field `ServiceTicket`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`clientId` of type `UUID!`
+  """
+  clientId: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`serviceTypeId` of type `UUID!`
+  """
+  serviceTypeId: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`technicianId` of type `UUID`
+  """
+  technicianId: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`client` of type `User!`
+  """
+  client: User_Order
+  """
+  ✨ Generated from Field `ServiceTicket`.`serviceType` of type `ServiceType!`
+  """
+  serviceType: ServiceType_Order
+  """
+  ✨ Generated from Field `ServiceTicket`.`technician` of type `User`
+  """
+  technician: User_Order
+  """
+  ✨ Generated from Field `ServiceTicket`.`completedAt` of type `Timestamp`
+  """
+  completedAt: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`description` of type `String!`
+  """
+  description: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`deviceName` of type `String`
+  """
+  deviceName: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`deviceSerialNumber` of type `String`
+  """
+  deviceSerialNumber: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost` of type `Float`
+  """
+  estimatedCost: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost` of type `Float`
+  """
+  finalCost: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`priority` of type `TicketPriority!`
+  """
+  priority: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`status` of type `TicketStatus!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`ticketNumber` of type `String!`
+  """
+  ticketNumber: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`title` of type `String!`
+  """
+  title: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`updatedAt` of type `Timestamp`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`clientId_count` of type `Int!`
+  """
+  clientId_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`completedAt_count` of type `Int!`
+  """
+  completedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`description_count` of type `Int!`
+  """
+  description_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`deviceName_count` of type `Int!`
+  """
+  deviceName_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`deviceSerialNumber_count` of type `Int!`
+  """
+  deviceSerialNumber_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost_count` of type `Int!`
+  """
+  estimatedCost_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost_count` of type `Int!`
+  """
+  finalCost_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`priority_count` of type `Int!`
+  """
+  priority_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`serviceTypeId_count` of type `Int!`
+  """
+  serviceTypeId_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`technicianId_count` of type `Int!`
+  """
+  technicianId_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`ticketNumber_count` of type `Int!`
+  """
+  ticketNumber_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`title_count` of type `Int!`
+  """
+  title_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost_sum` of type `Float`
+  """
+  estimatedCost_sum: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost_sum` of type `Float`
+  """
+  finalCost_sum: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost_avg` of type `Float`
+  """
+  estimatedCost_avg: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost_avg` of type `Float`
+  """
+  finalCost_avg: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`completedAt_min` of type `Timestamp`
+  """
+  completedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost_min` of type `Float`
+  """
+  estimatedCost_min: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost_min` of type `Float`
+  """
+  finalCost_min: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`completedAt_max` of type `Timestamp`
+  """
+  completedAt_max: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`estimatedCost_max` of type `Float`
+  """
+  estimatedCost_max: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`finalCost_max` of type `Float`
+  """
+  finalCost_max: OrderDirection
+  """
+  ✨ Generated from Field `ServiceTicket`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'ServiceType'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input ServiceType_Data {
+  """
+  ✨ Generated from Field `ServiceType`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ServiceType`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice` of type `Float!`
+  """
+  basePrice: Float
+  """
+  ✨ `_expr` server value variant of `basePrice` (✨ Generated from Field `ServiceType`.`basePrice` of type `Float!`)
+  """
+  basePrice_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `basePrice` (✨ Generated from Field `ServiceType`.`basePrice` of type `Float!`)
+  """
+  basePrice_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceType`.`completionDate` of type `Date`
+  """
+  completionDate: Date
+  """
+  ✨ `_date` server value variant of `completionDate` (✨ Generated from Field `ServiceType`.`completionDate` of type `Date`)
+  """
+  completionDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `completionDate` (✨ Generated from Field `ServiceType`.`completionDate` of type `Date`)
+  """
+  completionDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `completionDate` (✨ Generated from Field `ServiceType`.`completionDate` of type `Date`)
+  """
+  completionDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceType`.`description` of type `String`
+  """
+  description: String
+  """
+  ✨ `_expr` server value variant of `description` (✨ Generated from Field `ServiceType`.`description` of type `String`)
+  """
+  description_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceType`.`isActive` of type `Boolean!`
+  """
+  isActive: Boolean
+  """
+  ✨ `_expr` server value variant of `isActive` (✨ Generated from Field `ServiceType`.`isActive` of type `Boolean!`)
+  """
+  isActive_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceType`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `ServiceType`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ServiceType`.`serviceTickets_on_serviceType` of type `[ServiceTicket!]!`
+  """
+  serviceTickets_on_serviceType: [ServiceTicket_Data!]
+}
+"""
+✨ Generated filter input type for table 'ServiceType'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ServiceType_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [ServiceType_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: ServiceType_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [ServiceType_Filter!]
+  """
+  ✨ Generated from Field `ServiceType`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice` of type `Float!`
+  """
+  basePrice: Float_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`completionDate` of type `Date`
+  """
+  completionDate: Date_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`description` of type `String`
+  """
+  description: String_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`isActive` of type `Boolean!`
+  """
+  isActive: Boolean_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`serviceTickets_on_serviceType` of type `[ServiceTicket!]!`
+  """
+  serviceTickets_on_serviceType: ServiceTicket_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'ServiceType'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input ServiceType_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [ServiceType_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: ServiceType_Filter
+}
+"""
+✨ Generated having input type for table 'ServiceType'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ServiceType_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [ServiceType_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: ServiceType_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [ServiceType_Having!]
+  """
+  ✨ Generated from Field `ServiceType`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice_count` of type `Int!`
+  """
+  basePrice_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`completionDate_count` of type `Int!`
+  """
+  completionDate_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`description_count` of type `Int!`
+  """
+  description_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`isActive_count` of type `Int!`
+  """
+  isActive_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice_sum` of type `Float`
+  """
+  basePrice_sum: Float_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice_avg` of type `Float`
+  """
+  basePrice_avg: Float_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice_min` of type `Float`
+  """
+  basePrice_min: Float_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`completionDate_min` of type `Date`
+  """
+  completionDate_min: Date_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice_max` of type `Float`
+  """
+  basePrice_max: Float_Filter
+  """
+  ✨ Generated from Field `ServiceType`.`completionDate_max` of type `Date`
+  """
+  completionDate_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'ServiceType'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input ServiceType_Key {
+  """
+  ✨ Generated from Field `ServiceType`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ServiceType`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'ServiceType'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input ServiceType_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: ServiceType_Filter
+}
+"""
+✨ Generated order input type for table 'ServiceType'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input ServiceType_Order {
+  """
+  ✨ Generated from Field `ServiceType`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice` of type `Float!`
+  """
+  basePrice: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`completionDate` of type `Date`
+  """
+  completionDate: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`description` of type `String`
+  """
+  description: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`isActive` of type `Boolean!`
+  """
+  isActive: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice_count` of type `Int!`
+  """
+  basePrice_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`completionDate_count` of type `Int!`
+  """
+  completionDate_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`description_count` of type `Int!`
+  """
+  description_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`isActive_count` of type `Int!`
+  """
+  isActive_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice_sum` of type `Float`
+  """
+  basePrice_sum: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice_avg` of type `Float`
+  """
+  basePrice_avg: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice_min` of type `Float`
+  """
+  basePrice_min: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`completionDate_min` of type `Date`
+  """
+  completionDate_min: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`basePrice_max` of type `Float`
+  """
+  basePrice_max: OrderDirection
+  """
+  ✨ Generated from Field `ServiceType`.`completionDate_max` of type `Date`
+  """
+  completionDate_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'TicketAttachment'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input TicketAttachment_Data {
+  """
+  ✨ Generated from Field `TicketAttachment`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `TicketAttachment`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketAttachment`.`ticketId` of type `UUID!`
+  """
+  ticketId: UUID
+  """
+  ✨ `_expr` server value variant of `ticketId` (✨ Generated from Field `TicketAttachment`.`ticketId` of type `UUID!`)
+  """
+  ticketId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedById` of type `UUID!`
+  """
+  uploadedById: UUID
+  """
+  ✨ `_expr` server value variant of `uploadedById` (✨ Generated from Field `TicketAttachment`.`uploadedById` of type `UUID!`)
+  """
+  uploadedById_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketAttachment`.`ticket` of type `ServiceTicket!`
+  """
+  ticket: ServiceTicket_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedBy` of type `User!`
+  """
+  uploadedBy: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketAttachment`.`fileName` of type `String!`
+  """
+  fileName: String
+  """
+  ✨ `_expr` server value variant of `fileName` (✨ Generated from Field `TicketAttachment`.`fileName` of type `String!`)
+  """
+  fileName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketAttachment`.`filePath` of type `String!`
+  """
+  filePath: String
+  """
+  ✨ `_expr` server value variant of `filePath` (✨ Generated from Field `TicketAttachment`.`filePath` of type `String!`)
+  """
+  filePath_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketAttachment`.`mimeType` of type `String`
+  """
+  mimeType: String
+  """
+  ✨ `_expr` server value variant of `mimeType` (✨ Generated from Field `TicketAttachment`.`mimeType` of type `String`)
+  """
+  mimeType_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedAt` of type `Timestamp!`
+  """
+  uploadedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `uploadedAt` (✨ Generated from Field `TicketAttachment`.`uploadedAt` of type `Timestamp!`)
+  """
+  uploadedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `uploadedAt` (✨ Generated from Field `TicketAttachment`.`uploadedAt` of type `Timestamp!`)
+  """
+  uploadedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `uploadedAt` (✨ Generated from Field `TicketAttachment`.`uploadedAt` of type `Timestamp!`)
+  """
+  uploadedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'TicketAttachment'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input TicketAttachment_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [TicketAttachment_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: TicketAttachment_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [TicketAttachment_Filter!]
+  """
+  ✨ Generated from Field `TicketAttachment`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`ticketId` of type `UUID!`
+  """
+  ticketId: UUID_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedById` of type `UUID!`
+  """
+  uploadedById: UUID_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`ticket` of type `ServiceTicket!`
+  """
+  ticket: ServiceTicket_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedBy` of type `User!`
+  """
+  uploadedBy: User_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`fileName` of type `String!`
+  """
+  fileName: String_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`filePath` of type `String!`
+  """
+  filePath: String_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`mimeType` of type `String`
+  """
+  mimeType: String_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedAt` of type `Timestamp!`
+  """
+  uploadedAt: Timestamp_Filter
+}
+"""
+✨ Generated first-row input type for table 'TicketAttachment'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input TicketAttachment_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [TicketAttachment_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: TicketAttachment_Filter
+}
+"""
+✨ Generated having input type for table 'TicketAttachment'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input TicketAttachment_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [TicketAttachment_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: TicketAttachment_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [TicketAttachment_Having!]
+  """
+  ✨ Generated from Field `TicketAttachment`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`fileName_count` of type `Int!`
+  """
+  fileName_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`filePath_count` of type `Int!`
+  """
+  filePath_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`mimeType_count` of type `Int!`
+  """
+  mimeType_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`ticketId_count` of type `Int!`
+  """
+  ticketId_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedAt_count` of type `Int!`
+  """
+  uploadedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedById_count` of type `Int!`
+  """
+  uploadedById_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedAt_min` of type `Timestamp`
+  """
+  uploadedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedAt_max` of type `Timestamp`
+  """
+  uploadedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'TicketAttachment'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input TicketAttachment_Key {
+  """
+  ✨ Generated from Field `TicketAttachment`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `TicketAttachment`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'TicketAttachment'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input TicketAttachment_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: TicketAttachment_Filter
+}
+"""
+✨ Generated order input type for table 'TicketAttachment'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input TicketAttachment_Order {
+  """
+  ✨ Generated from Field `TicketAttachment`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`ticketId` of type `UUID!`
+  """
+  ticketId: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedById` of type `UUID!`
+  """
+  uploadedById: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`ticket` of type `ServiceTicket!`
+  """
+  ticket: ServiceTicket_Order
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedBy` of type `User!`
+  """
+  uploadedBy: User_Order
+  """
+  ✨ Generated from Field `TicketAttachment`.`fileName` of type `String!`
+  """
+  fileName: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`filePath` of type `String!`
+  """
+  filePath: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`mimeType` of type `String`
+  """
+  mimeType: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedAt` of type `Timestamp!`
+  """
+  uploadedAt: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`fileName_count` of type `Int!`
+  """
+  fileName_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`filePath_count` of type `Int!`
+  """
+  filePath_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`mimeType_count` of type `Int!`
+  """
+  mimeType_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`ticketId_count` of type `Int!`
+  """
+  ticketId_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedAt_count` of type `Int!`
+  """
+  uploadedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedById_count` of type `Int!`
+  """
+  uploadedById_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedAt_min` of type `Timestamp`
+  """
+  uploadedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `TicketAttachment`.`uploadedAt_max` of type `Timestamp`
+  """
+  uploadedAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'TicketComment'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input TicketComment_Data {
+  """
+  ✨ Generated from Field `TicketComment`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `TicketComment`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketComment`.`authorId` of type `UUID!`
+  """
+  authorId: UUID
+  """
+  ✨ `_expr` server value variant of `authorId` (✨ Generated from Field `TicketComment`.`authorId` of type `UUID!`)
+  """
+  authorId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketComment`.`ticketId` of type `UUID!`
+  """
+  ticketId: UUID
+  """
+  ✨ `_expr` server value variant of `ticketId` (✨ Generated from Field `TicketComment`.`ticketId` of type `UUID!`)
+  """
+  ticketId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketComment`.`author` of type `User!`
+  """
+  author: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketComment`.`ticket` of type `ServiceTicket!`
+  """
+  ticket: ServiceTicket_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketComment`.`content` of type `String!`
+  """
+  content: String
+  """
+  ✨ `_expr` server value variant of `content` (✨ Generated from Field `TicketComment`.`content` of type `String!`)
+  """
+  content_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketComment`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `TicketComment`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `TicketComment`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `TicketComment`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketComment`.`isInternal` of type `Boolean!`
+  """
+  isInternal: Boolean
+  """
+  ✨ `_expr` server value variant of `isInternal` (✨ Generated from Field `TicketComment`.`isInternal` of type `Boolean!`)
+  """
+  isInternal_expr: Boolean_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'TicketComment'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input TicketComment_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [TicketComment_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: TicketComment_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [TicketComment_Filter!]
+  """
+  ✨ Generated from Field `TicketComment`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`authorId` of type `UUID!`
+  """
+  authorId: UUID_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`ticketId` of type `UUID!`
+  """
+  ticketId: UUID_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`author` of type `User!`
+  """
+  author: User_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`ticket` of type `ServiceTicket!`
+  """
+  ticket: ServiceTicket_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`content` of type `String!`
+  """
+  content: String_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`isInternal` of type `Boolean!`
+  """
+  isInternal: Boolean_Filter
+}
+"""
+✨ Generated first-row input type for table 'TicketComment'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input TicketComment_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [TicketComment_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: TicketComment_Filter
+}
+"""
+✨ Generated having input type for table 'TicketComment'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input TicketComment_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [TicketComment_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: TicketComment_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [TicketComment_Having!]
+  """
+  ✨ Generated from Field `TicketComment`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`authorId_count` of type `Int!`
+  """
+  authorId_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`content_count` of type `Int!`
+  """
+  content_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`isInternal_count` of type `Int!`
+  """
+  isInternal_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`ticketId_count` of type `Int!`
+  """
+  ticketId_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `TicketComment`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'TicketComment'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input TicketComment_Key {
+  """
+  ✨ Generated from Field `TicketComment`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `TicketComment`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'TicketComment'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input TicketComment_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: TicketComment_Filter
+}
+"""
+✨ Generated order input type for table 'TicketComment'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input TicketComment_Order {
+  """
+  ✨ Generated from Field `TicketComment`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`authorId` of type `UUID!`
+  """
+  authorId: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`ticketId` of type `UUID!`
+  """
+  ticketId: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`author` of type `User!`
+  """
+  author: User_Order
+  """
+  ✨ Generated from Field `TicketComment`.`ticket` of type `ServiceTicket!`
+  """
+  ticket: ServiceTicket_Order
+  """
+  ✨ Generated from Field `TicketComment`.`content` of type `String!`
+  """
+  content: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`isInternal` of type `Boolean!`
+  """
+  isInternal: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`authorId_count` of type `Int!`
+  """
+  authorId_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`content_count` of type `Int!`
+  """
+  content_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`isInternal_count` of type `Int!`
+  """
+  isInternal_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`ticketId_count` of type `Int!`
+  """
+  ticketId_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `TicketComment`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+}
+"""
+✨ Generated filter input type for table 'TicketPriority'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input TicketPriority_Filter {
+  """
+  Match if field is exactly equal to provided value.
+  """
+  eq: TicketPriority
+  """
+  ✨ `_expr` server value variant of `eq` (Match if field is exactly equal to provided value.)
+  """
+  eq_expr: TicketPriority_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is not equal to provided value.
+  """
+  ne: TicketPriority
+  """
+  ✨ `_expr` server value variant of `ne` (Match if field is not equal to provided value.)
+  """
+  ne_expr: TicketPriority_Expr @fdc_forbiddenInVariables
+  """
+  When true, match if field `IS NULL`. When false, match if field is `NOT NULL`.
+  """
+  isNull: Boolean
+  """
+  Match if field value is among the provided list of values.
+  """
+  in: [TicketPriority!]
+  """
+  Match if field value is not among the provided list of values.
+  """
+  nin: [TicketPriority!]
+  """
+  Match if field value is greater than the provided value, based on index ordering of supported enum values.
+  """
+  gt: TicketPriority
+  """
+  ✨ `_expr` server value variant of `gt` (Match if field value is greater than the provided value, based on index ordering of supported enum values.)
+  """
+  gt_expr: TicketPriority_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is greater than or equal to the provided value.
+  """
+  ge: TicketPriority
+  """
+  ✨ `_expr` server value variant of `ge` (Match if field is greater than or equal to the provided value.)
+  """
+  ge_expr: TicketPriority_Expr @fdc_forbiddenInVariables
+  """
+  Match if field value is less than the provided value, based on index ordering of supported enum values.
+  """
+  lt: TicketPriority
+  """
+  ✨ `_expr` server value variant of `lt` (Match if field value is less than the provided value, based on index ordering of supported enum values.)
+  """
+  lt_expr: TicketPriority_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is less than or equal to the provided value, based on index ordering of supported enum values.
+  """
+  le: TicketPriority
+  """
+  ✨ `_expr` server value variant of `le` (Match if field is less than or equal to the provided value, based on index ordering of supported enum values.)
+  """
+  le_expr: TicketPriority_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'TicketPriority'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input TicketPriority_ListFilter {
+  """
+  Match if list field contains the provided value as a member.
+  """
+  includes: TicketPriority
+  """
+  ✨ `_expr` server value variant of `includes` (Match if list field contains the provided value as a member.)
+  """
+  includes_expr: TicketPriority_Expr @fdc_forbiddenInVariables
+  """
+  Match if list field contains all of the provided values as members.
+  """
+  includesAll: [TicketPriority!]
+  """
+  Match if list field does not contain the provided value as a member.
+  """
+  excludes: TicketPriority
+  """
+  ✨ `_expr` server value variant of `excludes` (Match if list field does not contain the provided value as a member.)
+  """
+  excludes_expr: TicketPriority_Expr @fdc_forbiddenInVariables
+  """
+  Match if list field does not contain any of the provided values as members.
+  """
+  excludesAll: [TicketPriority!]
+  """
+  The desired number of enum values that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: TicketPriority_Filter
+}
+"""
+✨ Generated filter input type for table 'TicketStatus'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input TicketStatus_Filter {
+  """
+  Match if field is exactly equal to provided value.
+  """
+  eq: TicketStatus
+  """
+  ✨ `_expr` server value variant of `eq` (Match if field is exactly equal to provided value.)
+  """
+  eq_expr: TicketStatus_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is not equal to provided value.
+  """
+  ne: TicketStatus
+  """
+  ✨ `_expr` server value variant of `ne` (Match if field is not equal to provided value.)
+  """
+  ne_expr: TicketStatus_Expr @fdc_forbiddenInVariables
+  """
+  When true, match if field `IS NULL`. When false, match if field is `NOT NULL`.
+  """
+  isNull: Boolean
+  """
+  Match if field value is among the provided list of values.
+  """
+  in: [TicketStatus!]
+  """
+  Match if field value is not among the provided list of values.
+  """
+  nin: [TicketStatus!]
+  """
+  Match if field value is greater than the provided value, based on index ordering of supported enum values.
+  """
+  gt: TicketStatus
+  """
+  ✨ `_expr` server value variant of `gt` (Match if field value is greater than the provided value, based on index ordering of supported enum values.)
+  """
+  gt_expr: TicketStatus_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is greater than or equal to the provided value.
+  """
+  ge: TicketStatus
+  """
+  ✨ `_expr` server value variant of `ge` (Match if field is greater than or equal to the provided value.)
+  """
+  ge_expr: TicketStatus_Expr @fdc_forbiddenInVariables
+  """
+  Match if field value is less than the provided value, based on index ordering of supported enum values.
+  """
+  lt: TicketStatus
+  """
+  ✨ `_expr` server value variant of `lt` (Match if field value is less than the provided value, based on index ordering of supported enum values.)
+  """
+  lt_expr: TicketStatus_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is less than or equal to the provided value, based on index ordering of supported enum values.
+  """
+  le: TicketStatus
+  """
+  ✨ `_expr` server value variant of `le` (Match if field is less than or equal to the provided value, based on index ordering of supported enum values.)
+  """
+  le_expr: TicketStatus_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'TicketStatus'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input TicketStatus_ListFilter {
+  """
+  Match if list field contains the provided value as a member.
+  """
+  includes: TicketStatus
+  """
+  ✨ `_expr` server value variant of `includes` (Match if list field contains the provided value as a member.)
+  """
+  includes_expr: TicketStatus_Expr @fdc_forbiddenInVariables
+  """
+  Match if list field contains all of the provided values as members.
+  """
+  includesAll: [TicketStatus!]
+  """
+  Match if list field does not contain the provided value as a member.
+  """
+  excludes: TicketStatus
+  """
+  ✨ `_expr` server value variant of `excludes` (Match if list field does not contain the provided value as a member.)
+  """
+  excludes_expr: TicketStatus_Expr @fdc_forbiddenInVariables
+  """
+  Match if list field does not contain any of the provided values as members.
+  """
+  excludesAll: [TicketStatus!]
+  """
+  The desired number of enum values that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: TicketStatus_Filter
+}
+"""
+✨ Generated data input type for table 'TicketStatusHistory'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input TicketStatusHistory_Data {
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `TicketStatusHistory`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedById` of type `UUID!`
+  """
+  changedById: UUID
+  """
+  ✨ `_expr` server value variant of `changedById` (✨ Generated from Field `TicketStatusHistory`.`changedById` of type `UUID!`)
+  """
+  changedById_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`ticketId` of type `UUID!`
+  """
+  ticketId: UUID
+  """
+  ✨ `_expr` server value variant of `ticketId` (✨ Generated from Field `TicketStatusHistory`.`ticketId` of type `UUID!`)
+  """
+  ticketId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedBy` of type `User!`
+  """
+  changedBy: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`ticket` of type `ServiceTicket!`
+  """
+  ticket: ServiceTicket_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedAt` of type `Timestamp!`
+  """
+  changedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `changedAt` (✨ Generated from Field `TicketStatusHistory`.`changedAt` of type `Timestamp!`)
+  """
+  changedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `changedAt` (✨ Generated from Field `TicketStatusHistory`.`changedAt` of type `Timestamp!`)
+  """
+  changedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `changedAt` (✨ Generated from Field `TicketStatusHistory`.`changedAt` of type `Timestamp!`)
+  """
+  changedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`comment` of type `String`
+  """
+  comment: String
+  """
+  ✨ `_expr` server value variant of `comment` (✨ Generated from Field `TicketStatusHistory`.`comment` of type `String`)
+  """
+  comment_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`newStatus` of type `TicketStatus!`
+  """
+  newStatus: TicketStatus
+  """
+  ✨ `_expr` server value variant of `newStatus` (✨ Generated from Field `TicketStatusHistory`.`newStatus` of type `TicketStatus!`)
+  """
+  newStatus_expr: TicketStatus_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`oldStatus` of type `TicketStatus`
+  """
+  oldStatus: TicketStatus
+  """
+  ✨ `_expr` server value variant of `oldStatus` (✨ Generated from Field `TicketStatusHistory`.`oldStatus` of type `TicketStatus`)
+  """
+  oldStatus_expr: TicketStatus_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'TicketStatusHistory'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input TicketStatusHistory_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [TicketStatusHistory_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: TicketStatusHistory_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [TicketStatusHistory_Filter!]
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedById` of type `UUID!`
+  """
+  changedById: UUID_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`ticketId` of type `UUID!`
+  """
+  ticketId: UUID_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedBy` of type `User!`
+  """
+  changedBy: User_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`ticket` of type `ServiceTicket!`
+  """
+  ticket: ServiceTicket_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedAt` of type `Timestamp!`
+  """
+  changedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`comment` of type `String`
+  """
+  comment: String_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`newStatus` of type `TicketStatus!`
+  """
+  newStatus: TicketStatus_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`oldStatus` of type `TicketStatus`
+  """
+  oldStatus: TicketStatus_Filter
+}
+"""
+✨ Generated first-row input type for table 'TicketStatusHistory'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input TicketStatusHistory_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [TicketStatusHistory_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: TicketStatusHistory_Filter
+}
+"""
+✨ Generated having input type for table 'TicketStatusHistory'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input TicketStatusHistory_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [TicketStatusHistory_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: TicketStatusHistory_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [TicketStatusHistory_Having!]
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedAt_count` of type `Int!`
+  """
+  changedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedById_count` of type `Int!`
+  """
+  changedById_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`comment_count` of type `Int!`
+  """
+  comment_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`newStatus_count` of type `Int!`
+  """
+  newStatus_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`oldStatus_count` of type `Int!`
+  """
+  oldStatus_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`ticketId_count` of type `Int!`
+  """
+  ticketId_count: Int_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedAt_min` of type `Timestamp`
+  """
+  changedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedAt_max` of type `Timestamp`
+  """
+  changedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'TicketStatusHistory'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input TicketStatusHistory_Key {
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `TicketStatusHistory`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'TicketStatusHistory'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input TicketStatusHistory_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: TicketStatusHistory_Filter
+}
+"""
+✨ Generated order input type for table 'TicketStatusHistory'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input TicketStatusHistory_Order {
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedById` of type `UUID!`
+  """
+  changedById: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`ticketId` of type `UUID!`
+  """
+  ticketId: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedBy` of type `User!`
+  """
+  changedBy: User_Order
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`ticket` of type `ServiceTicket!`
+  """
+  ticket: ServiceTicket_Order
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedAt` of type `Timestamp!`
+  """
+  changedAt: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`comment` of type `String`
+  """
+  comment: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`newStatus` of type `TicketStatus!`
+  """
+  newStatus: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`oldStatus` of type `TicketStatus`
+  """
+  oldStatus: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedAt_count` of type `Int!`
+  """
+  changedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedById_count` of type `Int!`
+  """
+  changedById_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`comment_count` of type `Int!`
+  """
+  comment_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`newStatus_count` of type `Int!`
+  """
+  newStatus_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`oldStatus_count` of type `Int!`
+  """
+  oldStatus_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`ticketId_count` of type `Int!`
+  """
+  ticketId_count: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedAt_min` of type `Timestamp`
+  """
+  changedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `TicketStatusHistory`.`changedAt_max` of type `Timestamp`
+  """
+  changedAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'User'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input User_Data {
+  """
+  ✨ Generated from Field `User`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `User`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `User`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `User`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `User`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`email` of type `String!`
+  """
+  email: String
+  """
+  ✨ `_expr` server value variant of `email` (✨ Generated from Field `User`.`email` of type `String!`)
+  """
+  email_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`firstName` of type `String!`
+  """
+  firstName: String
+  """
+  ✨ `_expr` server value variant of `firstName` (✨ Generated from Field `User`.`firstName` of type `String!`)
+  """
+  firstName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`isActive` of type `Boolean!`
+  """
+  isActive: Boolean
+  """
+  ✨ `_expr` server value variant of `isActive` (✨ Generated from Field `User`.`isActive` of type `Boolean!`)
+  """
+  isActive_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`lastName` of type `String!`
+  """
+  lastName: String
+  """
+  ✨ `_expr` server value variant of `lastName` (✨ Generated from Field `User`.`lastName` of type `String!`)
+  """
+  lastName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`password` of type `String!`
+  """
+  password: String
+  """
+  ✨ `_expr` server value variant of `password` (✨ Generated from Field `User`.`password` of type `String!`)
+  """
+  password_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`phone` of type `String`
+  """
+  phone: String
+  """
+  ✨ `_expr` server value variant of `phone` (✨ Generated from Field `User`.`phone` of type `String`)
+  """
+  phone_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`role` of type `UserRole!`
+  """
+  role: UserRole
+  """
+  ✨ `_expr` server value variant of `role` (✨ Generated from Field `User`.`role` of type `UserRole!`)
+  """
+  role_expr: UserRole_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`updatedAt` of type `Timestamp`
+  """
+  updatedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `User`.`updatedAt` of type `Timestamp`)
+  """
+  updatedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `updatedAt` (✨ Generated from Field `User`.`updatedAt` of type `Timestamp`)
+  """
+  updatedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `User`.`updatedAt` of type `Timestamp`)
+  """
+  updatedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`pcConfigurations_on_user` of type `[PcConfiguration!]!`
+  """
+  pcConfigurations_on_user: [PcConfiguration_Data!]
+  """
+  ✨ Generated from Field `User`.`serviceTickets_on_client` of type `[ServiceTicket!]!`
+  """
+  serviceTickets_on_client: [ServiceTicket_Data!]
+  """
+  ✨ Generated from Field `User`.`serviceTickets_on_technician` of type `[ServiceTicket!]!`
+  """
+  serviceTickets_on_technician: [ServiceTicket_Data!]
+  """
+  ✨ Generated from Field `User`.`ticketAttachments_on_uploadedBy` of type `[TicketAttachment!]!`
+  """
+  ticketAttachments_on_uploadedBy: [TicketAttachment_Data!]
+  """
+  ✨ Generated from Field `User`.`ticketComments_on_author` of type `[TicketComment!]!`
+  """
+  ticketComments_on_author: [TicketComment_Data!]
+  """
+  ✨ Generated from Field `User`.`ticketStatusHistories_on_changedBy` of type `[TicketStatusHistory!]!`
+  """
+  ticketStatusHistories_on_changedBy: [TicketStatusHistory_Data!]
+}
+"""
+✨ Generated filter input type for table 'User'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input User_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [User_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: User_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [User_Filter!]
+  """
+  ✨ Generated from Field `User`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`email` of type `String!`
+  """
+  email: String_Filter
+  """
+  ✨ Generated from Field `User`.`firstName` of type `String!`
+  """
+  firstName: String_Filter
+  """
+  ✨ Generated from Field `User`.`isActive` of type `Boolean!`
+  """
+  isActive: Boolean_Filter
+  """
+  ✨ Generated from Field `User`.`lastName` of type `String!`
+  """
+  lastName: String_Filter
+  """
+  ✨ Generated from Field `User`.`password` of type `String!`
+  """
+  password: String_Filter
+  """
+  ✨ Generated from Field `User`.`phone` of type `String`
+  """
+  phone: String_Filter
+  """
+  ✨ Generated from Field `User`.`role` of type `UserRole!`
+  """
+  role: UserRole_Filter
+  """
+  ✨ Generated from Field `User`.`updatedAt` of type `Timestamp`
+  """
+  updatedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`pcConfigurations_on_user` of type `[PcConfiguration!]!`
+  """
+  pcConfigurations_on_user: PcConfiguration_ListFilter
+  """
+  ✨ Generated from Field `User`.`serviceTickets_on_client` of type `[ServiceTicket!]!`
+  """
+  serviceTickets_on_client: ServiceTicket_ListFilter
+  """
+  ✨ Generated from Field `User`.`serviceTickets_on_technician` of type `[ServiceTicket!]!`
+  """
+  serviceTickets_on_technician: ServiceTicket_ListFilter
+  """
+  ✨ Generated from Field `User`.`ticketAttachments_on_uploadedBy` of type `[TicketAttachment!]!`
+  """
+  ticketAttachments_on_uploadedBy: TicketAttachment_ListFilter
+  """
+  ✨ Generated from Field `User`.`ticketComments_on_author` of type `[TicketComment!]!`
+  """
+  ticketComments_on_author: TicketComment_ListFilter
+  """
+  ✨ Generated from Field `User`.`ticketStatusHistories_on_changedBy` of type `[TicketStatusHistory!]!`
+  """
+  ticketStatusHistories_on_changedBy: TicketStatusHistory_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'User'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input User_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [User_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: User_Filter
+}
+"""
+✨ Generated having input type for table 'User'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input User_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [User_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: User_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [User_Having!]
+  """
+  ✨ Generated from Field `User`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`email_count` of type `Int!`
+  """
+  email_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`firstName_count` of type `Int!`
+  """
+  firstName_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`isActive_count` of type `Int!`
+  """
+  isActive_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`lastName_count` of type `Int!`
+  """
+  lastName_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`password_count` of type `Int!`
+  """
+  password_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`phone_count` of type `Int!`
+  """
+  phone_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`role_count` of type `Int!`
+  """
+  role_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'User'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input User_Key {
+  """
+  ✨ Generated from Field `User`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `User`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'User'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input User_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: User_Filter
+}
+"""
+✨ Generated order input type for table 'User'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input User_Order {
+  """
+  ✨ Generated from Field `User`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `User`.`email` of type `String!`
+  """
+  email: OrderDirection
+  """
+  ✨ Generated from Field `User`.`firstName` of type `String!`
+  """
+  firstName: OrderDirection
+  """
+  ✨ Generated from Field `User`.`isActive` of type `Boolean!`
+  """
+  isActive: OrderDirection
+  """
+  ✨ Generated from Field `User`.`lastName` of type `String!`
+  """
+  lastName: OrderDirection
+  """
+  ✨ Generated from Field `User`.`password` of type `String!`
+  """
+  password: OrderDirection
+  """
+  ✨ Generated from Field `User`.`phone` of type `String`
+  """
+  phone: OrderDirection
+  """
+  ✨ Generated from Field `User`.`role` of type `UserRole!`
+  """
+  role: OrderDirection
+  """
+  ✨ Generated from Field `User`.`updatedAt` of type `Timestamp`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `User`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`email_count` of type `Int!`
+  """
+  email_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`firstName_count` of type `Int!`
+  """
+  firstName_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`isActive_count` of type `Int!`
+  """
+  isActive_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`lastName_count` of type `Int!`
+  """
+  lastName_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`password_count` of type `Int!`
+  """
+  password_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`phone_count` of type `Int!`
+  """
+  phone_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`role_count` of type `Int!`
+  """
+  role_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `User`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `User`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: OrderDirection
+}
+"""
+✨ Generated filter input type for table 'UserRole'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input UserRole_Filter {
+  """
+  Match if field is exactly equal to provided value.
+  """
+  eq: UserRole
+  """
+  ✨ `_expr` server value variant of `eq` (Match if field is exactly equal to provided value.)
+  """
+  eq_expr: UserRole_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is not equal to provided value.
+  """
+  ne: UserRole
+  """
+  ✨ `_expr` server value variant of `ne` (Match if field is not equal to provided value.)
+  """
+  ne_expr: UserRole_Expr @fdc_forbiddenInVariables
+  """
+  When true, match if field `IS NULL`. When false, match if field is `NOT NULL`.
+  """
+  isNull: Boolean
+  """
+  Match if field value is among the provided list of values.
+  """
+  in: [UserRole!]
+  """
+  Match if field value is not among the provided list of values.
+  """
+  nin: [UserRole!]
+  """
+  Match if field value is greater than the provided value, based on index ordering of supported enum values.
+  """
+  gt: UserRole
+  """
+  ✨ `_expr` server value variant of `gt` (Match if field value is greater than the provided value, based on index ordering of supported enum values.)
+  """
+  gt_expr: UserRole_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is greater than or equal to the provided value.
+  """
+  ge: UserRole
+  """
+  ✨ `_expr` server value variant of `ge` (Match if field is greater than or equal to the provided value.)
+  """
+  ge_expr: UserRole_Expr @fdc_forbiddenInVariables
+  """
+  Match if field value is less than the provided value, based on index ordering of supported enum values.
+  """
+  lt: UserRole
+  """
+  ✨ `_expr` server value variant of `lt` (Match if field value is less than the provided value, based on index ordering of supported enum values.)
+  """
+  lt_expr: UserRole_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is less than or equal to the provided value, based on index ordering of supported enum values.
+  """
+  le: UserRole
+  """
+  ✨ `_expr` server value variant of `le` (Match if field is less than or equal to the provided value, based on index ordering of supported enum values.)
+  """
+  le_expr: UserRole_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'UserRole'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input UserRole_ListFilter {
+  """
+  Match if list field contains the provided value as a member.
+  """
+  includes: UserRole
+  """
+  ✨ `_expr` server value variant of `includes` (Match if list field contains the provided value as a member.)
+  """
+  includes_expr: UserRole_Expr @fdc_forbiddenInVariables
+  """
+  Match if list field contains all of the provided values as members.
+  """
+  includesAll: [UserRole!]
+  """
+  Match if list field does not contain the provided value as a member.
+  """
+  excludes: UserRole
+  """
+  ✨ `_expr` server value variant of `excludes` (Match if list field does not contain the provided value as a member.)
+  """
+  excludes_expr: UserRole_Expr @fdc_forbiddenInVariables
+  """
+  Match if list field does not contain any of the provided values as members.
+  """
+  excludesAll: [UserRole!]
+  """
+  The desired number of enum values that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: UserRole_Filter
+}

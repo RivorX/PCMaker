@@ -1,0 +1,638 @@
+extend type Query {
+  """
+  ✨ Look up a single `Component` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  component(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Component_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Component_FirstRow
+  ): Component @fdc_generated(from: "Component", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `ComponentCompatibility` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  componentCompatibility(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ComponentCompatibility_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ComponentCompatibility_FirstRow
+  ): ComponentCompatibility @fdc_generated(from: "ComponentCompatibility", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `ComponentRecommendation` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  componentRecommendation(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ComponentRecommendation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ComponentRecommendation_FirstRow
+  ): ComponentRecommendation @fdc_generated(from: "ComponentRecommendation", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `ComponentSpecification` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  componentSpecification(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ComponentSpecification_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ComponentSpecification_FirstRow
+  ): ComponentSpecification @fdc_generated(from: "ComponentSpecification", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `ConfigurationComponent` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  configurationComponent(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ConfigurationComponent_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ConfigurationComponent_FirstRow
+  ): ConfigurationComponent @fdc_generated(from: "ConfigurationComponent", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `PcConfiguration` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  pcConfiguration(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PcConfiguration_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PcConfiguration_FirstRow
+  ): PcConfiguration @fdc_generated(from: "PcConfiguration", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `ServiceTicket` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  serviceTicket(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ServiceTicket_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ServiceTicket_FirstRow
+  ): ServiceTicket @fdc_generated(from: "ServiceTicket", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `ServiceType` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  serviceType(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ServiceType_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ServiceType_FirstRow
+  ): ServiceType @fdc_generated(from: "ServiceType", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `TicketAttachment` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  ticketAttachment(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TicketAttachment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TicketAttachment_FirstRow
+  ): TicketAttachment @fdc_generated(from: "TicketAttachment", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `TicketComment` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  ticketComment(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TicketComment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TicketComment_FirstRow
+  ): TicketComment @fdc_generated(from: "TicketComment", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `TicketStatusHistory` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  ticketStatusHistory(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TicketStatusHistory_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TicketStatusHistory_FirstRow
+  ): TicketStatusHistory @fdc_generated(from: "TicketStatusHistory", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `User` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  user(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+  ): User @fdc_generated(from: "User", purpose: QUERY_SINGLE)
+  """
+  ✨ List `Component` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  components(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Component_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Component_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Component_Having
+  ): [Component!]! @fdc_generated(from: "Component", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `ComponentCompatibility` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  componentCompatibilities(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ComponentCompatibility_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ComponentCompatibility_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ComponentCompatibility_Having
+  ): [ComponentCompatibility!]! @fdc_generated(from: "ComponentCompatibility", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `ComponentRecommendation` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  componentRecommendations(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ComponentRecommendation_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ComponentRecommendation_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ComponentRecommendation_Having
+  ): [ComponentRecommendation!]! @fdc_generated(from: "ComponentRecommendation", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `ComponentSpecification` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  componentSpecifications(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ComponentSpecification_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ComponentSpecification_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ComponentSpecification_Having
+  ): [ComponentSpecification!]! @fdc_generated(from: "ComponentSpecification", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `ConfigurationComponent` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  configurationComponents(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ConfigurationComponent_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ConfigurationComponent_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ConfigurationComponent_Having
+  ): [ConfigurationComponent!]! @fdc_generated(from: "ConfigurationComponent", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `PcConfiguration` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  pcConfigurations(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: PcConfiguration_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [PcConfiguration_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: PcConfiguration_Having
+  ): [PcConfiguration!]! @fdc_generated(from: "PcConfiguration", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `ServiceTicket` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  serviceTickets(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ServiceTicket_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ServiceTicket_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ServiceTicket_Having
+  ): [ServiceTicket!]! @fdc_generated(from: "ServiceTicket", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `ServiceType` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  serviceTypes(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ServiceType_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ServiceType_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ServiceType_Having
+  ): [ServiceType!]! @fdc_generated(from: "ServiceType", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `TicketAttachment` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  ticketAttachments(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: TicketAttachment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [TicketAttachment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: TicketAttachment_Having
+  ): [TicketAttachment!]! @fdc_generated(from: "TicketAttachment", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `TicketComment` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  ticketComments(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: TicketComment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [TicketComment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: TicketComment_Having
+  ): [TicketComment!]! @fdc_generated(from: "TicketComment", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `TicketStatusHistory` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  ticketStatusHistories(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: TicketStatusHistory_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [TicketStatusHistory_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: TicketStatusHistory_Having
+  ): [TicketStatusHistory!]! @fdc_generated(from: "TicketStatusHistory", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `User` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  users(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: User_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [User_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: User_Having
+  ): [User!]! @fdc_generated(from: "User", purpose: QUERY_MULTIPLE)
+}
