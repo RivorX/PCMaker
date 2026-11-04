@@ -3,8 +3,7 @@
 # ==============================================================================
 
 # Pobranie listy komponentów (opcjonalnie filtrowane po typie)
-query ListComponents($type: String) @auth(level: PUBLIC, insecureReason: "Publicly accessible components directory.") {
-  components(where: { componentType: { eq: $type } }) {
+query ListComponents @auth(level: PUBLIC, insecureReason: "Publicly accessible components directory.") {
     id
     name
     manufacturer

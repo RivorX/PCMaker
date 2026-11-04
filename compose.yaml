@@ -2,10 +2,17 @@ name: pcmaker
 
 services:
   pcmaker:
-    build: .
     image: pcmaker
     container_name: pcmaker
+    build:
+      context: .
+      secrets:
+        - firebase_build_env
     env_file:
       - .env.local
     ports:
       - "3000:3000"
+
+secrets:
+  firebase_build_env:
+    file: .env.local

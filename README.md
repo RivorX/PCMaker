@@ -1,8 +1,10 @@
 # PCMaker
 
-PCMaker łączy konfigurator komputerów z przygotowaniem zgłoszenia serwisowego. Pierwszy przyrost jest frontendowym szkieletem Next.js: można ręcznie opisać podzespoły, sprawdzić podstawowe zależności socket/DDR oraz zapisać wersję roboczą lokalnie w przeglądarce. Formularz serwisowy działa tak samo i nie udaje wysłanego zgłoszenia.
+PCMaker łączy konfigurator komputerów z przygotowaniem zgłoszenia serwisowego. Konfigurator pokazuje podzespoły z katalogu Data Connect, pozwala ułożyć lokalny zestaw i sprawdzić podstawowe zależności socket/DDR. Formularz serwisowy zapisuje wersję roboczą i nie udaje wysłanego zgłoszenia.
 
-Źródła ofert sklepów, logowanie i baza danych nie są jeszcze podłączone. Aplikacja celowo nie pokazuje przykładowych cen ani fikcyjnych sklepów. Stan integracji jest dostępny pod `GET /api/v1/integrations`, a `GET /api/v1/offers` zwraca `503 source_not_configured` do czasu uzyskania prawdziwego dostępu do API. Kontrakty opisano w [docs/api-contract.md](docs/api-contract.md).
+Konfigurator pobiera katalog komponentów z Firebase Data Connect przez publiczne zapytanie `ListComponents`. Wymaga to działającego projektu, tabeli `components` z danymi, klucza `NEXT_PUBLIC_FIREBASE_API_KEY` oraz wdrożonego konektora. Po zmianie `dataconnect/connector/queries.gql` wdroż konektor, aby serwer zwracał pełny katalog zamiast filtrować go po typie. Pola socketu i typu pamięci pozostają puste, dopóki zapytanie nie pobiera specyfikacji komponentów.
+
+Źródła ofert sklepów nie są jeszcze podłączone. Aplikacja celowo nie pokazuje przykładowych produktów ani fikcyjnych ofert. Stan integracji jest dostępny pod `GET /api/v1/integrations`, a `GET /api/v1/offers` zwraca `503 source_not_configured` do czasu uzyskania prawdziwego dostępu do API sklepów. Kontrakty opisano w [docs/api-contract.md](docs/api-contract.md).
 
 ## Uruchomienie
 
@@ -20,6 +22,13 @@ docker compose up -d --build
 ```
 
 Później: **Docker Desktop → Containers → pcmaker → ▶ Start / ■ Stop**. Po zmianach w kodzie powtórz komendę powyżej.
+
+Docker buduje aplikację z wartościami `NEXT_PUBLIC_*` z lokalnego `.env.local`, korzystając z tymczasowego sekretu BuildKit. Plik pozostaje poza obrazem. Jeśli zmienisz publiczne ustawienia Firebase w `.env.local`, przebuduj bez cache:
+
+```bash
+docker compose build --no-cache
+docker compose up -d
+```
 
 ---
 

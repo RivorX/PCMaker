@@ -33,6 +33,10 @@ export interface ManualComponent {
   socket: string;
   memoryType: string;
   note: string;
+  /** Snapshot of the catalog data, retained when a product is no longer available. */
+  manufacturer?: string;
+  description?: string;
+  price?: number | null;
 }
 
 export interface ConfigurationDraft {
@@ -83,7 +87,10 @@ const isManualComponent = (value: unknown): value is ManualComponent => {
     isString(value.name) &&
     isString(value.socket) &&
     isString(value.memoryType) &&
-    isString(value.note)
+    isString(value.note) &&
+    (value.manufacturer === undefined || isString(value.manufacturer)) &&
+    (value.description === undefined || isString(value.description)) &&
+    (value.price === undefined || value.price === null || (typeof value.price === "number" && Number.isFinite(value.price) && value.price >= 0))
   );
 };
 
