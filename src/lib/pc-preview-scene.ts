@@ -8,19 +8,21 @@ import {
   type LoadedPcPart,
   type PcModelCategory,
 } from "@/lib/pc-model-assets";
+import {
+  applyPcMechanicalLayout,
+  preparePcMechanicalLayout,
+  type PcMechanicalDiagnostics,
+  type PcMechanicalPlan,
+  type PcMechanicalPose,
+} from "@/lib/pc-mechanical-layout";
 
-export type PcPreviewTransform = {
-  position: THREE.Vector3;
-  rotation: THREE.Quaternion;
-  scale: THREE.Vector3;
-};
+export type PcPreviewTransform = PcMechanicalPose;
 
 export type PcPreviewGeometry = {
   localBounds: THREE.Box3;
   localCenter: THREE.Vector3;
   size: THREE.Vector3;
   assembled: PcPreviewTransform;
-  exploded: PcPreviewTransform;
   grid: PcPreviewTransform;
 };
 
@@ -40,10 +42,12 @@ export type PcPreviewRuntime = {
   groups: Map<PcModelCategory, THREE.Group>;
   materials: Map<PcModelCategory, Map<THREE.Material, ModelMaterialState>>;
   geometry: Map<PcModelCategory, PcPreviewGeometry>;
+  mechanicalDiagnostics: PcMechanicalDiagnostics;
   scene: THREE.Scene;
   focus: THREE.Vector3;
   currentDistance: number;
   zoomMultiplier: number;
+  invalidate: () => void;
   applyAppearance: (selected: ComponentCategory[], active: ComponentCategory, fullPreview: boolean) => void;
   dispose: () => void;
 };
@@ -69,16 +73,6 @@ export class PcPreviewSceneError extends Error {
 }
 
 const categories: PcModelCategory[] = ["case", "motherboard", "cpu", "memory", "gpu", "storage", "psu", "cooling"];
-
-const explodedCenters: Record<PcModelCategory, [number, number, number]> = {
-  case: [-0.414, 0, 0], motherboard: [0.065, 0, -0.268], cpu: [-0.191, 0.310, 0.080], memory: [0.029, 0.322, -0.029],
-  gpu: [0.413, -0.102, 0.073], storage: [-0.225, -0.283, 0.044], psu: [0.094, -0.322, -0.073], cooling: [0.302, 0.276, 0.090],
-};
-
-const explodedAngles: Record<PcModelCategory, [number, number, number]> = {
-  case: [0, -0.12, 0], motherboard: [0.05, 0.14, 0], cpu: [0.13, -0.28, 0.06], memory: [0.08, 0.24, -0.04],
-  gpu: [-0.08, -0.16, 0], storage: [0.12, 0.1, -0.12], psu: [0.04, 0.22, 0.04], cooling: [-0.12, 0.18, 0],
-};
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const smoothStep = (value: number) => {
@@ -129,7 +123,7 @@ function boundsOf(root: THREE.Object3D): THREE.Box3 {
 function centeredAsset(part: LoadedPcPart, rotation: THREE.Quaternion, unitScale: number): THREE.Box3 {
   part.root.position.set(0, 0, 0);
   part.root.quaternion.copy(rotation);
-  part.root.scale.setScalar(unitScale);
+  part.root.scale.set(unitScale, part.category === "gpu" ? -unitScale : unitScale, unitScale);
   part.root.updateMatrixWorld(true);
   const bounds = boundsOf(part.root);
   part.root.position.copy(bounds.getCenter(new THREE.Vector3())).negate();
@@ -186,16 +180,6 @@ function markMaterials(
   visit(root);
 }
 
-function findBounds(root: THREE.Object3D, pattern: RegExp): THREE.Box3 | null {
-  const object = findNamedObject(root, pattern);
-  return object ? boundsOf(object) : null;
-}
-
-function transformedLocalBounds(group: THREE.Group, sourceBounds: THREE.Box3): THREE.Box3 {
-  group.updateWorldMatrix(true, false);
-  return sourceBounds.clone().applyMatrix4(group.matrixWorld);
-}
-
 export async function createPcPreviewScene(
   host: HTMLElement,
   options: PcPreviewSceneOptions,
@@ -212,6 +196,12 @@ export async function createPcPreviewScene(
   let modelsAttached = false;
   let isDisposed = false;
   let pointerStart: { x: number; y: number; id: number; maxDistance: number } | null = null;
+  let animationFrameId: number | null = null;
+  let requestRender: () => void = () => {};
+  let orbitChangePending = false;
+  let orbitChangeHandler: (() => void) | null = null;
+  let renderingFrame = false;
+  let visibilityHandler: (() => void) | null = null;
   const activePointers = new Set<number>();
   const pointerCleanups: Array<() => void> = [];
   let orbitStartHandler: (() => void) | null = null;
@@ -221,9 +211,12 @@ export async function createPcPreviewScene(
     isDisposed = true;
     resizeObserver?.disconnect();
     if (controls && orbitStartHandler) controls.removeEventListener("start", orbitStartHandler);
+    if (controls && orbitChangeHandler) controls.removeEventListener("change", orbitChangeHandler);
+    if (visibilityHandler) document.removeEventListener("visibilitychange", visibilityHandler);
     for (const remove of pointerCleanups) remove();
     controls?.dispose();
-    renderer?.setAnimationLoop(null);
+    if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
     if (scene) disposeSceneResources(scene);
     if (!modelsAttached) disposePcModelRoots(loadedParts.map((part) => part.root));
     environmentTarget?.dispose();
@@ -247,6 +240,8 @@ export async function createPcPreviewScene(
     renderer.toneMappingExposure = 1.1;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.shadowMap.autoUpdate = false;
+    renderer.shadowMap.needsUpdate = true;
     renderer.domElement.setAttribute("aria-hidden", "true");
     host.appendChild(renderer.domElement);
 
@@ -269,7 +264,7 @@ export async function createPcPreviewScene(
     orbit.maxPolarAngle = Math.PI - 0.14;
     orbit.update();
     orbit.saveState();
-    orbitStartHandler = options.onOrbitStart;
+    orbitStartHandler = () => { options.onOrbitStart(); requestRender(); };
     orbit.addEventListener("start", orbitStartHandler);
 
     scene.add(new THREE.HemisphereLight(0xdce9f6, 0x182230, 1.2));
@@ -336,9 +331,8 @@ export async function createPcPreviewScene(
     rotations.set("motherboard", around(new THREE.Vector3(0, 0, 1), Math.PI / 2).multiply(around(new THREE.Vector3(1, 0, 0), Math.PI / 2)));
     rotations.set("cpu", rotations.get("motherboard")!.clone());
     rotations.set("memory", around(new THREE.Vector3(0, 0, 1), Math.PI / 2));
-    // The card's fans point down; yaw the rear bracket toward the case cutouts
-    // while keeping its gold fingers aimed toward the motherboard.
-    rotations.set("gpu", around(new THREE.Vector3(0, 1, 0), Math.PI).multiply(around(new THREE.Vector3(1, 0, 0), Math.PI)));
+    // Mirror only local Y: fans face down while the card body exits toward the +Z glass side.
+    rotations.set("gpu", new THREE.Quaternion());
     rotations.set("storage", rotations.get("motherboard")!.clone());
     // Keep the PSU upright; orient its inlet toward the rear of the case.
     rotations.set("psu", around(new THREE.Vector3(0, 1, 0), -Math.PI / 2));
@@ -361,78 +355,14 @@ export async function createPcPreviewScene(
     }
     modelsAttached = true;
 
-    sceneRoot.updateMatrixWorld(true);
-    const caseRoot = groups.get("case")!;
-    const caseBounds = boundsOf(caseRoot);
-    const caseTrayBounds = findBounds(caseRoot, /motherboard tray/i);
-    const motherboardBounds = localBoundsByCategory.get("motherboard")!;
-    const boardCenter = caseTrayBounds?.getCenter(new THREE.Vector3()) ?? caseBounds.getCenter(new THREE.Vector3());
-    boardCenter.z = (caseTrayBounds?.max.z ?? caseBounds.min.z + 0.025) + motherboardBounds.getSize(new THREE.Vector3()).z / 2 + 0.002;
-    const rearIoPorts = findBounds(groups.get("motherboard")!, /audio jacks|lan jack/i);
-    if (rearIoPorts) boardCenter.x += caseBounds.min.x + 0.013 - rearIoPorts.getCenter(new THREE.Vector3()).x;
-    groups.get("motherboard")!.position.copy(boardCenter);
-    sceneRoot.updateMatrixWorld(true);
-
-    const motherboardRoot = groups.get("motherboard")!;
-    const socketBounds = findBounds(motherboardRoot, /cpu socket|socket housing|load plate/i);
-    const cpuBounds = localBoundsByCategory.get("cpu")!;
-    const cpuCenter = socketBounds?.getCenter(new THREE.Vector3()) ?? boardCenter.clone().add(new THREE.Vector3(-0.02, 0.06, 0.02));
-    cpuCenter.z = (socketBounds?.max.z ?? boardCenter.z + motherboardBounds.getSize(new THREE.Vector3()).z / 2) + cpuBounds.getSize(new THREE.Vector3()).z / 2 + 0.001;
-    groups.get("cpu")!.position.copy(cpuCenter);
-
-    const dimmA2 = findBounds(motherboardRoot, /dimm\s*a2/i);
-    const dimmB2 = findBounds(motherboardRoot, /dimm\s*b2/i);
-    const memorySlots = [dimmA2, dimmB2].filter((bounds): bounds is THREE.Box3 => !!bounds);
-    const fallbackSlots = [
-      cpuCenter.clone().add(new THREE.Vector3(0.06, 0, 0)),
-      cpuCenter.clone().add(new THREE.Vector3(0.09, 0, 0)),
-    ];
-    const slotCenters = memorySlots.length >= 2
-      ? memorySlots.map((bounds) => bounds.getCenter(new THREE.Vector3()).setZ(bounds.max.z + 0.006))
-      : fallbackSlots;
     const memoryGroup = groups.get("memory")!;
-    const memoryAsset = loadedByCategory.get("memory")!.root;
-    const memoryCenter = slotCenters[0].clone().add(slotCenters[1]).multiplyScalar(0.5);
-    memoryGroup.position.copy(memoryCenter);
-    memoryAsset.position.copy(slotCenters[0]).sub(memoryCenter);
-    const secondMemory = memoryAsset.clone(true);
+    const secondMemory = loadedByCategory.get("memory")!.root.clone(true);
     secondMemory.name = "memory-stick-secondary";
-    secondMemory.position.copy(slotCenters[1]).sub(memoryCenter);
     memoryGroup.add(secondMemory);
-
-    const pcieSlotBounds = findBounds(motherboardRoot, /pcie\s*x16\s*slot\s*1/i)
-      ?? findBounds(motherboardRoot, /pcie.*x16/i);
-    const gpuRoot = loadedByCategory.get("gpu")!.root;
-    const gpuConnectorBounds = findBounds(gpuRoot, /gold.?finger|gold.?contact|pcie.?contact/i);
-    const gpuCenter = pcieSlotBounds?.getCenter(new THREE.Vector3()) ?? boardCenter.clone().add(new THREE.Vector3(-0.06, -0.08, 0.03));
-    if (gpuConnectorBounds && pcieSlotBounds) groups.get("gpu")!.position.copy(gpuCenter).sub(gpuConnectorBounds.getCenter(new THREE.Vector3()));
-    else groups.get("gpu")!.position.copy(gpuCenter);
-
-    const storageSlotBounds = findBounds(motherboardRoot, /m\.?2.*slot|m\.?2 connector/i);
-    const storageGroup = groups.get("storage")!;
-    if (storageSlotBounds) {
-      const slotSize = storageSlotBounds.getSize(new THREE.Vector3());
-      if (slotSize.y > slotSize.x) loadedByCategory.get("storage")!.root.quaternion.premultiply(around(new THREE.Vector3(0, 0, 1), Math.PI / 2));
-      storageGroup.position.copy(storageSlotBounds.getCenter(new THREE.Vector3()));
-      const contacts = findBounds(loadedByCategory.get("storage")!.root, /gold.?finger|gold.?contact/i);
-      if (contacts) storageGroup.position.sub(contacts.getCenter(new THREE.Vector3()));
-    } else {
-      storageGroup.position.copy(cpuCenter).add(new THREE.Vector3(0.08, -0.08, 0));
-    }
-
-    const psuBounds = localBoundsByCategory.get("psu")!;
-    groups.get("psu")!.position.set(
-      caseBounds.min.x + psuBounds.getSize(new THREE.Vector3()).x / 2 + 0.012,
-      caseBounds.min.y + psuBounds.getSize(new THREE.Vector3()).y / 2 + 0.006,
-      caseBounds.getCenter(new THREE.Vector3()).z,
-    );
-
-    const coolerBounds = localBoundsByCategory.get("cooling")!;
-    const cpuTop = groups.get("cpu")!.position.z + cpuBounds.max.z;
-    groups.get("cooling")!.position.set(cpuCenter.x, cpuCenter.y, cpuTop - coolerBounds.min.z + 0.002);
-
+    const mechanicalPlan: PcMechanicalPlan = preparePcMechanicalLayout(groups, localBoundsByCategory);
     sceneRoot.updateMatrixWorld(true);
     const geometry = new Map<PcModelCategory, PcPreviewGeometry>();
+    const gridPoses = new Map<PcModelCategory, PcMechanicalPose>();
     for (const category of categories) {
       const group = groups.get(category)!;
       const worldBounds = boundsOf(group);
@@ -443,28 +373,17 @@ export async function createPcPreviewScene(
           for (const z of [worldBounds.min.z, worldBounds.max.z]) localBounds.expandByPoint(new THREE.Vector3(x, y, z).applyMatrix4(inverse));
         }
       }
-      const assembled: PcPreviewTransform = {
-        position: group.position.clone(),
-        rotation: group.quaternion.clone(),
-        scale: group.scale.clone(),
-      };
+      const assembled = mechanicalPlan.assembled.get(category)!;
       const localCenter = localBounds.getCenter(new THREE.Vector3());
       const size = localBounds.getSize(new THREE.Vector3());
-      const explodedRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(...explodedAngles[category]));
-      const explodedCenter = new THREE.Vector3(...explodedCenters[category]);
-      const explodedOffset = localCenter.clone().multiply(assembled.scale).applyQuaternion(explodedRotation);
-      const exploded: PcPreviewTransform = {
-        position: explodedCenter.sub(explodedOffset),
-        rotation: explodedRotation,
-        scale: assembled.scale.clone(),
-      };
+      const grid: PcMechanicalPose = { position: assembled.position.clone(), rotation: assembled.rotation.clone(), scale: assembled.scale.clone() };
+      gridPoses.set(category, grid);
       geometry.set(category, {
         localBounds,
         localCenter,
         size,
         assembled,
-        exploded,
-        grid: { position: assembled.position.clone(), rotation: assembled.rotation.clone(), scale: assembled.scale.clone() },
+        grid,
       });
     }
 
@@ -503,11 +422,12 @@ export async function createPcPreviewScene(
     const raycaster = new THREE.Raycaster();
     raycaster.params.Line = { threshold: 0.01 };
     const pointer = new THREE.Vector2();
-    const findCategory = (event: PointerEvent) => {
+    const raycastRoots = [...groups.values()];
+    const findCategoryAt = (clientX: number, clientY: number) => {
       const rect = renderer!.domElement.getBoundingClientRect();
-      pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+      pointer.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
       raycaster.setFromCamera(pointer, camera);
-      const hits = raycaster.intersectObjects([...groups.values()], true);
+      const hits = raycaster.intersectObjects(raycastRoots, true);
       return hits.find((hit) => {
         let current: THREE.Object3D | null = hit.object;
         while (current && current !== sceneRoot) {
@@ -517,6 +437,9 @@ export async function createPcPreviewScene(
         return !!hit.object.userData.category;
       })?.object.userData.category as ComponentCategory | undefined;
     };
+    let hoverPending = false;
+    let hoverX = 0;
+    let hoverY = 0;
     const onPointerDown = (event: PointerEvent) => {
       activePointers.add(event.pointerId);
       if (!event.isPrimary || activePointers.size > 1) { pointerStart = null; return; }
@@ -529,7 +452,7 @@ export async function createPcPreviewScene(
       if (!start || start.id !== event.pointerId || activePointers.size > 0 || !event.isPrimary) return;
       const distance = Math.hypot(event.clientX - start.x, event.clientY - start.y);
       if (Math.max(start.maxDistance, distance) < 7) {
-        const category = findCategory(event);
+        const category = findCategoryAt(event.clientX, event.clientY);
         if (category) options.onSelectCategory(category);
       }
     };
@@ -538,9 +461,12 @@ export async function createPcPreviewScene(
         pointerStart.maxDistance = Math.max(pointerStart.maxDistance, Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y));
         return;
       }
-      renderer!.domElement.style.cursor = findCategory(event) ? "pointer" : "grab";
+      hoverX = event.clientX;
+      hoverY = event.clientY;
+      hoverPending = true;
+      requestRender();
     };
-    const onPointerLeave = () => { pointerStart = null; renderer!.domElement.style.cursor = "grab"; };
+    const onPointerLeave = () => { pointerStart = null; hoverPending = false; renderer!.domElement.style.cursor = "grab"; };
     const onPointerCancel = (event: PointerEvent) => { activePointers.delete(event.pointerId); pointerStart = null; };
     const addPointerHandler = <K extends keyof HTMLElementEventMap>(type: K, handler: (event: HTMLElementEventMap[K]) => void) => {
       renderer!.domElement.addEventListener(type, handler as EventListener);
@@ -559,6 +485,7 @@ export async function createPcPreviewScene(
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       gridColumns = setGridTargets(width);
+      requestRender();
     };
     resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(host);
@@ -573,18 +500,35 @@ export async function createPcPreviewScene(
     const partBounds = new THREE.Box3();
     const worldSize = new THREE.Vector3();
     const anchor = new THREE.Vector3();
+    const desiredDirection = new THREE.Vector3();
+    const framingFocus = new THREE.Vector3();
+    const previousCameraPosition = new THREE.Vector3();
+    const previousOrbitTarget = new THREE.Vector3();
+    const boundsByCategory = new Map<PcModelCategory, THREE.Box3>(categories.map((category) => [category, new THREE.Box3()]));
     const cameraHalfFov = THREE.MathUtils.degToRad(camera.fov / 2);
     let frameTime = performance.now();
     let currentProgress = 0;
     let lastAppliedDistance = camera.position.distanceTo(orbit.target);
     let zoomMultiplier = 1;
     const autoFrameDirection = initialDirection.clone();
-    const applyTransform = (group: THREE.Group, from: PcPreviewTransform, to: PcPreviewTransform, amount: number) => {
-      group.position.lerpVectors(from.position, to.position, amount);
-      group.quaternion.slerpQuaternions(from.rotation, to.rotation, amount);
-      group.scale.lerpVectors(from.scale, to.scale, amount);
+    let frameCallback: FrameRequestCallback = () => {};
+    requestRender = () => {
+      if (animationFrameId !== null || document.visibilityState === "hidden" || isDisposed) return;
+      animationFrameId = requestAnimationFrame(frameCallback);
     };
-
+    orbitChangeHandler = () => {
+      orbitChangePending = true;
+      if (!renderingFrame) requestRender();
+    };
+    orbit.addEventListener("change", orbitChangeHandler);
+    visibilityHandler = () => {
+      if (document.visibilityState === "hidden") {
+        if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      } else requestRender();
+    };
+    document.addEventListener("visibilitychange", visibilityHandler);
+    const activeEmissive = new THREE.Color(0x176d68);
     const applyAppearance = (selected: ComponentCategory[], active: ComponentCategory, fullPreview: boolean) => {
       for (const category of categories) {
         const visible = fullPreview || selected.includes(category);
@@ -597,13 +541,15 @@ export async function createPcPreviewScene(
             standard.emissive.copy(state.emissive);
             standard.emissiveIntensity = state.emissiveIntensity;
             if (category === active && visible && !state.isGlass) {
-              standard.emissive.lerp(new THREE.Color(0x176d68), 0.14);
+              standard.emissive.lerp(activeEmissive, 0.14);
               standard.emissiveIntensity = Math.max(standard.emissiveIntensity, 0.12);
             }
           }
           material.needsUpdate = true;
         }
       }
+      renderer!.shadowMap.needsUpdate = true;
+      requestRender();
     };
     const runtime: PcPreviewRuntime = {
       renderer,
@@ -612,46 +558,49 @@ export async function createPcPreviewScene(
       groups,
       materials,
       geometry,
+      mechanicalDiagnostics: mechanicalPlan.diagnostics,
       scene,
       focus: new THREE.Vector3(),
       currentDistance: lastAppliedDistance,
       zoomMultiplier,
+      invalidate: requestRender,
       applyAppearance,
       dispose,
     };
-    applyAppearance(options.selectedCategories(), options.activeCategory(), options.fullPreview());
-
-    renderer.setAnimationLoop((time) => {
+    frameCallback = (time) => {
+      animationFrameId = null;
+      if (isDisposed) return;
+      renderingFrame = true;
+      orbitChangePending = false;
       const delta = Math.min(0.06, Math.max(0.001, (time - frameTime) / 1000));
       frameTime = time;
       const destination = options.layoutTarget();
       const progressGap = destination - currentProgress;
+      const previousProgress = currentProgress;
       const easing = 1 - Math.exp(-delta * 8.5);
       currentProgress = Math.abs(progressGap) < 0.05 ? destination : currentProgress + progressGap * easing;
       if (currentProgress < 0.02) currentProgress = 0;
       if (currentProgress > 99.98) currentProgress = 100;
       const normalized = currentProgress / 100;
-      const explodedProgress = smoothStep(normalized / 0.66);
-      const gridProgress = smoothStep((normalized - 0.66) / 0.34);
+      const gridProgress = smoothStep((normalized - 0.75) / 0.25);
+      const layoutPending = Math.abs(destination - currentProgress) >= 0.05;
+      const layoutChanged = currentProgress !== previousProgress;
       const floorOpacity = 0.45 * (1 - smoothStep((gridProgress - 0.68) / 0.32));
       floorMaterial.opacity = floorOpacity;
       for (const material of stageGridMaterials) material.opacity = 0.16 * (floorOpacity / 0.45);
 
       const width = Math.max(1, host.clientWidth);
       if ((width < 760 ? 2 : 4) !== gridColumns) gridColumns = setGridTargets(width);
-      for (const category of categories) {
-        const group = groups.get(category)!;
-        const part = geometry.get(category)!;
-        applyTransform(group, normalized <= 0.66 ? part.assembled : part.exploded, normalized <= 0.66 ? part.exploded : part.grid, normalized <= 0.66 ? explodedProgress : gridProgress);
-      }
+      applyPcMechanicalLayout(groups, mechanicalPlan, gridPoses, normalized);
+      if (layoutChanged) renderer!.shadowMap.needsUpdate = true;
 
       sceneRoot.updateMatrixWorld(true);
       worldBounds.makeEmpty();
-      const boundsByCategory = new Map<PcModelCategory, THREE.Box3>();
       for (const category of categories) {
         const group = groups.get(category)!;
-        const bounds = partBounds.copy(geometry.get(category)!.localBounds).applyMatrix4(group.matrixWorld).clone();
-        boundsByCategory.set(category, bounds);
+        const bounds = boundsByCategory.get(category)!;
+        if (category === "case") bounds.setFromObject(group);
+        else bounds.copy(partBounds.copy(geometry.get(category)!.localBounds).applyMatrix4(group.matrixWorld));
         worldBounds.union(bounds);
       }
 
@@ -664,7 +613,7 @@ export async function createPcPreviewScene(
       if (options.isAutoFraming()) {
         worldBounds.getCenter(focus);
         worldBounds.getSize(worldSize);
-        const desiredDirection = initialDirection.clone().lerp(frontDirection, smoothStep(normalized / 0.28)).normalize();
+        desiredDirection.copy(initialDirection).lerp(frontDirection, smoothStep(normalized / 0.28)).normalize();
         cameraDirection.copy(camera.position).sub(orbit.target).normalize();
         cameraDirection.lerp(desiredDirection, 1 - Math.exp(-delta * 5.5)).normalize();
         cameraRight.set(1, 0, 0).applyQuaternion(camera.quaternion).normalize();
@@ -674,7 +623,7 @@ export async function createPcPreviewScene(
         const halfVerticalFov = Math.atan(Math.tan(cameraHalfFov) / camera.zoom);
         const halfHorizontalFov = Math.atan(Math.tan(halfVerticalFov) * camera.aspect);
         const screenHeight = Math.max(1, host.clientHeight);
-        const inGrid = normalized >= 0.66;
+        const inGrid = normalized >= 0.75;
         const safeTop = inGrid ? 124 : 46;
         const safeBottom = inGrid ? 115 : 112;
         const safeVerticalFraction = Math.max(0.42, (screenHeight - safeTop - safeBottom) / screenHeight);
@@ -692,7 +641,7 @@ export async function createPcPreviewScene(
         stageGrid.position.y = worldBounds.min.y - 0.016;
         const verticalWorldSpan = 2 * fittedDistance * Math.tan(halfVerticalFov);
         const safeCenterOffset = (safeTop - safeBottom) / 2;
-        const framingFocus = focus.clone().addScaledVector(cameraUp, safeCenterOffset * verticalWorldSpan / screenHeight);
+        framingFocus.copy(focus).addScaledVector(cameraUp, safeCenterOffset * verticalWorldSpan / screenHeight);
         camera.position.copy(framingFocus).addScaledVector(cameraDirection, fittedDistance);
         orbit.target.copy(framingFocus);
         orbit.update();
@@ -728,8 +677,20 @@ export async function createPcPreviewScene(
         label.style.opacity = String(revealLabels);
         label.style.visibility = "visible";
       }
+      if (hoverPending) {
+        hoverPending = false;
+        renderer!.domElement.style.cursor = findCategoryAt(hoverX, hoverY) ? "pointer" : "grab";
+      }
       renderer!.render(scene!, camera);
-    });
+      const cameraStillAutoFraming = options.isAutoFraming()
+        && (layoutPending || cameraDirection.distanceToSquared(desiredDirection) > 0.00008);
+      const shouldContinue = layoutPending || cameraStillAutoFraming || orbitChangePending;
+      renderingFrame = false;
+      if (shouldContinue) requestRender();
+    };
+    applyAppearance(options.selectedCategories(), options.activeCategory(), options.fullPreview());
+    if (options.signal.aborted) throw new PcPreviewSceneError("assets");
+    requestRender();
 
     return runtime;
   } catch (error) {

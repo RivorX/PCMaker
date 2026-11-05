@@ -95,6 +95,7 @@ export default function PcPreview({ selectedCategories, activeCategory, onSelect
     layoutTargetRef.current = next;
     autoFramingRef.current = true;
     setLayoutProgress(next);
+    runtimeRef.current?.invalidate();
   };
 
   const chooseView = (view: "front" | "side" | "reset") => {
@@ -111,6 +112,7 @@ export default function PcPreview({ selectedCategories, activeCategory, onSelect
     runtime.controls.update();
     runtime.currentDistance = runtime.camera.position.distanceTo(runtime.controls.target);
     if (view === "reset") runtime.zoomMultiplier = 1;
+    runtime.invalidate();
   };
 
   const changeZoom = (direction: 1 | -1) => {
@@ -124,6 +126,7 @@ export default function PcPreview({ selectedCategories, activeCategory, onSelect
       runtime.controls.update();
     }
     runtime.zoomMultiplier = nextZoom;
+    runtime.invalidate();
   };
 
   const activeSelected = selectedCategories.includes(activeCategory);
