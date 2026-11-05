@@ -184,11 +184,17 @@
 .webglFallback > span { display: grid; width: 41px; height: 41px; place-items: center; border: 1px solid rgba(117, 222, 214, .28); border-radius: 11px; color: #7be0d4; font-size: 12px; font-weight: 850; }
 .webglFallback strong { color: #ecf4fa; font-size: 13px; }
 .webglFallback p { max-width: 300px; margin: 0; color: #8298ad; font-size: 10px; line-height: 1.6; }
+.loading { position: absolute; z-index: 5; top: 50%; left: 50%; display: flex; align-items: center; gap: 10px; padding: 12px 15px; border: 1px solid rgba(120, 174, 195, .18); border-radius: 8px; background: rgba(13, 26, 41, .88); color: #c7d6e1; font-size: 11px; transform: translate(-50%, -50%); pointer-events: none; backdrop-filter: blur(10px); }
+.previewToggle { position: absolute; z-index: 3; top: 94px; right: 24px; min-height: 26px; padding: 0 9px; border: 1px solid rgba(137, 178, 198, .18); border-radius: 6px; background: rgba(14, 27, 42, .82); color: #93a9ba; font: inherit; font-size: 8px; font-weight: 700; cursor: pointer; pointer-events: auto; backdrop-filter: blur(10px); }
+.previewToggle:hover,.previewToggleOn { border-color: rgba(94, 206, 195, .34); background: rgba(64, 161, 155, .15); color: #bff1e9; }
+.previewToggle:focus-visible { outline: 2px solid #65d7ca; outline-offset: 2px; }
+.previewToggle:disabled { cursor: not-allowed; opacity: .45; }
 
 @media (max-width: 760px) {
   .activeReadout { top: 54px; left: 13px; min-width: 143px; padding: 9px 10px; }
   .interactionHint { right: 13px; bottom: 108px; max-width: 188px; font-size: 7px; }
   .controls { top: 54px; right: 13px; gap: 2px; }
+  .previewToggle { top: 88px; right: 13px; }
   .controls button { min-width: 35px; height: 26px; padding: 0 6px; font-size: 7px; }
   .controls .zoomButton { min-width: 25px; }
   .layoutFooter { right: 13px; bottom: 50px; left: 13px; gap: 6px; padding: 8px 10px 9px; }
@@ -199,6 +205,7 @@
 @media (max-width: 450px) {
   .interactionHint { right: 12px; bottom: 108px; max-width: 164px; gap: 5px; padding: 7px; font-size: 6px; }
   .controls { left: auto; top: 54px; right: 12px; }
+  .previewToggle { top: 87px; right: 12px; }
   .controls button { min-width: 32px; padding: 0 5px; font-size: 6px; }
   .controls .zoomButton { min-width: 24px; }
   .activeReadout { min-width: 130px; }
