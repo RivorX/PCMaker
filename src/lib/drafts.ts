@@ -30,6 +30,7 @@ export interface ManualComponent {
   id: string;
   category: ComponentCategory;
   name: string;
+  source?: "catalog" | "own";
   socket: string;
   memoryType: string;
   note: string;
@@ -85,6 +86,7 @@ const isManualComponent = (value: unknown): value is ManualComponent => {
     isString(value.id) &&
     isComponentCategory(value.category) &&
     isString(value.name) &&
+    (value.source === undefined || value.source === "catalog" || value.source === "own") &&
     isString(value.socket) &&
     isString(value.memoryType) &&
     isString(value.note) &&

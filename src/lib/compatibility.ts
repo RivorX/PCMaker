@@ -1,4 +1,4 @@
-import type { ManualComponent } from "@/lib/drafts";
+import { componentCategoryLabels, type ManualComponent } from "@/lib/drafts";
 
 export type CompatibilityState = "compatible" | "warning" | "unknown";
 
@@ -22,6 +22,17 @@ export const getCompatibilityChecks = (components: ManualComponent[]): Compatibi
         detail: `Znaleziono ${count} wpisy. Wybierz jeden główny element, aby potwierdzić zgodność.`,
       });
     }
+  }
+  const ownedCriticalParts = components.filter((component) =>
+    component.source === "own" && ["cpu", "motherboard", "memory", "cooling"].includes(component.category),
+  );
+  if (ownedCriticalParts.length > 0) {
+    checks.push({
+      state: "unknown",
+      title: "Kontrola zgodności niedostępna",
+      detail: `Brak specyfikacji dla własnych części: ${ownedCriticalParts.map((part) => componentCategoryLabels[part.category]).join(", ")}. Sprawdź ręcznie socket, typ pamięci i zgodność chłodzenia przed zakupem.`,
+    });
+    return checks;
   }
   const processor = category(components, "cpu");
   const motherboard = category(components, "motherboard");

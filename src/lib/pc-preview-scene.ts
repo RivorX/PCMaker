@@ -33,6 +33,13 @@ type ModelMaterialState = {
   emissive: THREE.Color | null;
   emissiveIntensity: number;
   isGlass: boolean;
+  thumbnailOpacity: number;
+  thumbnailTransparent: boolean;
+  thumbnailDepthWrite: boolean;
+  thumbnailSide: THREE.Side;
+  thumbnailColor: THREE.Color | null;
+  thumbnailEmissive: THREE.Color | null;
+  thumbnailEmissiveIntensity: number;
 };
 
 export type PcPreviewRuntime = {
@@ -45,9 +52,12 @@ export type PcPreviewRuntime = {
   mechanicalDiagnostics: PcMechanicalDiagnostics;
   scene: THREE.Scene;
   focus: THREE.Vector3;
+  nominalFitDistance: number;
   currentDistance: number;
   zoomMultiplier: number;
+  setZoomMultiplier: (value: number, minimum?: number) => void;
   invalidate: () => void;
+  getCategoryThumbnail: (category: ComponentCategory) => string | null;
   applyAppearance: (selected: ComponentCategory[], active: ComponentCategory, fullPreview: boolean) => void;
   dispose: () => void;
 };
@@ -59,6 +69,7 @@ export type PcPreviewSceneOptions = {
   selectedCategories: () => ComponentCategory[];
   activeCategory: () => ComponentCategory;
   fullPreview: () => boolean;
+  isManualCamera: () => boolean;
   labelForCategory: (category: PcModelCategory) => HTMLDivElement | null;
   onSelectCategory: (category: ComponentCategory) => void;
   onOrbitStart: () => void;
@@ -73,6 +84,8 @@ export class PcPreviewSceneError extends Error {
 }
 
 const categories: PcModelCategory[] = ["case", "motherboard", "cpu", "memory", "gpu", "storage", "psu", "cooling"];
+const minZoomMultiplier = 0.62;
+const maxZoomMultiplier = 1.35;
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const smoothStep = (value: number) => {
@@ -147,6 +160,13 @@ function markMaterials(
         if (!materialStates.has(material)) {
           const physical = material as THREE.MeshStandardMaterial;
           const hasEmissive = physical.emissive instanceof THREE.Color;
+          const thumbnailOpacity = material.opacity;
+          const thumbnailTransparent = material.transparent;
+          const thumbnailDepthWrite = material.depthWrite;
+          const thumbnailSide = material.side;
+          const thumbnailColor = physical.color instanceof THREE.Color ? physical.color.clone() : null;
+          const thumbnailEmissive = hasEmissive ? physical.emissive.clone() : null;
+          const thumbnailEmissiveIntensity = hasEmissive ? physical.emissiveIntensity : 0;
           if (category === "memory" && /ram-stick_body/i.test(object.name) && physical.color instanceof THREE.Color) {
             physical.color.multiply(new THREE.Color(0.5, 0.57, 0.6));
           }
@@ -164,6 +184,13 @@ function markMaterials(
             emissive: hasEmissive ? physical.emissive.clone() : null,
             emissiveIntensity: hasEmissive ? physical.emissiveIntensity : 0,
             isGlass,
+            thumbnailOpacity,
+            thumbnailTransparent,
+            thumbnailDepthWrite,
+            thumbnailSide,
+            thumbnailColor,
+            thumbnailEmissive,
+            thumbnailEmissiveIntensity,
           };
           if (isGlass) {
             state.opacity = Math.min(state.opacity, 0.16);
@@ -205,6 +232,8 @@ export async function createPcPreviewScene(
   const activePointers = new Set<number>();
   const pointerCleanups: Array<() => void> = [];
   let orbitStartHandler: (() => void) | null = null;
+  let resizeFitPending = false;
+  let resizeLimitsPending = false;
 
   const dispose = () => {
     if (isDisposed) return;
@@ -258,8 +287,9 @@ export async function createPcPreviewScene(
     orbit.dampingFactor = 0.055;
     orbit.screenSpacePanning = false;
     orbit.enablePan = true;
+    const initialDistance = camera.position.distanceTo(orbit.target);
     orbit.minDistance = 0.3;
-    orbit.maxDistance = 60;
+    orbit.maxDistance = initialDistance * maxZoomMultiplier;
     orbit.minPolarAngle = 0.14;
     orbit.maxPolarAngle = Math.PI - 0.14;
     orbit.update();
@@ -387,13 +417,14 @@ export async function createPcPreviewScene(
       });
     }
 
-    const setGridTargets = (width: number) => {
-      const columns = width < 760 ? 2 : 4;
+    const setGridTargets = (width: number, height: number) => {
+      const aspect = width / Math.max(1, height);
+      const columns = width < 760 || aspect < 1.08 ? 2 : 4;
       const rows = Math.ceil(categories.length / columns);
-      const cellWidth = columns === 4 ? 2.3 : 2.28;
-      const cellHeight = columns === 4 ? 1.8 : 1.75;
-      const gapX = columns === 4 ? 0.48 : 0.38;
-      const gapY = columns === 4 ? 0.5 : 0.55;
+      const cellWidth = columns === 4 ? 2.12 : 2.08;
+      const cellHeight = columns === 4 ? 1.62 : 1.5;
+      const gapX = columns === 4 ? 0.34 : 0.34;
+      const gapY = columns === 4 ? 0.44 : 0.38;
       const inspectionRotations = new Map<PcModelCategory, THREE.Quaternion>([
         ["memory", around(new THREE.Vector3(0, 1, 0), Math.PI / 2)],
         ["gpu", around(new THREE.Vector3(1, 0, 0), -Math.PI / 2)],
@@ -409,7 +440,7 @@ export async function createPcPreviewScene(
         const gridRotation = inspectionRotation.multiply(part.assembled.rotation);
         const gridBounds = part.localBounds.clone().applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(gridRotation));
         const gridSize = gridBounds.getSize(new THREE.Vector3());
-        const scale = Math.min(30, (cellWidth - 0.28) / Math.max(gridSize.x, 0.01), (cellHeight - 0.24) / Math.max(gridSize.y, 0.01));
+        const scale = Math.min(30, (cellWidth - 0.26) / Math.max(gridSize.x, 0.01), (cellHeight - 0.22) / Math.max(gridSize.y, 0.01));
         const scaledCenter = part.localCenter.clone().multiplyScalar(scale).applyQuaternion(gridRotation);
         part.grid.position.copy(center).sub(scaledCenter);
         part.grid.rotation.copy(gridRotation);
@@ -418,7 +449,7 @@ export async function createPcPreviewScene(
       return columns;
     };
 
-    let gridColumns = setGridTargets(Math.max(1, host.clientWidth));
+    let gridColumns = setGridTargets(Math.max(1, host.clientWidth), Math.max(1, host.clientHeight));
     const raycaster = new THREE.Raycaster();
     raycaster.params.Line = { threshold: 0.01 };
     const pointer = new THREE.Vector2();
@@ -484,7 +515,14 @@ export async function createPcPreviewScene(
       renderer!.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      gridColumns = setGridTargets(width);
+      gridColumns = setGridTargets(width, height);
+      if (options.isManualCamera()) {
+        resizeLimitsPending = true;
+        resizeFitPending = false;
+      } else {
+        resizeFitPending = true;
+        resizeLimitsPending = false;
+      }
       requestRender();
     };
     resizeObserver = new ResizeObserver(resize);
@@ -496,6 +534,8 @@ export async function createPcPreviewScene(
     const frontDirection = new THREE.Vector3(0, 0.03, 1).normalize();
     const initialDirection = new THREE.Vector3(4.55, 2.81, 5.2).normalize();
     const focus = new THREE.Vector3();
+    const fitPoint = new THREE.Vector3();
+    const worldUp = new THREE.Vector3(0, 1, 0);
     const worldBounds = new THREE.Box3();
     const partBounds = new THREE.Box3();
     const worldSize = new THREE.Vector3();
@@ -506,9 +546,52 @@ export async function createPcPreviewScene(
     const previousOrbitTarget = new THREE.Vector3();
     const boundsByCategory = new Map<PcModelCategory, THREE.Box3>(categories.map((category) => [category, new THREE.Box3()]));
     const cameraHalfFov = THREE.MathUtils.degToRad(camera.fov / 2);
+    const measureFitDistance = (direction: THREE.Vector3, width: number, screenHeight: number, normalized: number) => {
+      worldBounds.getCenter(focus);
+      worldBounds.getSize(worldSize);
+      cameraRight.crossVectors(worldUp, direction).normalize();
+      cameraUp.crossVectors(direction, cameraRight).normalize();
+      const halfVerticalFov = Math.atan(Math.tan(cameraHalfFov) / camera.zoom);
+      const halfHorizontalFov = Math.atan(Math.tan(halfVerticalFov) * camera.aspect);
+      const inGrid = normalized >= 0.48;
+      const maxLabelWidth = inGrid ? Math.max(0, ...categories.map((category) => options.labelForCategory(category)?.getBoundingClientRect().width ?? 0)) : 0;
+      const maxLabelHeight = inGrid ? Math.max(0, ...categories.map((category) => options.labelForCategory(category)?.getBoundingClientRect().height ?? 0)) : 0;
+      const safeTop = inGrid ? 102 : 68;
+      const safeBottom = inGrid ? 18 + maxLabelHeight * 0.58 : 22;
+      const safeVerticalFraction = Math.max(0.34, (screenHeight - safeTop - safeBottom) / screenHeight);
+      const safeHorizontalFraction = Math.max(0.44, (width - (inGrid ? maxLabelWidth + 30 : 28)) / width);
+      const tanHalfHorizontal = Math.tan(halfHorizontalFov) * safeHorizontalFraction;
+      const tanHalfVertical = Math.tan(halfVerticalFov) * safeVerticalFraction;
+      const verticalOffsetRatio = Math.tan(halfVerticalFov) * (safeTop - safeBottom) / screenHeight;
+      let fitDistance = 0.45;
+      for (let cornerIndex = 0; cornerIndex < 8; cornerIndex += 1) {
+        fitPoint.set(
+          cornerIndex & 1 ? worldBounds.max.x : worldBounds.min.x,
+          cornerIndex & 2 ? worldBounds.max.y : worldBounds.min.y,
+          cornerIndex & 4 ? worldBounds.max.z : worldBounds.min.z,
+        ).sub(focus);
+        const depth = fitPoint.dot(direction);
+        const horizontal = Math.abs(fitPoint.dot(cameraRight));
+        const vertical = fitPoint.dot(cameraUp);
+        fitDistance = Math.max(
+          fitDistance,
+          depth + 0.05,
+          depth + horizontal / Math.max(tanHalfHorizontal, 0.001),
+          (vertical + tanHalfVertical * depth) / Math.max(tanHalfVertical + verticalOffsetRatio, 0.001),
+          (-vertical + tanHalfVertical * depth) / Math.max(tanHalfVertical - verticalOffsetRatio, 0.001),
+        );
+      }
+      return {
+        fitDistance: Math.max(fitDistance, worldSize.length() * 0.5) * 1.08,
+        halfVerticalFov,
+        safeTop,
+        safeBottom,
+      };
+    };
     let frameTime = performance.now();
     let currentProgress = 0;
     let lastAppliedDistance = camera.position.distanceTo(orbit.target);
+    let nominalFitDistance = Math.max(lastAppliedDistance, 0.45);
     let zoomMultiplier = 1;
     const autoFrameDirection = initialDirection.clone();
     let frameCallback: FrameRequestCallback = () => {};
@@ -533,7 +616,7 @@ export async function createPcPreviewScene(
       for (const category of categories) {
         const visible = fullPreview || selected.includes(category);
         for (const [material, state] of materials.get(category)!) {
-          material.opacity = state.isGlass ? state.opacity : state.opacity * (visible ? 1 : 0.1);
+          material.opacity = visible ? state.opacity : Math.min(state.opacity, 0.05);
           material.transparent = state.transparent || !visible || state.isGlass;
           material.depthWrite = state.isGlass ? false : visible ? state.depthWrite : false;
           const standard = material as THREE.MeshStandardMaterial;
@@ -551,6 +634,173 @@ export async function createPcPreviewScene(
       renderer!.shadowMap.needsUpdate = true;
       requestRender();
     };
+    const thumbnailCache = new Map<PcModelCategory, string>();
+    const getCategoryThumbnail = (requestedCategory: ComponentCategory): string | null => {
+      const category = requestedCategory === "other" ? "cpu" : requestedCategory;
+      if (!categories.includes(category)) return null;
+      const cached = thumbnailCache.get(category);
+      if (cached) return cached;
+      const source = groups.get(category);
+      const assembled = mechanicalPlan.assembled.get(category);
+      if (!source || !assembled) return null;
+
+      const thumbnailWidth = 512;
+      const thumbnailHeight = 384;
+      const thumbnailScene = new THREE.Scene();
+      thumbnailScene.environment = scene!.environment;
+      thumbnailScene.environmentIntensity = scene!.environmentIntensity;
+      const thumbnailModel = source.clone(true);
+      thumbnailModel.position.copy(assembled.position);
+      thumbnailModel.quaternion.copy(assembled.rotation);
+      thumbnailModel.scale.copy(assembled.scale);
+      const materialClones = new Map<THREE.Material, THREE.Material>();
+      thumbnailModel.traverse((object) => {
+        const mesh = object as THREE.Mesh;
+        if (!mesh.isMesh || !mesh.material) return;
+        const cloneMaterial = (material: THREE.Material) => {
+          let clone = materialClones.get(material);
+          if (!clone) {
+            clone = material.clone();
+            const state = materials.get(category)?.get(material);
+            if (state) {
+              clone.opacity = state.thumbnailOpacity;
+              clone.transparent = state.thumbnailTransparent;
+              clone.depthWrite = state.thumbnailDepthWrite;
+              clone.side = state.thumbnailSide;
+              const physical = clone as THREE.MeshStandardMaterial;
+              if (state.thumbnailColor && physical.color instanceof THREE.Color) physical.color.copy(state.thumbnailColor);
+              if (state.thumbnailEmissive && physical.emissive instanceof THREE.Color) physical.emissive.copy(state.thumbnailEmissive);
+              if (physical.emissive instanceof THREE.Color) physical.emissiveIntensity = state.thumbnailEmissiveIntensity;
+            }
+            materialClones.set(material, clone);
+          }
+          return clone;
+        };
+        mesh.material = Array.isArray(mesh.material) ? mesh.material.map(cloneMaterial) : cloneMaterial(mesh.material);
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+      });
+
+      if (category === "case") {
+        const clonedPanel = thumbnailModel.getObjectByName(mechanicalPlan.panel.object.name);
+        if (clonedPanel) {
+          clonedPanel.position.copy(mechanicalPlan.panel.closed.position);
+          clonedPanel.quaternion.copy(mechanicalPlan.panel.closed.rotation);
+          clonedPanel.scale.copy(mechanicalPlan.panel.closed.scale);
+        }
+      }
+      thumbnailScene.add(thumbnailModel);
+      scene!.children.forEach((child) => {
+        if (!(child as THREE.Light).isLight) return;
+        const light = child.clone() as THREE.Light;
+        light.castShadow = false;
+        thumbnailScene.add(light);
+      });
+
+      thumbnailModel.updateMatrixWorld(true);
+      const bounds = new THREE.Box3().setFromObject(thumbnailModel);
+      const center = bounds.getCenter(new THREE.Vector3());
+      thumbnailModel.position.sub(center);
+      bounds.translate(center.negate());
+      thumbnailModel.updateMatrixWorld(true);
+
+      const camera = new THREE.PerspectiveCamera(32, thumbnailWidth / thumbnailHeight, 0.001, 100);
+      const viewDirection = category === "gpu"
+        ? new THREE.Vector3(4.2, -3.1, 5.1).normalize()
+        : category === "case"
+          ? new THREE.Vector3(4.5, 2.8, 5.2).normalize()
+          : new THREE.Vector3(4.1, 3.0, 5.1).normalize();
+      const cameraRight = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), viewDirection).normalize();
+      const cameraUp = new THREE.Vector3().crossVectors(viewDirection, cameraRight).normalize();
+      const halfVertical = THREE.MathUtils.degToRad(camera.fov / 2);
+      const tanVertical = Math.tan(halfVertical) * 0.88;
+      const tanHorizontal = tanVertical * camera.aspect;
+      let distance = 0.01;
+      for (let cornerIndex = 0; cornerIndex < 8; cornerIndex += 1) {
+        const corner = new THREE.Vector3(
+          cornerIndex & 1 ? bounds.max.x : bounds.min.x,
+          cornerIndex & 2 ? bounds.max.y : bounds.min.y,
+          cornerIndex & 4 ? bounds.max.z : bounds.min.z,
+        );
+        const depth = corner.dot(viewDirection);
+        distance = Math.max(
+          distance,
+          depth + Math.abs(corner.dot(cameraRight)) / tanHorizontal,
+          depth + Math.abs(corner.dot(cameraUp)) / tanVertical,
+          depth + 0.01,
+        );
+      }
+      distance *= 1.04;
+      camera.position.copy(viewDirection).multiplyScalar(distance);
+      camera.lookAt(0, 0, 0);
+      camera.updateProjectionMatrix();
+
+      const target = new THREE.WebGLRenderTarget(thumbnailWidth, thumbnailHeight, {
+        format: THREE.RGBAFormat,
+        type: THREE.UnsignedByteType,
+        depthBuffer: true,
+        stencilBuffer: false,
+      });
+      target.texture.colorSpace = THREE.SRGBColorSpace;
+      target.texture.generateMipmaps = false;
+      target.texture.minFilter = THREE.LinearFilter;
+      target.texture.magFilter = THREE.LinearFilter;
+      const previousTarget = renderer!.getRenderTarget();
+      const previousViewport = renderer!.getViewport(new THREE.Vector4());
+      const previousScissor = renderer!.getScissor(new THREE.Vector4());
+      const previousScissorTest = renderer!.getScissorTest();
+      const previousClearColor = renderer!.getClearColor(new THREE.Color()).clone();
+      const previousClearAlpha = renderer!.getClearAlpha();
+      const previousAutoClear = renderer!.autoClear;
+      const previousToneMapping = renderer!.toneMapping;
+      const previousToneMappingExposure = renderer!.toneMappingExposure;
+      const previousShadowEnabled = renderer!.shadowMap.enabled;
+      const previousShadowAutoUpdate = renderer!.shadowMap.autoUpdate;
+      const previousShadowNeedsUpdate = renderer!.shadowMap.needsUpdate;
+
+      try {
+        renderer!.shadowMap.enabled = false;
+        renderer!.shadowMap.autoUpdate = false;
+        renderer!.setRenderTarget(target);
+        renderer!.setViewport(0, 0, thumbnailWidth, thumbnailHeight);
+        renderer!.setScissorTest(false);
+        renderer!.autoClear = true;
+        renderer!.setClearColor(0x000000, 0);
+        renderer!.clear(true, true, true);
+        renderer!.render(thumbnailScene, camera);
+        const pixels = new Uint8Array(thumbnailWidth * thumbnailHeight * 4);
+        renderer!.readRenderTargetPixels(target, 0, 0, thumbnailWidth, thumbnailHeight, pixels);
+        const canvas = document.createElement("canvas");
+        canvas.width = thumbnailWidth;
+        canvas.height = thumbnailHeight;
+        const context = canvas.getContext("2d");
+        if (!context) return null;
+        const image = context.createImageData(thumbnailWidth, thumbnailHeight);
+        for (let y = 0; y < thumbnailHeight; y += 1) {
+          const sourceStart = (thumbnailHeight - 1 - y) * thumbnailWidth * 4;
+          image.data.set(pixels.subarray(sourceStart, sourceStart + thumbnailWidth * 4), y * thumbnailWidth * 4);
+        }
+        context.putImageData(image, 0, 0);
+        const dataUrl = canvas.toDataURL("image/png");
+        thumbnailCache.set(category, dataUrl);
+        return dataUrl;
+      } finally {
+        renderer!.setRenderTarget(previousTarget);
+        renderer!.setViewport(previousViewport);
+        renderer!.setScissor(previousScissor);
+        renderer!.setScissorTest(previousScissorTest);
+        renderer!.setClearColor(previousClearColor, previousClearAlpha);
+        renderer!.autoClear = previousAutoClear;
+        renderer!.toneMapping = previousToneMapping;
+        renderer!.toneMappingExposure = previousToneMappingExposure;
+        renderer!.shadowMap.enabled = previousShadowEnabled;
+        renderer!.shadowMap.autoUpdate = previousShadowAutoUpdate;
+        renderer!.shadowMap.needsUpdate = previousShadowNeedsUpdate;
+        target.dispose();
+        materialClones.forEach((material) => material.dispose());
+        thumbnailModel.removeFromParent();
+      }
+    };
     const runtime: PcPreviewRuntime = {
       renderer,
       camera,
@@ -561,9 +811,12 @@ export async function createPcPreviewScene(
       mechanicalDiagnostics: mechanicalPlan.diagnostics,
       scene,
       focus: new THREE.Vector3(),
+      nominalFitDistance,
       currentDistance: lastAppliedDistance,
       zoomMultiplier,
+      setZoomMultiplier: (value, minimum = minZoomMultiplier) => { zoomMultiplier = THREE.MathUtils.clamp(value, minimum, maxZoomMultiplier); },
       invalidate: requestRender,
+      getCategoryThumbnail,
       applyAppearance,
       dispose,
     };
@@ -590,7 +843,8 @@ export async function createPcPreviewScene(
       for (const material of stageGridMaterials) material.opacity = 0.16 * (floorOpacity / 0.45);
 
       const width = Math.max(1, host.clientWidth);
-      if ((width < 760 ? 2 : 4) !== gridColumns) gridColumns = setGridTargets(width);
+      const screenHeight = Math.max(1, host.clientHeight);
+      if ((width < 760 || width / screenHeight < 1.08 ? 2 : 4) !== gridColumns) gridColumns = setGridTargets(width, screenHeight);
       applyPcMechanicalLayout(groups, mechanicalPlan, gridPoses, normalized);
       if (layoutChanged) renderer!.shadowMap.needsUpdate = true;
 
@@ -605,36 +859,36 @@ export async function createPcPreviewScene(
       }
 
       orbit.update();
-      const liveDistance = camera.position.distanceTo(orbit.target);
+      let liveDistance = camera.position.distanceTo(orbit.target);
+      if (resizeLimitsPending && options.isManualCamera()) {
+        cameraDirection.copy(camera.position).sub(orbit.target).normalize();
+        nominalFitDistance = Math.max(measureFitDistance(cameraDirection, width, screenHeight, normalized).fitDistance, 0.45);
+        orbit.maxDistance = nominalFitDistance * maxZoomMultiplier;
+        const boundedDistance = THREE.MathUtils.clamp(liveDistance, orbit.minDistance, orbit.maxDistance);
+        if (Math.abs(boundedDistance - liveDistance) > 0.001) {
+          camera.position.copy(orbit.target).addScaledVector(cameraDirection, boundedDistance);
+          orbit.update();
+          liveDistance = camera.position.distanceTo(orbit.target);
+        }
+        zoomMultiplier = Math.min(liveDistance / nominalFitDistance, maxZoomMultiplier);
+        resizeLimitsPending = false;
+      }
       if (lastAppliedDistance > 0 && Math.abs(liveDistance - lastAppliedDistance) > Math.max(0.04, lastAppliedDistance * 0.006)) {
-        zoomMultiplier = THREE.MathUtils.clamp(zoomMultiplier * (liveDistance / lastAppliedDistance), 0.62, 1.8);
+        zoomMultiplier = Math.min(liveDistance / nominalFitDistance, maxZoomMultiplier);
       }
 
-      if (options.isAutoFraming()) {
+      if (options.isAutoFraming() || resizeFitPending) {
         worldBounds.getCenter(focus);
         worldBounds.getSize(worldSize);
         desiredDirection.copy(initialDirection).lerp(frontDirection, smoothStep(normalized / 0.28)).normalize();
         cameraDirection.copy(camera.position).sub(orbit.target).normalize();
         cameraDirection.lerp(desiredDirection, 1 - Math.exp(-delta * 5.5)).normalize();
-        cameraRight.set(1, 0, 0).applyQuaternion(camera.quaternion).normalize();
-        cameraUp.set(0, 1, 0).applyQuaternion(camera.quaternion).normalize();
-        const projectedWidth = Math.abs(cameraRight.x) * worldSize.x + Math.abs(cameraRight.y) * worldSize.y + Math.abs(cameraRight.z) * worldSize.z;
-        const projectedHeight = Math.abs(cameraUp.x) * worldSize.x + Math.abs(cameraUp.y) * worldSize.y + Math.abs(cameraUp.z) * worldSize.z;
-        const halfVerticalFov = Math.atan(Math.tan(cameraHalfFov) / camera.zoom);
-        const halfHorizontalFov = Math.atan(Math.tan(halfVerticalFov) * camera.aspect);
-        const screenHeight = Math.max(1, host.clientHeight);
-        const inGrid = normalized >= 0.75;
-        const safeTop = inGrid ? 124 : 46;
-        const safeBottom = inGrid ? 115 : 112;
-        const safeVerticalFraction = Math.max(0.42, (screenHeight - safeTop - safeBottom) / screenHeight);
-        const safeHorizontalFraction = Math.max(0.65, (width - 36) / width);
-        const fitDistance = Math.max(
-          projectedWidth / (2 * Math.tan(halfHorizontalFov) * safeHorizontalFraction),
-          projectedHeight / (2 * Math.tan(halfVerticalFov) * safeVerticalFraction),
-          worldSize.z * 0.75,
-          0.45,
-        ) * 1.14;
-        const fittedDistance = THREE.MathUtils.clamp(fitDistance * zoomMultiplier, 0.45, 55);
+        const { fitDistance, halfVerticalFov, safeTop, safeBottom } = measureFitDistance(cameraDirection, width, screenHeight, normalized);
+        nominalFitDistance = Math.max(fitDistance, 0.45);
+        zoomMultiplier = THREE.MathUtils.clamp(zoomMultiplier, minZoomMultiplier, maxZoomMultiplier);
+        orbit.minDistance = 0.3;
+        orbit.maxDistance = nominalFitDistance * maxZoomMultiplier;
+        const fittedDistance = nominalFitDistance * zoomMultiplier;
         studioFog.near = fittedDistance + worldSize.length() * 0.62;
         studioFog.far = studioFog.near + worldSize.length() * 1.4;
         floor.position.y = worldBounds.min.y - 0.018;
@@ -647,33 +901,51 @@ export async function createPcPreviewScene(
         orbit.update();
         camera.updateMatrixWorld(true);
         lastAppliedDistance = camera.position.distanceTo(orbit.target);
+        zoomMultiplier = THREE.MathUtils.clamp(lastAppliedDistance / nominalFitDistance, minZoomMultiplier, maxZoomMultiplier);
         runtime.focus.copy(framingFocus);
+        runtime.nominalFitDistance = nominalFitDistance;
         runtime.currentDistance = lastAppliedDistance;
         runtime.zoomMultiplier = zoomMultiplier;
-        if (Math.abs(currentProgress - destination) < 0.1 && cameraDirection.distanceTo(desiredDirection) < 0.012) options.onFramingSettled();
+        if (Math.abs(currentProgress - destination) < 0.1 && cameraDirection.distanceTo(desiredDirection) < 0.012) {
+          options.onFramingSettled();
+          resizeFitPending = false;
+        }
       } else {
         camera.updateMatrixWorld(true);
         lastAppliedDistance = liveDistance;
+        runtime.nominalFitDistance = nominalFitDistance;
         runtime.currentDistance = liveDistance;
         runtime.zoomMultiplier = zoomMultiplier;
         runtime.focus.copy(orbit.target);
       }
 
       const revealLabels = smoothStep(gridProgress / 0.65);
-      for (const category of categories) {
-        const label = options.labelForCategory(category);
+      const labelAnchors = categories.map((category) => {
         const bounds = boundsByCategory.get(category);
-        if (!label || !bounds) continue;
+        if (!bounds) return { x: width / 2, y: screenHeight / 2 };
+        bounds.getCenter(anchor);
+        anchor.y = bounds.min.y - Math.max(0.012, worldSize.y * 0.008);
+        anchor.project(camera);
+        return { x: ((anchor.x + 1) / 2) * width, y: ((1 - anchor.y) / 2) * screenHeight };
+      });
+      for (const [index, category] of categories.entries()) {
+        const label = options.labelForCategory(category);
+        if (!label) continue;
         if (revealLabels < 0.01) {
           label.style.opacity = "0";
           label.style.visibility = "hidden";
           continue;
         }
-        bounds.getCenter(anchor);
-        anchor.y = bounds.min.y - Math.max(0.012, worldSize.y * 0.008);
-        anchor.project(camera);
-        label.style.left = `${((anchor.x + 1) / 2) * width}px`;
-        label.style.top = `${((1 - anchor.y) / 2) * Math.max(1, host.clientHeight)}px`;
+        const column = index % gridColumns;
+        const neighborIndex = column > 0 ? index - 1 : index + 1;
+        const neighborGap = Math.abs(labelAnchors[index].x - (labelAnchors[neighborIndex]?.x ?? labelAnchors[index].x));
+        const labelWidth = Math.max(56, Math.min(176, neighborGap - 10));
+        label.style.width = `${labelWidth}px`;
+        label.style.minWidth = "0";
+        const halfLabel = Math.min(labelWidth / 2, width / 2 - 5);
+        const left = THREE.MathUtils.clamp(labelAnchors[index].x, halfLabel + 4, width - halfLabel - 4);
+        label.style.left = `${left}px`;
+        label.style.top = `${labelAnchors[index].y}px`;
         label.style.opacity = String(revealLabels);
         label.style.visibility = "visible";
       }
@@ -682,7 +954,7 @@ export async function createPcPreviewScene(
         renderer!.domElement.style.cursor = findCategoryAt(hoverX, hoverY) ? "pointer" : "grab";
       }
       renderer!.render(scene!, camera);
-      const cameraStillAutoFraming = options.isAutoFraming()
+      const cameraStillAutoFraming = (options.isAutoFraming() || resizeFitPending)
         && (layoutPending || cameraDirection.distanceToSquared(desiredDirection) > 0.00008);
       const shouldContinue = layoutPending || cameraStillAutoFraming || orbitChangePending;
       renderingFrame = false;

@@ -12,7 +12,6 @@ export type PcMechanicalPlan = {
   assembled: Map<PcModelCategory, PcMechanicalPose>;
   release: Map<PcModelCategory, PcMechanicalPose>;
   extracted: Map<PcModelCategory, PcMechanicalPose>;
-  spread: Map<PcModelCategory, PcMechanicalPose>;
   panel: {
     object: THREE.Object3D;
     closed: PcMechanicalPose;
@@ -51,7 +50,6 @@ const EPSILON = 1e-7;
 const CONTACT_GAP = 0.0004;
 const REAR_RELEASE_CLEARANCE = 0.006;
 const SIDE_EXIT_CLEARANCE = 0.03;
-const SPREAD_FRONT_CLEARANCE = 0.7;
 
 function poseOf(object: THREE.Object3D): PcMechanicalPose {
   return { position: object.position.clone(), rotation: object.quaternion.clone(), scale: object.scale.clone() };
@@ -251,13 +249,6 @@ function resizeAperture(
   return vertexIndices.length;
 }
 
-function centeredChildBounds(child: THREE.Object3D): THREE.Box3 {
-  child.position.set(0, 0, 0);
-  const initial = boundsOf(child);
-  child.position.sub(centerOf(initial));
-  return boundsOf(child);
-}
-
 function blendPose(group: THREE.Group, from: PcMechanicalPose, to: PcMechanicalPose, amount: number): void {
   group.position.lerpVectors(from.position, to.position, amount);
   group.quaternion.slerpQuaternions(from.rotation, to.rotation, amount);
@@ -349,6 +340,14 @@ export function preparePcMechanicalLayout(
   const socketCap = findObject(boardGroup, /^Socket protective cap$/i);
   if (socketCap) socketCap.visible = false;
   if (socketHousing && cpuSubstrate) {
+    // The source package's local long edge is rotated 14° in its X/Z plane
+    // (measured from the convex hull of the IHS and substrate vertices). The
+    // motherboard basis swaps those in-plane axes; compensate the baked skew
+    // after the 90° swap so the package edges align with the socket rectangle.
+    cpuGroup.position.set(0, 0, 0);
+    const cpuSourceSkew = 14 * Math.PI / 180;
+    cpuGroup.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2 + cpuSourceSkew);
+    cpuGroup.updateWorldMatrix(true, true);
     const socket = boundsOf(socketHousing);
     const substrate = boundsOf(cpuSubstrate);
     const socketCenter = centerOf(socket);
@@ -375,20 +374,27 @@ export function preparePcMechanicalLayout(
     ramRoots.push(second);
   }
   const dimmSlots = [findObject(boardGroup, /^DIMM slot A2$/i), findObject(boardGroup, /^DIMM slot B2$/i)];
+  const dimmConnectors = [findObject(boardGroup, /^DIMM slot A2 2$/i), findObject(boardGroup, /^DIMM slot B2 2$/i)];
   const dimmSlotBounds = dimmSlots.map((slot) => slot ? boundsOf(slot) : null);
+  const dimmConnectorBounds = dimmConnectors.map((connector) => connector ? boundsOf(connector) : null);
   for (let index = 0; index < Math.min(2, ramRoots.length); index += 1) {
     const root = ramRoots[index];
     // The RAM asset already carries its Rz(90°) mounting orientation from
     // centeredAsset. Keep it: the board asset has its own child rotation, so
     // the category group's identity quaternion is not the board's world frame.
-    const ramBounds = centeredChildBounds(root);
+    const seatingEdge = findObject(root, /^RAM stick body$/i) ?? findObject(root, /^ram-stick body$/i);
+    root.position.set(0, 0, 0);
+    const seatingBounds = seatingEdge ? boundsOf(seatingEdge) : boundsOf(root);
     const slot = dimmSlotBounds[index];
     if (slot) {
-      const slotCenter = centerOf(slot);
+      const connector = dimmConnectorBounds[index] ?? slot;
+      const connectorCenter = centerOf(connector);
+      // Center the RAM seating edge on the actual A2/B2 contact channel. Its lower edge
+      // enters 3 mm from the connector opening; the RGB bar remains above the slot.
       root.position.set(
-        slotCenter.x - centerOf(ramBounds).x,
-        slotCenter.y - centerOf(ramBounds).y,
-        slot.max.z - ramBounds.min.z - 0.001,
+        connectorCenter.x - centerOf(seatingBounds).x,
+        connectorCenter.y - centerOf(seatingBounds).y,
+        connector.max.z - seatingBounds.min.z - 0.003,
       );
     } else {
       assumptions.push(`DIMM slot ${index === 0 ? "A2" : "B2"} missing; RAM stick remains centered.`);
@@ -443,23 +449,20 @@ export function preparePcMechanicalLayout(
     ? boundsOf(gpuBracket).min.x - rearPlaneX
     : null;
 
-  // Place the SSD connector in M.2 socket 1 without altering its source scale.
+  // The SSD's 22 mm edge must span the M.2 connector's 22 mm opening; its
+  // 80 mm body extends away from the socket along the board's X axis.
   const m2Socket = findObject(boardGroup, /^M\.?2 connector 1$/i) ?? findObject(boardGroup, /M\.?2 connector/i);
   const ssdContacts = findObject(storageGroup, /^Gold.?finger contacts$/i);
   if (m2Socket && ssdContacts) {
+    storageGroup.position.set(0, 0, 0);
+    storageGroup.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2);
     const slot = boundsOf(m2Socket);
-    let drive = boundsOf(storageGroup);
-    const size = slot.getSize(new THREE.Vector3());
-    if ((size.x > size.y && drive.getSize(new THREE.Vector3()).y > drive.getSize(new THREE.Vector3()).x)
-      || (size.y > size.x && drive.getSize(new THREE.Vector3()).x > drive.getSize(new THREE.Vector3()).y)) {
-      const turn = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2);
-      storageGroup.quaternion.premultiply(turn);
-      drive = boundsOf(storageGroup);
-    }
     const contacts = boundsOf(ssdContacts);
     const slotCenter = centerOf(slot);
     const contactCenter = centerOf(contacts);
     storageGroup.position.add(slotCenter.sub(contactCenter));
+    const m2HeatsinkCover = findObject(boardGroup, /^M2 heatsink cover$/i);
+    if (m2HeatsinkCover) m2HeatsinkCover.visible = false;
   } else {
     assumptions.push("M.2 socket or SSD contacts missing; storage remains at its centered origin.");
   }
@@ -604,29 +607,6 @@ export function preparePcMechanicalLayout(
     record(extracted, category, group);
   }
 
-  // The first full-size inspection spread sits beyond the glass opening. A wide
-  // center gap keeps parts clear of the stationary case until grid animation starts.
-  const spread = new Map<PcModelCategory, PcMechanicalPose>();
-  const positions: Partial<Record<PcModelCategory, [number, number]>> = {
-    gpu: [-0.72, 0.72], motherboard: [0.72, 0.72], cooling: [-0.72, 0.24], psu: [-0.72, -0.24],
-    cpu: [-0.72, -0.24], memory: [0.72, -0.24], storage: [-0.72, -0.72],
-  };
-  const spreadZ = caseBounds.max.z + SPREAD_FRONT_CLEARANCE;
-  for (const category of categories) {
-    const group = groups.get(category)!;
-    const base = extracted.get(category)!;
-    const target = { position: base.position.clone(), rotation: base.rotation.clone(), scale: base.scale.clone() };
-    if (category === "case") {
-      target.position.copy(base.position);
-    } else if (category === "psu") {
-      target.position.set(caseBounds.min.x - 0.42, caseBounds.getCenter(new THREE.Vector3()).y - 0.18, spreadZ);
-    } else {
-      const [x, y] = positions[category] ?? [0.72, -0.72];
-      target.position.set(x, y, spreadZ);
-    }
-    spread.set(category, target);
-  }
-
   // Diagnostics describe the assembled fit, independent of the last temporary
   // extraction pose used to measure the animation waypoints.
   for (const category of categories) copyPose(groups.get(category)!, assembled.get(category)!);
@@ -673,13 +653,12 @@ export function preparePcMechanicalLayout(
     assembled,
     release,
     extracted,
-    spread,
     panel: { object: panelObject, closed: panelClosed, open: panelOpen, out: panelOut },
     diagnostics,
   };
 }
 
-/** Apply the reversible, staged assembly path. `gridPoses` is the caller's existing final 100% layout. */
+/** Apply the reversible extraction followed by one continuous move into the caller's final grid layout. */
 export function applyPcMechanicalLayout(
   groups: Map<PcModelCategory, THREE.Group>,
   plan: PcMechanicalPlan,
@@ -701,23 +680,16 @@ export function applyPcMechanicalLayout(
     from = plan.release;
     to = plan.extracted;
     amount = smooth((progress - 0.2) / 0.28);
-  } else if (progress < 0.56) {
-    from = plan.extracted;
-    to = plan.extracted;
-  } else if (progress < 0.75) {
-    from = plan.extracted;
-    to = plan.spread;
-    amount = smooth((progress - 0.56) / 0.19);
   } else {
-    from = plan.spread;
+    from = plan.extracted;
     to = gridPoses;
-    amount = smooth((progress - 0.75) / 0.25);
+    amount = smooth((progress - 0.48) / 0.52);
   }
 
   for (const category of categories) {
     const group = groups.get(category);
     const start = from.get(category);
-    const end = to.get(category) ?? plan.spread.get(category);
+    const end = to.get(category) ?? plan.extracted.get(category);
     if (group && start && end) blendPose(group, start, end, amount);
   }
 
