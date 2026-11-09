@@ -10,11 +10,23 @@ import {
   displayDate,
   emptyConfigurationDraft,
   readConfigurationDraft,
-  saveConfigurationDraft,
   type ComponentCategory,
   type ConfigurationDraft,
   type ManualComponent,
 } from "@/lib/drafts";
+import {
+  configurationContentKey,
+  configurationSnapshot,
+  deleteConfigurationFromLibrary,
+  loadSavedConfigurationLibrary,
+  normalizeConfigurationName,
+  readWorkingConfiguration,
+  saveConfigurationToLibrary,
+  saveWorkingConfiguration,
+  type ConfigurationSnapshot,
+  type SavedConfiguration,
+  type WorkingConfigurationState,
+} from "@/lib/saved-configurations";
 import { getCompatibilityChecks } from "@/lib/compatibility";
 import styles from "./Configurator.module.css";
 
@@ -23,6 +35,7 @@ const categoryIcons: Record<ComponentCategory, string> = {
   cpu: "CPU", motherboard: "MB", memory: "RAM", gpu: "GPU", storage: "SSD", psu: "PSU", case: "CASE", cooling: "FAN", other: "PC",
 };
 type ConfigurableCategory = Exclude<ComponentCategory, "other">;
+type SavedConfigurationDialogState = { type: "details" | "delete"; saved: SavedConfiguration } | null;
 const categoryDescriptions: Record<ConfigurableCategory, string> = {
   cpu: "Wykonuje obliczenia i uruchamia programy. Socket procesora musi pasować do płyty głównej.",
   motherboard: "Łączy podzespoły i udostępnia gniazda dla procesora, pamięci oraz kart rozszerzeń.",
@@ -48,18 +61,74 @@ const asDraftComponent = (part: CatalogComponent): ManualComponent => ({
 });
 
 const money = (value: number) => new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 }).format(value);
+const savedConfigurationCountLabel = (count: number) => {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+  const noun = count === 1
+    ? "zestaw"
+    : lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14)
+      ? "zestawy"
+      : "zestawów";
+  return `${count} ${noun}`;
+};
+
+const browserStorage = (): Storage | null => {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+};
 
 export default function Configurator() {
   const [draft, setDraft] = useState<ConfigurationDraft>(emptyConfigurationDraft);
+  const [savedConfigurations, setSavedConfigurations] = useState<SavedConfiguration[]>([]);
+  const [activeSavedId, setActiveSavedId] = useState<string | null>(null);
+  const [baseline, setBaseline] = useState<ConfigurationSnapshot>(() => configurationSnapshot(emptyConfigurationDraft()));
+  const [storageInitialized, setStorageInitialized] = useState(false);
+  const [libraryIssue, setLibraryIssue] = useState<"corrupt" | "unavailable" | null>(null);
+  const [legacyWarning, setLegacyWarning] = useState(false);
+  const [workingCacheIssue, setWorkingCacheIssue] = useState<"corrupt" | "unavailable" | null>(null);
+  const [libraryNotice, setLibraryNotice] = useState<string | null>(null);
+  const [pendingTransition, setPendingTransition] = useState<{ type: "new" } | { type: "load"; id: string } | null>(null);
+  const [savedConfigurationDialog, setSavedConfigurationDialog] = useState<SavedConfigurationDialogState>(null);
+  const [savedDialogError, setSavedDialogError] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<CatalogComponent[]>([]);
   const [loading, setLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<ComponentCategory>("cpu");
   const [categoryThumbnails, setCategoryThumbnails] = useState<Partial<Record<ConfigurableCategory, string>>>({});
   const categoryThumbnailsRef = useRef<Partial<Record<ConfigurableCategory, string>>>({});
+  const storageInitializationRef = useRef(false);
+  const savedDialogRef = useRef<HTMLDialogElement>(null);
+  const savedDialogTriggerRef = useRef<HTMLElement | null>(null);
+  const savedDialogWasOpenRef = useRef(false);
+  const backdropPointerRef = useRef(false);
   const [search, setSearch] = useState("");
-  const [savedAt, setSavedAt] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState(false);
+
+  useEffect(() => {
+    const dialog = savedDialogRef.current;
+    if (savedConfigurationDialog) {
+      if (dialog && !dialog.open) dialog.showModal();
+      savedDialogWasOpenRef.current = true;
+      return;
+    }
+    if (dialog?.open) dialog.close();
+    if (savedDialogWasOpenRef.current) {
+      savedDialogWasOpenRef.current = false;
+      const trigger = savedDialogTriggerRef.current;
+      if (trigger?.isConnected) trigger.focus();
+      else document.getElementById("saved-configurations-title")?.focus();
+      savedDialogTriggerRef.current = null;
+    }
+  }, [savedConfigurationDialog]);
+
+  useEffect(() => {
+    if (!savedConfigurationDialog) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [savedConfigurationDialog]);
 
   const loadCatalog = useCallback(async () => {
     setLoading(true);
@@ -83,12 +152,102 @@ export default function Configurator() {
   }, []);
 
   useEffect(() => {
-    const saved = readConfigurationDraft();
-    if (saved) setDraft(saved);
+    if (storageInitializationRef.current) return;
+    storageInitializationRef.current = true;
+    const storage = browserStorage();
+    if (!storage) {
+      setLibraryIssue("unavailable");
+      setWorkingCacheIssue("unavailable");
+      setStorageInitialized(true);
+      void loadCatalog();
+      return;
+    }
+    const library = loadSavedConfigurationLibrary(storage);
+    setSavedConfigurations(library.configurations);
+    setLibraryIssue(library.issue);
+    setLegacyWarning(library.warning === "legacy-corrupt");
+
+    const working = readWorkingConfiguration(storage);
+    if (working.status === "valid") {
+      const migratedRecord = library.migratedLegacyId
+        ? library.configurations.find((item) => item.id === library.migratedLegacyId)
+        : undefined;
+      const emptyBaseline = configurationSnapshot(emptyConfigurationDraft());
+      const recoverLegacyLink = !working.value.activeSavedId
+        && migratedRecord
+        && library.legacyDraft
+        && working.value.draft.updatedAt === library.legacyDraft.updatedAt
+        && configurationContentKey(configurationSnapshot(working.value.draft)) === configurationContentKey(configurationSnapshot(library.legacyDraft))
+        && configurationContentKey(working.value.baseline) === configurationContentKey(emptyBaseline);
+      const missingActiveLink = Boolean(working.value.activeSavedId)
+        && library.issue === null
+        && !library.configurations.some((item) => item.id === working.value.activeSavedId);
+      const recoveredDraft = recoverLegacyLink && migratedRecord
+        ? { ...working.value.draft, title: migratedRecord.title, components: migratedRecord.components, updatedAt: migratedRecord.updatedAt }
+        : working.value.draft;
+      setDraft(recoveredDraft);
+      setActiveSavedId(missingActiveLink ? null : recoverLegacyLink && migratedRecord ? migratedRecord.id : working.value.activeSavedId);
+      setBaseline(missingActiveLink
+        ? emptyBaseline
+        : recoverLegacyLink && migratedRecord
+          ? configurationSnapshot(recoveredDraft)
+          : working.value.baseline);
+    } else {
+      if (working.status === "corrupt" || working.status === "unavailable") {
+        setWorkingCacheIssue(working.status);
+      }
+      const legacy = library.legacyDraft ?? (library.issue === "corrupt" ? readConfigurationDraft() : null);
+      if (legacy) {
+        const migratedRecord = library.migratedLegacyId
+          ? library.configurations.find((item) => item.id === library.migratedLegacyId)
+          : undefined;
+        const initialDraft = migratedRecord
+          ? { ...legacy, title: migratedRecord.title, components: migratedRecord.components, updatedAt: migratedRecord.updatedAt }
+          : legacy;
+        setDraft(initialDraft);
+        setActiveSavedId(migratedRecord?.id ?? null);
+        setBaseline(migratedRecord ? configurationSnapshot(initialDraft) : configurationSnapshot(emptyConfigurationDraft()));
+      }
+    }
+    setStorageInitialized(true);
     void loadCatalog();
   }, [loadCatalog]);
 
+  const workingState = useMemo<WorkingConfigurationState>(() => ({
+    version: 1,
+    draft,
+    activeSavedId,
+    baseline,
+  }), [draft, activeSavedId, baseline]);
+
+  useEffect(() => {
+    if (!storageInitialized) return;
+    const storage = browserStorage();
+    if (!storage) {
+      setWorkingCacheIssue("unavailable");
+      return;
+    }
+    const saved = saveWorkingConfiguration(storage, workingState);
+    setWorkingCacheIssue(saved.ok ? null : saved.issue);
+  }, [storageInitialized, workingState]);
+
   const selected = useMemo(() => new Map(draft.components.map((part) => [part.category, part])), [draft.components]);
+  const currentContent = useMemo(() => configurationSnapshot(draft), [draft]);
+  const isDirty = configurationContentKey(currentContent) !== configurationContentKey(baseline);
+  const sortedSavedConfigurations = useMemo(
+    () => [...savedConfigurations].sort((first, second) => second.updatedAt.localeCompare(first.updatedAt)),
+    [savedConfigurations],
+  );
+  const activeSavedConfiguration = savedConfigurations.find((item) => item.id === activeSavedId);
+  const saveStatusText = isDirty
+    ? "Niezapisane zmiany"
+    : libraryIssue
+      ? "Biblioteka niedostępna"
+      : activeSavedConfiguration
+        ? `Zapisano ${displayDate(activeSavedConfiguration.updatedAt)}`
+        : activeSavedId
+          ? "Zapis nie jest dostępny"
+          : "Niezapisany zestaw";
   const activePart = selected.get(activeCategory);
   const activeVisualCategory: ConfigurableCategory = activeCategory === "other" ? "cpu" : activeCategory;
   const listedParts = useMemo(() => {
@@ -118,8 +277,7 @@ export default function Configurator() {
 
   const updateParts = (components: ManualComponent[]) => {
     setDraft((current) => ({ ...current, components, updatedAt: new Date().toISOString() }));
-    setSavedAt(null);
-    setSaveError(false);
+    setLibraryNotice(null);
   };
 
   const choosePart = (part: CatalogComponent) => {
@@ -152,16 +310,125 @@ export default function Configurator() {
     ]);
   };
 
-  const saveDraft = () => {
-    const next = { ...draft, updatedAt: new Date().toISOString() };
-    setDraft(next);
-    if (saveConfigurationDraft(next)) {
-      setSavedAt(next.updatedAt);
-      setSaveError(false);
-    } else {
-      setSaveError(true);
-      setSavedAt(null);
+  const saveDraft = (mode: "update" | "copy" = "update") => {
+    const storage = browserStorage();
+    if (!storage) {
+      setLibraryIssue("unavailable");
+      setLibraryNotice("Nie udało się zapisać zestawu. Przeglądarka blokuje pamięć lokalną.");
+      return;
     }
+    const next = { ...draft, title: normalizeConfigurationName(draft.title), updatedAt: new Date().toISOString() };
+    const result = saveConfigurationToLibrary(storage, next, mode, activeSavedId);
+    if (!result.ok) {
+      if (result.issue === "corrupt" || result.issue === "unavailable") setLibraryIssue(result.issue);
+      setLibraryNotice(result.issue === "corrupt"
+        ? "Nie udało się odczytać zapisanych zestawów. Istniejące zapisy pozostały bez zmian."
+        : result.issue === "missing"
+          ? "Wybrany zapis nie jest już dostępny. Użyj „Zapisz jako nowy”."
+          : "Nie udało się zapisać zestawu. Sprawdź wolne miejsce i ustawienia przeglądarki.");
+      return;
+    }
+    setDraft({ ...next, updatedAt: result.saved.updatedAt });
+    setSavedConfigurations(result.configurations);
+    setActiveSavedId(result.saved.id);
+    setBaseline(configurationSnapshot(next));
+    setLibraryIssue(null);
+    setLibraryNotice(mode === "copy" ? "Zapisano jako nowy zestaw." : "Zapisano zmiany w zestawie.");
+  };
+
+  const refreshPartsFromCatalog = (components: ManualComponent[]) => components.map((saved) => {
+    if (saved.source === "own") return saved;
+    const fresh = catalog.find((item) => item.id === saved.id);
+    return fresh ? { ...saved, ...asDraftComponent(fresh), source: saved.source ?? "catalog" as const } : saved;
+  });
+
+  const loadSavedConfiguration = (id: string) => {
+    const saved = savedConfigurations.find((item) => item.id === id);
+    if (!saved) return;
+    const savedDraft: ConfigurationDraft = {
+      version: 1,
+      title: saved.title,
+      components: saved.components,
+      updatedAt: saved.updatedAt,
+    };
+    setDraft({ ...savedDraft, components: refreshPartsFromCatalog(saved.components) });
+    setActiveSavedId(saved.id);
+    setBaseline(configurationSnapshot(savedDraft));
+    setPendingTransition(null);
+    setLibraryNotice(null);
+  };
+
+  const startNewConfiguration = () => {
+    const next = emptyConfigurationDraft();
+    setDraft(next);
+    setActiveSavedId(null);
+    setBaseline(configurationSnapshot(next));
+    setPendingTransition(null);
+    setLibraryNotice(null);
+  };
+
+  const requestLoadSavedConfiguration = (id: string) => {
+    if (isDirty) setPendingTransition({ type: "load", id });
+    else loadSavedConfiguration(id);
+  };
+
+  const openSavedConfigurationDialog = (type: "details" | "delete", saved: SavedConfiguration, trigger: HTMLElement) => {
+    savedDialogTriggerRef.current = trigger;
+    setSavedDialogError(null);
+    setSavedConfigurationDialog({ type, saved });
+  };
+
+  const closeSavedConfigurationDialog = () => {
+    setSavedDialogError(null);
+    setSavedConfigurationDialog(null);
+  };
+
+  const confirmDeleteSavedConfiguration = (id: string): boolean => {
+    const storage = browserStorage();
+    if (!storage) {
+      setLibraryIssue("unavailable");
+      const message = "Nie udało się usunąć zestawu. Przeglądarka blokuje pamięć lokalną.";
+      setLibraryNotice(message);
+      setSavedDialogError(message);
+      return false;
+    }
+    const result = deleteConfigurationFromLibrary(storage, id);
+    if (result.ok) {
+      setSavedConfigurations(result.configurations);
+      if (activeSavedId === id) {
+        setActiveSavedId(null);
+        setBaseline(configurationSnapshot(emptyConfigurationDraft()));
+      }
+      setLibraryIssue(null);
+      setLibraryNotice("Usunięto zapisany zestaw.");
+      return true;
+    }
+    if (result.issue === "missing") {
+      setSavedConfigurations(result.configurations);
+      if (activeSavedId === id && !result.configurations.some((item) => item.id === id)) {
+        setActiveSavedId(null);
+        setBaseline(configurationSnapshot(emptyConfigurationDraft()));
+      }
+      setLibraryNotice("Ten zestaw nie istnieje już w bibliotece. Lista została odświeżona.");
+      return true;
+    }
+    setLibraryIssue(result.issue);
+    const message = result.issue === "corrupt"
+      ? "Nie udało się odczytać zapisanych zestawów. Istniejące zapisy pozostały bez zmian."
+      : "Nie udało się usunąć zestawu. Sprawdź ustawienia pamięci przeglądarki.";
+    setLibraryNotice(message);
+    setSavedDialogError(message);
+    return false;
+  };
+
+  const requestNewConfiguration = () => {
+    if (isDirty) setPendingTransition({ type: "new" });
+    else startNewConfiguration();
+  };
+
+  const continuePendingTransition = () => {
+    if (pendingTransition?.type === "new") startNewConfiguration();
+    else if (pendingTransition?.type === "load") loadSavedConfiguration(pendingTransition.id);
   };
 
   const activateCategory = (category: ComponentCategory) => {
@@ -181,9 +448,99 @@ export default function Configurator() {
     <div className={styles.page}>
       <header className={styles.heading}>
         <div><p className={styles.eyebrow}>PCMAKER <span>/</span> BUDOWANIE ZESTAWU</p><h1>Konfigurator komputera</h1><p className={styles.lede}>Wybierz części z katalogu i kliknij element komputera, żeby zobaczyć jego status.</p></div>
-        <div className={styles.saveBox}><span><i className={styles.liveDot} />{savedAt ? `Zapisano ${displayDate(savedAt)}` : "Twój zestaw"}</span><button type="button" onClick={saveDraft}>Zapisz zestaw <b>↗</b></button></div>
+        <div className={styles.saveBox}><span><i className={styles.liveDot} />{saveStatusText}</span><button type="button" onClick={() => saveDraft()}>Zapisz zestaw <b>↗</b></button></div>
       </header>
-      {saveError && <p className={styles.saveError} role="alert">Nie udało się zapisać zestawu w tej przeglądarce.</p>}
+      <section className={styles.savedLibrary} aria-labelledby="saved-configurations-title">
+        <div className={styles.libraryTopline}>
+          <div className={styles.libraryHeading}>
+            <span className={styles.libraryIcon} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5v-15Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M5 6h11M8.5 9.5h7M8.5 12.5h7M5 20.5A2.5 2.5 0 0 1 7.5 18H19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+            <div><p className={styles.eyebrow}>TWOJA KOLEKCJA</p><h2 id="saved-configurations-title" tabIndex={-1}>Zapisane zestawy</h2></div>
+            <span className={styles.libraryCount}>{savedConfigurationCountLabel(savedConfigurations.length)}</span>
+          </div>
+          <span className={styles.localStorageNote}><i className={styles.liveDot} />Zapisane w tej przeglądarce</span>
+        </div>
+        <div className={styles.libraryEditor}>
+          <label className={styles.configurationName}><span>Nazwa aktualnego zestawu</span><input value={draft.title} maxLength={80} onChange={(event) => { setDraft((current) => ({ ...current, title: event.target.value, updatedAt: new Date().toISOString() })); setLibraryNotice(null); }} placeholder="Mój zestaw" /></label>
+          <div className={styles.libraryButtons}>
+            <button type="button" className={styles.libraryPrimary} onClick={() => saveDraft()}>{activeSavedId ? "Zapisz zmiany" : "Zapisz zestaw"}</button>
+            <button type="button" onClick={() => saveDraft("copy")}>Zapisz jako nowy</button>
+            <button type="button" onClick={requestNewConfiguration}>Nowy zestaw</button>
+          </div>
+        </div>
+        {libraryNotice && <p className={`${styles.libraryMessage} ${libraryNotice.startsWith("Nie udało") || libraryNotice.startsWith("Wybrany") || libraryNotice.startsWith("Ten zestaw nie istnieje") ? styles.libraryError : styles.librarySuccess}`} role="status">{libraryNotice}</p>}
+        {libraryIssue === "corrupt" && <p className={styles.libraryError} role="alert">Nie udało się odczytać zapisanych zestawów. Istniejące zapisy pozostały bez zmian.</p>}
+        {libraryIssue === "unavailable" && <p className={styles.libraryError} role="alert">Przeglądarka nie pozwoliła odczytać lub zapisać biblioteki. Bieżące zmiany pozostają w edytorze.</p>}
+        {legacyWarning && <p className={styles.libraryWarning} role="status">Poprzedni zapis nie dał się odczytać. Zostawiłem go bez zmian.</p>}
+        {workingCacheIssue && <p className={styles.libraryWarning} role="status">Nie udało się zachować roboczego szkicu. Zapis biblioteki działa niezależnie.</p>}
+        {pendingTransition && <div className={styles.discardConfirm} role="alert"><span>Masz niezapisane zmiany. {pendingTransition.type === "new" ? "Rozpoczęcie nowego zestawu" : "Wczytanie innego zestawu"} je odrzuci.</span><div><button type="button" className={styles.discardAction} onClick={continuePendingTransition}>Odrzuć i kontynuuj</button><button type="button" onClick={() => setPendingTransition(null)}>Zostań przy tym zestawie</button></div></div>}
+        <div className={styles.savedConfigurationList} aria-label="Lista zapisanych konfiguracji">
+          {sortedSavedConfigurations.length === 0 ? <div className={styles.emptySavedList}><span className={styles.emptySavedIcon} aria-hidden="true">＋</span><strong>Twoja kolekcja czeka na pierwszy zestaw</strong><span>Zapisz bieżący komputer, aby wrócić do niego później.</span></div> : sortedSavedConfigurations.map((saved) => <article className={`${styles.savedConfiguration} ${saved.id === activeSavedId ? styles.savedConfigurationActive : ""}`} key={saved.id}>
+            <div className={styles.savedCardHeader}>
+              <span className={styles.savedPcIcon} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4" width="12" height="16" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M7 8h5M7 11h5M7 14h5M7 17h1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M18 8h2.5v8H18a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.6"/><circle cx="18.8" cy="12" r=".7" fill="currentColor"/></svg></span>
+              <div className={styles.savedConfigurationInfo}><strong title={saved.title}>{saved.title}</strong><span>{displayDate(saved.updatedAt)} <i>·</i> {saved.components.length} {saved.components.length === 1 ? "część" : "części"}</span></div>
+              {saved.id === activeSavedId && <span className={styles.currentConfiguration}><i />Aktywny</span>}
+            </div>
+            <div className={styles.savedCardActions}>
+              <button type="button" className={styles.savedPartsButton} aria-label={`Podgląd części zestawu ${saved.title}`} title={`Podgląd części zestawu ${saved.title}`} onClick={(event) => openSavedConfigurationDialog("details", saved, event.currentTarget)}>Podgląd</button>
+              <button type="button" className={styles.savedLoadButton} aria-label={`${saved.id === activeSavedId ? "Wczytaj ponownie" : "Wczytaj zestaw"} ${saved.title}`} title={`${saved.id === activeSavedId ? "Wczytaj ponownie" : "Wczytaj zestaw"} ${saved.title}`} onClick={() => requestLoadSavedConfiguration(saved.id)}>{saved.id === activeSavedId ? "Wczytaj ponownie" : "Wczytaj"}</button>
+              <button type="button" className={styles.savedDeleteButton} aria-label={`Usuń zestaw ${saved.title}`} title={`Usuń zestaw ${saved.title}`} onClick={(event) => openSavedConfigurationDialog("delete", saved, event.currentTarget)}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4.5 7h15M9 7V4.5h6V7m-8.5 0 .8 12h9.4l.8-12M10 10.5v5.5m4-5.5v5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+            </div>
+          </article>)}
+        </div>
+      </section>
+
+      <dialog
+        ref={savedDialogRef}
+        className={`${styles.savedDialog} ${savedConfigurationDialog?.type === "delete" ? styles.savedDeleteDialog : ""}`}
+        aria-labelledby="saved-dialog-title"
+        onCancel={(event) => { event.preventDefault(); closeSavedConfigurationDialog(); }}
+        onPointerDown={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          backdropPointerRef.current = event.target === event.currentTarget
+            && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom);
+        }}
+        onPointerUp={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          const endedOnBackdrop = event.target === event.currentTarget
+            && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom);
+          const shouldClose = backdropPointerRef.current && endedOnBackdrop;
+          backdropPointerRef.current = false;
+          if (shouldClose) closeSavedConfigurationDialog();
+        }}
+      >
+        {savedConfigurationDialog && <>
+          <header className={styles.savedDialogHeader}>
+            <div className={styles.savedDialogHeaderCopy}>
+              <span className={styles.savedDialogEyebrow}>{savedConfigurationDialog.type === "details" ? "PODSUMOWANIE ZAPISU" : "USUWANIE ZAPISU"}</span>
+              <h2 id="saved-dialog-title">{savedConfigurationDialog.type === "details" ? savedConfigurationDialog.saved.title : "Usunąć zapisany zestaw?"}</h2>
+              {savedConfigurationDialog.type === "details" && <p>{categories.filter((category) => savedConfigurationDialog.saved.components.some((part) => part.category === category)).length} z 8 kategorii uzupełnionych</p>}
+            </div>
+            <button type="button" className={styles.savedDialogClose} aria-label="Zamknij okno" onClick={closeSavedConfigurationDialog}>×</button>
+          </header>
+          {savedConfigurationDialog.type === "details" ? <>
+            <div className={styles.savedDialogBody}>
+              <ul className={styles.savedPartsList}>{categories.map((category) => {
+                const part = savedConfigurationDialog.saved.components.find((item) => item.category === category);
+                return <li key={category} className={part ? styles.savedDialogPart : styles.savedDialogMissing}>
+                  <span>{componentCategoryLabels[category]}</span>
+                  <strong>{!part ? "Nie wybrano" : part.source === "own" ? "Mam własną część" : part.name}</strong>
+                </li>;
+              })}</ul>
+            </div>
+            <footer className={styles.savedDialogFooter}><button type="button" className={styles.savedDialogNeutral} onClick={closeSavedConfigurationDialog}>Zamknij</button></footer>
+          </> : <>
+            <div className={styles.savedDialogBody}>
+              {savedDialogError && <p className={styles.savedDialogError} role="alert">{savedDialogError}</p>}
+              <p className={styles.savedDeleteDialogName}>„{savedConfigurationDialog.saved.title}”</p>
+              <p className={styles.savedDeleteDialogCopy}>Usuniemy ten zapis z biblioteki. Bieżący zestaw w edytorze pozostanie bez zmian.</p>
+            </div>
+            <footer className={styles.savedDialogFooter}>
+              <button type="button" className={styles.savedDialogNeutral} onClick={closeSavedConfigurationDialog}>Anuluj</button>
+              <button type="button" className={styles.savedDialogDeleteAction} onClick={() => { if (confirmDeleteSavedConfiguration(savedConfigurationDialog.saved.id)) closeSavedConfigurationDialog(); }}>Usuń zestaw</button>
+            </footer>
+          </>}
+        </>}
+      </dialog>
 
       <section className={styles.studio} aria-label="Interaktywny podgląd komputera">
         <div className={styles.previewPane}><PcPreview selectedParts={previewParts} activeCategory={activeCategory} onSelectCategory={activateCategory} onCategoryThumbnail={receiveCategoryThumbnail} /></div>
@@ -242,8 +599,7 @@ export default function Configurator() {
           {(ownCount > 0 || missingPrices > 0) && <p className={styles.priceNote}>{[ownCount > 0 ? `Niewliczone: ${ownCount === 1 ? "część własna" : "części własne"}.` : "", missingPrices > 0 ? catalogError ? "Ceny zapisanych części są nieaktualne i nie są teraz wliczane." : `${missingPrices} ${missingPrices === 1 ? "część bez aktualnej ceny" : "części bez aktualnej ceny"} nie jest wliczana.` : ""].filter(Boolean).join(" ")}</p>}
           <div className={styles.progressBlock}><div><span>Kompletność</span><strong>{Math.round(representedCategories / categories.length * 100)}%</strong></div><div className={styles.progressTrack}><i style={{ width: `${representedCategories / categories.length * 100}%` }} /></div><div className={styles.progressCaption}>{representedCategories === 8 ? "Wszystkie główne części dodane" : `Dodaj jeszcze ${8 - representedCategories} ${representedCategories === 7 ? "część" : "części"}`}</div></div>
           <div className={styles.checks}><div className={styles.checkHead}><span>Wstępna kontrola</span><span className={styles.beta}>BETA</span></div>{checks.map((check) => <div key={check.title} className={styles.checkRow}><i className={`${styles.checkDot} ${check.state === "compatible" ? styles.checkGood : check.state === "warning" ? styles.checkWarn : ""}`} /><div><strong>{check.title}</strong><span>{check.detail}</span></div></div>)}<p className={styles.checkDisclaimer}>Kontrola obejmuje socket procesora i typ pamięci. Pozostałe parametry sprawdź przed zakupem.</p></div>
-          <button type="button" className={styles.saveWide} onClick={saveDraft}>Zapisz zestaw <span>↗</span></button>
-          {savedAt && <p className={styles.savedInfo}>Zestaw zapisany lokalnie · {displayDate(savedAt)}</p>}
+          <button type="button" className={styles.saveWide} onClick={() => saveDraft()}>Zapisz zestaw <span>↗</span></button>
         </aside>
       </section>
       <p className={styles.footnote}>Ceny i dostępność pochodzą z katalogu bazy danych. Model komputera jest wizualizacją poglądową.</p>

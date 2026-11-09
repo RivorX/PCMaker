@@ -1,6 +1,6 @@
 export const CONFIGURATION_DRAFT_VERSION = 1;
 export const SERVICE_DRAFT_VERSION = 1;
-const CONFIGURATION_STORAGE_KEY = "pcmaker:configuration-draft:v1";
+export const CONFIGURATION_STORAGE_KEY = "pcmaker:configuration-draft:v1";
 const SERVICE_STORAGE_KEY = "pcmaker:service-draft:v1";
 
 export type ComponentCategory =
