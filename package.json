@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@pcmaker/dataconnect": "file:src/lib/dataconnect-generated",
+    "bcryptjs": "^3.0.3",
     "firebase": "^13.1.0",
     "jose": "^6.2.13",
     "next": "16.4.2",

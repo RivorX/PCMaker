@@ -90,3 +90,16 @@ query ListPublicConfigurations @auth(level: PUBLIC, insecureReason: "Publicly ac
     createdAt
   }
 }
+
+# Pobranie użytkownika po adresie e-mail (na potrzeby logowania)
+query GetUserByEmail($email: String!) @auth(level: PUBLIC, insecureReason: "Login endpoint must be publicly accessible") {
+  users(where: { email: { eq: $email } }, limit: 1) {
+    id
+    firstName
+    lastName
+    email
+    password   
+    role
+    isActive
+  }
+}

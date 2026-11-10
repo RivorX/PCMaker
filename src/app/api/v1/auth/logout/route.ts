@@ -3,8 +3,11 @@ import { NextResponse } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth";
 
 export async function POST(request: Request) {
+  const host = request.headers.get("host") || "localhost:3000";
+  const protocol = request.headers.get("x-forwarded-proto") || "http";
+
   const response = NextResponse.redirect(
-    new URL("/", request.url),
+    `${protocol}://${host}/`,
     303
   );
 

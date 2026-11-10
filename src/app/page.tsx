@@ -23,21 +23,52 @@ export default function LoginPage() {
 
     if (isSubmitting) return;
 
-    if (mode === "register") {
-      setMessage(
-        "Rejestracja będzie dostępna po podłączeniu bazy danych."
-      );
-      return;
-    }
-
     const formData = new FormData(event.currentTarget);
-
-    const identifier = String(formData.get("identifier") ?? "").trim();
-    const password = String(formData.get("password") ?? "");
 
     setIsSubmitting(true);
 
     try {
+      if (mode === "register") {
+        const firstName = String(formData.get("firstName") ?? "").trim();
+        const lastName = String(formData.get("lastName") ?? "").trim();
+        const email = String(formData.get("email") ?? "").trim();
+        const password = String(formData.get("password") ?? "");
+        const confirmPassword = String(
+          formData.get("confirm-password") ?? ""
+        );
+
+        if (password !== confirmPassword) {
+          setMessage("Podane hasła nie są identyczne.");
+          return;
+        }
+
+        const response = await fetch("/api/v1/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            firstName,
+            lastName,
+            email,
+            password,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          setMessage(result.error ?? "Nie udało się utworzyć konta.");
+          return;
+        }
+
+        setMessage("Konto zostało utworzone. Możesz teraz się zalogować.");
+        return;
+      }
+
+      const identifier = String(formData.get("identifier") ?? "").trim();
+      const password = String(formData.get("password") ?? "");
+
       const response = await fetch("/api/v1/auth/login", {
         method: "POST",
         headers: {
@@ -75,63 +106,63 @@ export default function LoginPage() {
           </span>
         </Link>
 
-      <div className="auth-visual-content">
-        <p className="eyebrow">PCMAKER / WARSZTAT</p>
+        <div className="auth-visual-content">
+          <p className="eyebrow">PCMAKER / WARSZTAT</p>
 
-        <h1>
-          Twój warsztat.
-          <br />
-          <em>Czeka.</em>
-        </h1>
+          <h1>
+            Twój warsztat.
+            <br />
+            <em>Czeka.</em>
+          </h1>
 
-        <p>
-          Konfiguracje, drafty i zgłoszenia serwisowe
-          są zapisane — gotowe, gdy wrócisz.
-        </p>
+          <p>
+            Konfiguracje, drafty i zgłoszenia serwisowe
+            są zapisane — gotowe, gdy wrócisz.
+          </p>
 
-        <div className="auth-workspace-preview" aria-hidden="true">
-          <div className="auth-workspace-head">
-            <span className="auth-workspace-badge">TWÓJ WARSZTAT</span>
-            <span className="auth-workspace-live">
-              <span className="auth-workspace-live-dot" />
-              online
-            </span>
-          </div>
+          <div className="auth-workspace-preview" aria-hidden="true">
+            <div className="auth-workspace-head">
+              <span className="auth-workspace-badge">TWÓJ WARSZTAT</span>
+              <span className="auth-workspace-live">
+                <span className="auth-workspace-live-dot" />
+                online
+              </span>
+            </div>
 
-          <ul className="auth-workspace-list">
-            <li>
-              <span className="auth-workspace-status status-teal" />
-              <div className="auth-workspace-text">
-                <strong>Konfiguracja · Setup do gier</strong>
-                <small>3 podzespoły · gotowe</small>
-              </div>
-            </li>
-            <li>
-              <span className="auth-workspace-status status-amber" />
-              <div className="auth-workspace-text">
-                <strong>Zgłoszenie serwis · Dysk SSD</strong>
-                <small>Draft · edytowany 2 dni temu</small>
-              </div>
-            </li>
-            <li>
-              <span className="auth-workspace-status status-muted" />
-              <div className="auth-workspace-text">
-                <strong>Serwis</strong>
-                <small>Brak aktywnych zgłoszeń</small>
-              </div>
-            </li>
-          </ul>
+            <ul className="auth-workspace-list">
+              <li>
+                <span className="auth-workspace-status status-teal" />
+                <div className="auth-workspace-text">
+                  <strong>Konfiguracja · Setup do gier</strong>
+                  <small>3 podzespoły · gotowe</small>
+                </div>
+              </li>
+              <li>
+                <span className="auth-workspace-status status-amber" />
+                <div className="auth-workspace-text">
+                  <strong>Zgłoszenie serwis · Dysk SSD</strong>
+                  <small>Draft · edytowany 2 dni temu</small>
+                </div>
+              </li>
+              <li>
+                <span className="auth-workspace-status status-muted" />
+                <div className="auth-workspace-text">
+                  <strong>Serwis</strong>
+                  <small>Brak aktywnych zgłoszeń</small>
+                </div>
+              </li>
+            </ul>
 
-          <div className="auth-workspace-foot">
-            Zapisane — czekają na Ciebie
-            <span>→</span>
+            <div className="auth-workspace-foot">
+              Zapisane — czekają na Ciebie
+              <span>→</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <p className="auth-footer-note">
-        TWÓJ WARSZTAT · TWOJE PROJEKTY CZEKAJĄ
-      </p>
+        <p className="auth-footer-note">
+          TWÓJ WARSZTAT · TWOJE PROJEKTY CZEKAJĄ
+        </p>
       </section>
 
       <section className="auth-form-side">
@@ -200,14 +231,27 @@ export default function LoginPage() {
             ) : (
               <>
                 <div className="auth-field">
-                  <label htmlFor="name">Nazwa użytkownika</label>
+                  <label htmlFor="firstName">Imię</label>
 
                   <input
-                    id="name"
-                    name="name"
+                    id="firstName"
+                    name="firstName"
                     type="text"
-                    placeholder="Jan Kowalski"
-                    autoComplete="name"
+                    placeholder="Jan"
+                    autoComplete="given-name"
+                    required
+                  />
+                </div>
+
+                <div className="auth-field">
+                  <label htmlFor="lastName">Nazwisko</label>
+
+                  <input
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                    placeholder="Kowalski"
+                    autoComplete="family-name"
                     required
                   />
                 </div>
@@ -240,6 +284,7 @@ export default function LoginPage() {
                     ? "current-password"
                     : "new-password"
                 }
+                minLength={mode === "register" ? 8 : undefined}
                 required
               />
             </div>
@@ -256,6 +301,7 @@ export default function LoginPage() {
                   type="password"
                   placeholder="Wpisz hasło ponownie"
                   autoComplete="new-password"
+                  minLength={8}
                   required
                 />
               </div>
@@ -280,7 +326,9 @@ export default function LoginPage() {
               disabled={isSubmitting}
             >
               {isSubmitting
-                ? "Sprawdzanie..."
+                ? mode === "login"
+                  ? "Sprawdzanie..."
+                  : "Tworzenie konta..."
                 : mode === "login"
                   ? "Zaloguj się"
                   : "Utwórz konto"}
