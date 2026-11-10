@@ -83,11 +83,11 @@ export default function LoginPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        setMessage(result.error ?? "Nieprawidłowy login lub hasło.");
+        setMessage(result.error ?? "Nieprawidłowy e-mail lub hasło.");
         return;
       }
 
-      router.replace("/admin");
+      router.replace(result.role === "ADMIN" ? "/admin" : "/home");
       router.refresh();
     } catch {
       setMessage("Nie udało się połączyć z serwerem. Spróbuj ponownie.");
@@ -223,8 +223,9 @@ export default function LoginPage() {
                   id="identifier"
                   name="identifier"
                   type="text"
-                  placeholder="Wprowadź login lub e-mail"
-                  autoComplete="username"
+                  inputMode="email"
+                  placeholder="login lub e-mail"
+                  autoComplete="email"
                   required
                 />
               </div>

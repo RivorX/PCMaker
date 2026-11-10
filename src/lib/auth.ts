@@ -1,27 +1,23 @@
-
 import "server-only";
 import { SignJWT, jwtVerify } from "jose";
 
 export const SESSION_COOKIE = "pcmaker_session";
 const SESSION_DURATION = 8 * 60 * 60;
 
+export type UserRole = "CLIENT" | "TECHNICIAN" | "ADMIN";
+
+const VALID_ROLES: UserRole[] = ["CLIENT", "TECHNICIAN", "ADMIN"];
+
 function getSecret(): Uint8Array {
   const secret = process.env.SESSION_SECRET;
-
   if (!secret || secret.length < 32) {
-    throw new Error(
-      "SESSION_SECRET musi mieć co najmniej 32 znaki."
-    );
+    throw new Error("SESSION_SECRET musi mieć co najmniej 32 znaki.");
   }
-
   return new TextEncoder().encode(secret);
 }
 
-export async function createSession(username: string) {
-  return new SignJWT({
-    username,
-    role: "admin",
-  })
+export async function createSession(username: string, role: UserRole = "CLIENT") {
+  return new SignJWT({ username, role })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("8h")
@@ -37,15 +33,16 @@ export async function verifySession(token?: string) {
     });
 
     if (
-      payload.role !== "admin" ||
-      typeof payload.username !== "string"
+      typeof payload.username !== "string" ||
+      typeof payload.role !== "string" ||
+      !VALID_ROLES.includes(payload.role as UserRole)
     ) {
       return null;
     }
 
     return {
       username: payload.username,
-      role: "admin" as const,
+      role: payload.role as UserRole,
     };
   } catch {
     return null;

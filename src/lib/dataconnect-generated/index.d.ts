@@ -161,6 +161,22 @@ export interface GetServiceTicketByIdVariables {
   id: UUIDString;
 }
 
+export interface GetUserByEmailData {
+  users: ({
+    id: UUIDString;
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    role: UserRole;
+    isActive: boolean;
+  } & User_Key)[];
+}
+
+export interface GetUserByEmailVariables {
+  email: string;
+}
+
 export interface ListComponentsData {
   components: ({
     id: UUIDString;
@@ -382,4 +398,16 @@ export const listPublicConfigurationsRef: ListPublicConfigurationsRef;
 
 export function listPublicConfigurations(options?: ExecuteQueryOptions): QueryPromise<ListPublicConfigurationsData, undefined>;
 export function listPublicConfigurations(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListPublicConfigurationsData, undefined>;
+
+interface GetUserByEmailRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetUserByEmailVariables): QueryRef<GetUserByEmailData, GetUserByEmailVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetUserByEmailVariables): QueryRef<GetUserByEmailData, GetUserByEmailVariables>;
+  operationName: string;
+}
+export const getUserByEmailRef: GetUserByEmailRef;
+
+export function getUserByEmail(vars: GetUserByEmailVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserByEmailData, GetUserByEmailVariables>;
+export function getUserByEmail(dc: DataConnect, vars: GetUserByEmailVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserByEmailData, GetUserByEmailVariables>;
 
