@@ -16,9 +16,29 @@ node --experimental-strip-types scripts/import-userbenchmark.mjs .\UserBenchmark
 
 Importer wymaga dokładnie kolumn `Type,Part Number,Brand,Model,Rank,Benchmark,Samples,URL`. Obsługuje BOM, CRLF, pola w cudzysłowie, przecinki w nazwach i powtórzone cudzysłowy. Obsługiwane typy to `CPU`, `GPU`, `SSD`, `HDD` i `RAM`; pozostałe są raportowane jako pominięte. URL-e importowanych rekordów muszą być HTTPS i należeć do `userbenchmark.com` lub jego subdomen. Nie wylicza socketu, typu pamięci, ceny ani uniwersalnego wyniku wydajności. `Benchmark`, `Rank` i `Samples` są zachowane jako metryka źródła `userbenchmark`, a `Part Number` trafia do `sourceIdentity.externalId`.
 
-Wygenerowany plik jest snapshotem. Aby lokalny serwer używał go jako źródła katalogu, ustaw po stronie serwera `CATALOG_DATA_FILE` na ścieżkę tego pliku i uruchom ponownie aplikację. Gdy zmienna nie jest ustawiona, endpoint korzysta z `components.sample.json`. Gdy jest ustawiona, ale plik jest niedostępny lub nie przejdzie walidacji, endpoint zwraca `503 catalog_unavailable` i nie przełącza się po cichu na zbiór przykładowy. Ścieżka nie jest zwracana klientowi.
+Wygenerowany plik jest snapshotem. Aby przygotować lokalny, niepublikowany podgląd mapowania do pól Firebase `Component`, uruchom:
+
+```bash
+node --experimental-strip-types scripts/prepare-firebase-catalog.mjs .\\data\\userbenchmark.components.json
+```
+
+Narzędzie przyjmuje wyłącznie snapshot `version: 1` z tablicą `components` (czyli wynik importera, a nie surowy alternatywny format `components.sample.json`). Zapisuje domyślnie `.local/catalog/firebase-import.preview.json`, tworzy katalog wyjściowy i ustawia `readyToWrite: false`. Podgląd zawiera wyłącznie pola `Component`, ceny i wyniki wydajności pozostawia jako `null`, a źródłową tożsamość, czas i metryki zachowuje w osobnym `manifest`. Identyfikatory są deterministycznymi UUID opartymi o `sourceIdentity` albo istniejące ID katalogu, więc ponowienie przygotowania nie losuje nowych rekordów. Błędne rekordy, nieznane kategorie, duplikaty ID oraz powtórzone pary `manufacturer`/`model` kończą się błędem zamiast cichego nadpisania.
+
+Podgląd jest celowo zablokowany: obecny schemat wymaga nie-null `Component.price`, a repozytorium nie ma zatwierdzonej operacji zapisu katalogu. Skrypt nie wykonuje sieci, SQL ani mutacji Firebase. Aby obejrzeć snapshot lokalnie, ustaw `CATALOG_SOURCE=file` i `CATALOG_DATA_FILE` na jego ścieżkę; po zakończeniu lokalnego sprawdzenia przywróć `CATALOG_SOURCE=firebase`. Pliki `.local/`, wygenerowany snapshot oraz rozpoznawalne surowe CSV UserBenchmark i pliki service-account są ignorowane przez Git, ale katalog `data/` jako całość pozostaje śledzony.
+
+Aby lokalny serwer używał snapshotu jako źródła katalogu, ustaw po stronie serwera `CATALOG_DATA_FILE` na ścieżkę tego pliku i uruchom ponownie aplikację. Gdy zmienna nie jest ustawiona, endpoint korzysta z `components.sample.json`. Gdy jest ustawiona, ale plik jest niedostępny lub nie przejdzie walidacji, endpoint zwraca `503 catalog_unavailable` i nie przełącza się po cichu na zbiór przykładowy. Ścieżka nie jest zwracana klientowi.
 
 Snapshot nie modyfikuje bazy ani nie pobiera sieci podczas żądania. Dla aplikacji opisanej w README (Node 20+) importer/testy używają `node --experimental-strip-types`, dlatego wymagają Node 24+ albo wcześniejszego skompilowania pliku TypeScript.
+
+### Firebase Data Connect (odczyt)
+
+Po ustawieniu `CATALOG_SOURCE=firebase` katalog wykonuje serwerowy, wyłącznie read-only request `ListComponents` do Firebase Data Connect. Klucz `NEXT_PUBLIC_FIREBASE_API_KEY` jest używany tylko w nagłówku backendowego requestu i nie jest zwracany w odpowiedzi. Odczyt ma limit czasu około 8 sekund, limit rozmiaru odpowiedzi i pamięć podręczną procesu przez 60 sekund; błąd źródła zwraca `503 catalog_unavailable` bez fallbacku do próbki. Puste, poprawne `data.components` jest poprawnym wynikiem.
+
+Mapowane są wyłącznie znane typy (`CPU`, `GPU`, `Motherboard`, `RAM`/`Memory`, `SSD`/`HDD`/`Storage`, `PSU`, `Case`, `Cooling`). Nieznany typ lub niepoprawny rekord powoduje `503`, zamiast cichego pominięcia. `specifications` pozostaje `{}`, a `price` i `performanceScore` są `null`, ponieważ kontrakt zapytania nie potwierdza waluty ani jednostek benchmarku. `source.kind` ma wartość `database`, a `source.provider` — `firebase-sql-connect`; `capturedAt` oznacza czas odczytu, nie czas aktualizacji rekordu w bazie.
+
+Domyślne zapytanie pobiera najwyżej 100 rekordów. `meta.total` oznacza liczbę rekordów zwróconych przez to zapytanie po filtrach, a nie gwarantowaną liczbę wszystkich rekordów w bazie.
+
+Weryfikacja 2026-11-11: rzeczywisty `ListComponents` i lokalny `GET /api/v1/components` zwróciły HTTP 200 oraz pustą listę z `source: "database"`. Sprawdzono również endpoint kategorii, stan konfiguracji bazy i odpowiedzi 400/404. Testy kontrolowanych odpowiedzi obejmują niepuste rekordy; nie potwierdzono jeszcze odczytu niepustego katalogu zdalnego. Przeszło 16 testów katalogu, sprawdzenie TypeScript i kompilacja produkcyjna. Nie wykonywano mutacji ani wdrożenia schematu.
 
 ## API
 

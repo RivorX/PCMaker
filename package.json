@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test:catalog": "node --experimental-strip-types --test tests/userbenchmark.test.mjs tests/catalog.test.mjs tests/serpapi.test.mjs"
+    "prepare:firebase-catalog": "node --experimental-strip-types scripts/prepare-firebase-catalog.mjs",
+    "test:catalog": "node --experimental-strip-types --test tests/userbenchmark.test.mjs tests/catalog.test.mjs tests/firebase-catalog.test.mjs tests/firebase-import-preview.test.mjs tests/serpapi.test.mjs"
   },
   "dependencies": {
     "firebase": "^13.1.0",

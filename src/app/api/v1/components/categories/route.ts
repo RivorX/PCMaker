@@ -1,14 +1,20 @@
-import { CatalogUnavailableError, catalogCategories, getCatalogDataset, getCatalogManufacturers } from "@/lib/catalog";
+import {
+  CatalogUnavailableError,
+  catalogCategories,
+  getCatalogManufacturersFromDataset,
+  loadCatalogDataset,
+} from "@/lib/catalog";
 
-export function GET() {
+export async function GET() {
   try {
-    const dataset = getCatalogDataset();
+    const dataset = await loadCatalogDataset();
     return Response.json({
       data: {
         categories: catalogCategories,
-        manufacturers: getCatalogManufacturers(),
+        manufacturers: getCatalogManufacturersFromDataset(dataset),
       },
       source: dataset.source,
+      ...(dataset.provider ? { provider: dataset.provider } : {}),
     });
   } catch (error) {
     if (error instanceof CatalogUnavailableError) {

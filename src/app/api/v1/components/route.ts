@@ -1,9 +1,9 @@
 import {
   catalogCategories,
   CatalogUnavailableError,
-  getCatalogDataset,
+  loadCatalogDataset,
   isCatalogCategory,
-  listCatalogComponents,
+  listCatalogComponentsFromDataset,
 } from "@/lib/catalog";
 import type {
   CatalogErrorResponse,
@@ -28,7 +28,7 @@ const unavailableResponse = (): Response => Response.json(
   { status: 503 },
 );
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const url = new URL(request.url);
   const rawPage = url.searchParams.get("page");
   const rawLimit = url.searchParams.get("limit");
@@ -55,8 +55,8 @@ export function GET(request: Request) {
   }
 
   try {
-    const dataset = getCatalogDataset();
-    const filtered = listCatalogComponents({
+    const dataset = await loadCatalogDataset();
+    const filtered = listCatalogComponentsFromDataset(dataset, {
       query,
       category: rawCategory,
       manufacturer,

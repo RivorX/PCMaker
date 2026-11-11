@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import sampleData from "../data/components.sample.json" with { type: "json" };
 import type { CatalogComponent, ComponentCategory } from "../types/catalog";
+import { getFirebaseCatalogSnapshot } from "./firebase-catalog.ts";
 
 const COMPONENT_CATEGORIES = [
   "cpu", "gpu", "motherboard", "memory", "storage", "psu", "case", "cooling",
@@ -95,15 +96,50 @@ const loadConfiguredDataset = (filePath: string): CatalogDataset => {
   }
 };
 
-export const getCatalogDataset = (): CatalogDataset => {
+type CatalogSelection = "sample" | "file" | "firebase";
+
+const getCatalogSelection = (): CatalogSelection => {
+  const explicit = process.env.CATALOG_SOURCE?.trim().toLocaleLowerCase("pl-PL");
+  if (explicit === "sample" || explicit === "file" || explicit === "firebase") return explicit;
+  if (explicit) throw new CatalogUnavailableError();
+  return process.env.CATALOG_DATA_FILE?.trim() ? "file" : "sample";
+};
+
+const loadLocalDataset = (selection: "sample" | "file"): CatalogDataset => {
+  if (selection === "sample") return { components: sampleComponents, source: "sample" };
   const configuredPath = process.env.CATALOG_DATA_FILE?.trim();
-  if (!configuredPath) return { components: sampleComponents, source: "sample" };
+  if (!configuredPath) throw new CatalogUnavailableError();
   if (cachedDatasetKey === configuredPath && cachedDataset) return cachedDataset;
   const dataset = loadConfiguredDataset(configuredPath);
   cachedDatasetKey = configuredPath;
   cachedDataset = dataset;
   return dataset;
 };
+
+export const getCatalogDataset = (): CatalogDataset => {
+  const selection = getCatalogSelection();
+  if (selection === "firebase") throw new CatalogUnavailableError();
+  return loadLocalDataset(selection);
+};
+
+export const getCatalogDatasetAsync = async (): Promise<CatalogDataset> => {
+  const selection = getCatalogSelection();
+  if (selection !== "firebase") return loadLocalDataset(selection);
+  try {
+    const snapshot = await getFirebaseCatalogSnapshot();
+    return {
+      components: snapshot.components,
+      source: "database",
+      provider: "firebase-sql-connect",
+    };
+  } catch (error) {
+    if (error instanceof CatalogUnavailableError) throw error;
+    throw new CatalogUnavailableError();
+  }
+};
+
+// Async source selection is the request-time entry point for route handlers.
+export const loadCatalogDataset = getCatalogDatasetAsync;
 
 export const getCatalogSource = (): CatalogDataset["source"] => getCatalogDataset().source;
 export const getCatalogProvider = (): string | undefined => getCatalogDataset().provider;
@@ -118,8 +154,7 @@ export interface CatalogFilters {
   limit: number;
 }
 
-export const listCatalogComponents = (filters: CatalogFilters): CatalogComponent[] => {
-  const dataset = getCatalogDataset();
+export const listCatalogComponentsFromDataset = (dataset: CatalogDataset, filters: CatalogFilters): CatalogComponent[] => {
   const query = filters.query ? normalize(filters.query) : "";
   const manufacturer = filters.manufacturer ? normalize(filters.manufacturer) : "";
   return dataset.components
@@ -133,11 +168,33 @@ export const listCatalogComponents = (filters: CatalogFilters): CatalogComponent
     .sort((left, right) => left.name.localeCompare(right.name, "pl-PL"));
 };
 
+export const listCatalogComponents = (filters: CatalogFilters): CatalogComponent[] =>
+  listCatalogComponentsFromDataset(getCatalogDataset(), filters);
+
+export const listCatalogComponentsAsync = async (filters: CatalogFilters): Promise<CatalogComponent[]> =>
+  listCatalogComponentsFromDataset(await getCatalogDatasetAsync(), filters);
+
 export const getCatalogComponent = (id: string): CatalogComponent | undefined =>
   getCatalogDataset().components.find((component) => component.id === id);
 
+export const getCatalogComponentFromDataset = (dataset: CatalogDataset, id: string): CatalogComponent | undefined =>
+  dataset.components.find((component) => component.id === id);
+
+export const getCatalogComponentAsync = async (id: string): Promise<{ component?: CatalogComponent; dataset: CatalogDataset }> => {
+  const dataset = await getCatalogDatasetAsync();
+  return { component: getCatalogComponentFromDataset(dataset, id), dataset };
+};
+
 export const getCatalogManufacturers = (): string[] =>
   [...new Set(getCatalogDataset().components.map((component) => component.manufacturer))].sort((left, right) => left.localeCompare(right, "pl-PL"));
+
+export const getCatalogManufacturersFromDataset = (dataset: CatalogDataset): string[] =>
+  [...new Set(dataset.components.map((component) => component.manufacturer))].sort((left, right) => left.localeCompare(right, "pl-PL"));
+
+export const getCatalogManufacturersAsync = async (): Promise<{ manufacturers: string[]; dataset: CatalogDataset }> => {
+  const dataset = await getCatalogDatasetAsync();
+  return { manufacturers: getCatalogManufacturersFromDataset(dataset), dataset };
+};
 
 export const isCatalogCategory = (value: string): value is ComponentCategory =>
   (COMPONENT_CATEGORIES as readonly string[]).includes(value);

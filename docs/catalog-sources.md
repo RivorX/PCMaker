@@ -29,6 +29,12 @@ Wdrażamy katalog modeli, przykładowe rekordy i odczyt REST. Import CSV jest op
 
 Model bazy rozdziela komponent, specyfikacje, identyfikator w źródle, ofertę sklepu i historię ceny. Przed synchronizacją ofert potrzebne są: dostęp dostawcy, identyfikacja produktu po MPN/EAN, waluta, dostępność, koszt dostawy oraz czas obserwacji. Harmonogram odświeżania musi respektować limity przyznanego dostępu. Bez źródła ceny nie są automatycznie aktualizowane; nie ma deklaracji „na żywo”.
 
+## Firebase Data Connect — odczyt katalogu
+
+Firebase Data Connect jest skonfigurowany jako opcjonalne źródło kanonicznych modeli, bez mutacji, uwierzytelniania użytkownika ani automatycznego pobierania ofert. `CATALOG_SOURCE=firebase` wysyła `ListComponents` przez stały endpoint projektu i mapuje tylko potwierdzone pola. Brak klucza, błąd HTTP, niepoprawna odpowiedź albo nieznany `componentType` daje `503`, bez powrotu do danych przykładowych. Pusty wynik jest prawidłowy i jest pokazany w UI jako brak rekordów zwróconych przez bazę.
+
+Wynik ma limit 100 rekordów na zapytanie, więc `meta.total` opisuje zwrócony wycinek, nie pełny rozmiar tabeli. Ceny i wyniki wydajności pozostają `null`, a brak specyfikacji jest jawnie oznaczony jako niedostępny.
+
 ## Odrzucone źródło ofert
 
 Everydata/Alternate zostało rozpoznane, ale odrzucone z powodu ograniczenia do ofert alternate.de i warunków B2B. Nie jest już źródłem aplikacji, nie ma fallbacku ani aktywnego klucza w konfiguracji.

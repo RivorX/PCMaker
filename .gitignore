@@ -16,3 +16,19 @@ PLAN.md
 .firebase
 .vscode
 *.log
+
+# Local catalog import previews and generated snapshots (never commit raw downloads).
+.local/
+data/userbenchmark.components.json
+UserBenchmarks*.csv
+UserBenchmark*.csv
+CPU_UserBenchmarks.csv
+GPU_UserBenchmarks.csv
+SSD_UserBenchmarks.csv
+HDD_UserBenchmarks.csv
+RAM_UserBenchmarks.csv
+
+# Local Firebase/service-account credentials.
+*service-account*.json
+*serviceAccount*.json
+*firebase-adminsdk*.json
