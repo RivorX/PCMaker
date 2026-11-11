@@ -8,7 +8,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "prepare:firebase-catalog": "node --experimental-strip-types scripts/prepare-firebase-catalog.mjs",
-    "test:catalog": "node --experimental-strip-types --test tests/userbenchmark.test.mjs tests/catalog.test.mjs tests/firebase-catalog.test.mjs tests/firebase-import-preview.test.mjs tests/serpapi.test.mjs"
+    "import:userbenchmark-batch": "node --experimental-strip-types scripts/import-userbenchmark-batch.mjs",
+    "test:catalog": "node --experimental-strip-types --test tests/userbenchmark.test.mjs tests/catalog.test.mjs tests/firebase-catalog.test.mjs tests/firebase-import-preview.test.mjs tests/userbenchmark-batch.test.mjs tests/serpapi.test.mjs"
   },
   "dependencies": {
     "firebase": "^13.1.0",

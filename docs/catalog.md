@@ -16,6 +16,16 @@ node --experimental-strip-types scripts/import-userbenchmark.mjs .\UserBenchmark
 
 Importer wymaga dokładnie kolumn `Type,Part Number,Brand,Model,Rank,Benchmark,Samples,URL`. Obsługuje BOM, CRLF, pola w cudzysłowie, przecinki w nazwach i powtórzone cudzysłowy. Obsługiwane typy to `CPU`, `GPU`, `SSD`, `HDD` i `RAM`; pozostałe są raportowane jako pominięte. URL-e importowanych rekordów muszą być HTTPS i należeć do `userbenchmark.com` lub jego subdomen. Nie wylicza socketu, typu pamięci, ceny ani uniwersalnego wyniku wydajności. `Benchmark`, `Rank` i `Samples` są zachowane jako metryka źródła `userbenchmark`, a `Part Number` trafia do `sourceIdentity.externalId`.
 
+Dla pięciu pobranych plików można uruchomić bezpieczny batch:
+
+```bash
+npm run import:userbenchmark-batch
+```
+
+Bez argumentów skrypt czyta `.local/catalog/raw/CPU_UserBenchmarks.csv`, `GPU_UserBenchmarks.csv`, `SSD_UserBenchmarks.csv`, `HDD_UserBenchmarks.csv` i `RAM_UserBenchmarks.csv`. Można podać własną listę plików CSV jako argumenty. Każdy niepusty fizyczny wiersz przechodzi przez ten sam ścisły importer co pojedynczy plik; batch nie naprawia cudzysłowów ani nie scala rekordów wielowierszowych. Błędne wiersze trafiają do lokalnej kwarantanny z nazwą pliku, numerem wiersza i oryginalnym tekstem. Dokładne duplikaty są odrzucane z licznikiem, natomiast wszystkie rekordy w konflikcie stabilnego ID albo w niejednoznacznej grupie `manufacturer/model` są odrzucane razem.
+
+Batch zapisuje `.local/catalog/userbenchmark.components.json`, `.local/catalog/userbenchmark.batch.report.json` i `.local/catalog/userbenchmark.quarantine.json`. Snapshot ma `version: 1`, wspólne `importedAt` i `source: "UserBenchmark CSV"`; raport podaje `rawRead`, `parsed`, `accepted`, `deduplicatedIdentical`, `quarantined`, grupy konfliktów i wyniki per plik. Kwarantanna zachowuje oryginalne rekordy lokalnie. Nie ma cen ani zgadywanych specyfikacji; metryki UserBenchmark pozostają w `sourceMetrics`.
+
 Wygenerowany plik jest snapshotem. Aby przygotować lokalny, niepublikowany podgląd mapowania do pól Firebase `Component`, uruchom:
 
 ```bash
@@ -55,6 +65,10 @@ Istniejący Firebase Data Connect ma `components` i `component_specifications`, 
 Projekt obejmuje komponenty, specyfikacje, źródła, identyfikatory zewnętrzne, obserwacje benchmarków, oferty oraz historię cen. `components.public_id` przechowuje identyfikator używany przez REST/importer; wewnętrzny UUID bazy pozostaje osobnym kluczem. Metryki UserBenchmark zachowują własne źródło i czas importu. Oferta i historia mają kwoty w groszach, osobny koszt dostawy i walutę PLN. Nieznany koszt dostawy jest `NULL`, nie oznacza darmowej wysyłki.
 
 ## Sprawdzenie
+
+Weryfikacja lokalnego katalogu 2026-11-11: pobrano CSV dla CPU, GPU, SSD, HDD i RAM. Z 5029 wierszy zaakceptowano 4578 komponentów: 1427 CPU, 1148 GPU, 1915 dysków i 88 pamięci RAM. Usunięto 5 identycznych powtórzeń; 446 wierszy przeniesiono do raportu kwarantanny, w tym 98 błędnie zapisanych. Dane i raporty są wyłącznie lokalne w ignorowanym `.local/catalog/`.
+
+Lokalne `CATALOG_SOURCE=file` i `CATALOG_DATA_FILE=./.local/catalog/userbenchmark.components.json` uruchamiają ten katalog. Sprawdzono HTTP listy, kategorii, wyszukiwanie `7800X3D`, szczegóły i rozłączne strony wyników. Interfejs pokazał 4578 rekordów. Podgląd importu zawiera 4578 części i `readyToWrite: false`; nie wykonano zapisu do Firebase. Przeszły 24 testy oraz sprawdzenie TypeScript. Ten etap nie zmieniał kodu aplikacji Next.js i nie wymagał ponownej kompilacji produkcyjnej.
 
 ```bash
 npm run test:catalog
