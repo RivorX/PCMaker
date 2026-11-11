@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 
 const navItems = [
   { href: "/home", label: "Przegląd", icon: "⌂" },
+  { href: "/katalog", label: "Katalog części", icon: "▤" },
   { href: "/konfigurator", label: "Konfigurator", icon: "▦" },
   { href: "/serwis", label: "Serwis sprzętu", icon: "♧" },
 ];
@@ -142,6 +143,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
               ? "Panel administratora"
               : pathname === "/home"
                 ? "Przegląd"
+                : pathname.startsWith("/katalog")
+                  ? "Katalog części"
                 : pathname.startsWith("/serwis")
                   ? "Serwis sprzętu"
                   : "Konfigurator"}

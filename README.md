@@ -2,7 +2,7 @@
 
 PCMaker łączy konfigurator komputerów z przygotowaniem zgłoszenia serwisowego. Pierwszy przyrost jest frontendowym szkieletem Next.js: można ręcznie opisać podzespoły, sprawdzić podstawowe zależności socket/DDR oraz zapisać wersję roboczą lokalnie w przeglądarce. Formularz serwisowy działa tak samo i nie udaje wysłanego zgłoszenia.
 
-Źródła ofert sklepów, logowanie i baza danych nie są jeszcze podłączone. Aplikacja celowo nie pokazuje przykładowych cen ani fikcyjnych sklepów. Stan integracji jest dostępny pod `GET /api/v1/integrations`, a `GET /api/v1/offers` zwraca `503 source_not_configured` do czasu uzyskania prawdziwego dostępu do API. Kontrakty opisano w [docs/api-contract.md](docs/api-contract.md).
+Katalog podzespołów korzysta domyślnie z małego, jawnie oznaczonego zbioru przykładowego. Rekordy opisują modele i specyfikacje, ale ceny pozostają `null`, dopóki nie uzyskamy legalnego źródła ofert. `GET /api/v1/components` udostępnia wyszukiwanie, filtrowanie i paginację, a importer UserBenchmark CSV działa offline według [docs/catalog.md](docs/catalog.md). Lokalny snapshot można włączyć przez serwerową zmienną `CATALOG_DATA_FILE`; niepoprawny wskazany plik daje `503 catalog_unavailable`, bez cichego fallbacku do próbek. Źródło ofert Alternate obsługuje jawne wyszukiwanie i lookup produktu, ale wymaga serwerowego `EVERYDATA_API_KEY`; bez klucza endpointy zwracają `503 source_not_configured`. Kwota PLN jest oznaczona jako orientacyjna i oparta na stałej `EUR_PLN_RATE` (domyślnie 4.30), bez zewnętrznego API kursów. Logowanie i baza danych nie są jeszcze podłączone. Stan integracji jest dostępny pod `GET /api/v1/integrations`. Kontrakty opisano w [docs/api-contract.md](docs/api-contract.md).
 
 ## Uruchomienie
 
@@ -43,6 +43,8 @@ src/lib/drafts.ts        wersjonowane, walidowane drafty localStorage
 src/lib/compatibility.ts czyste reguły socket i typu pamięci
 src/types/api.ts         wspólne typy kontraktów HTTP
 docs/api-contract.md     kontrakt dla przyszłego backendu ofert
+docs/catalog.md          katalog, import CSV i granice źródeł danych
+database/catalog-reference.sql  referencyjny projekt tabel katalogu i ofert
 ```
 
 Draft ma wersję w kluczu `pcmaker:configuration-draft:v1` albo `pcmaker:service-draft:v1`. Odczyt odrzuca uszkodzony, niezgodny lub nadmiernie duży kształt danych, a zapis lokalny jest sygnalizowany użytkownikowi. Nie jest to jeszcze zapis serwerowy.
