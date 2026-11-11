@@ -1,51 +1,35 @@
-export interface OfferMoney {
-  originalEUR: { amountCents: number; currency: "EUR" } | null;
-  estimatedPLN: { amountCents: number; currency: "PLN"; eurPlnRate: number; isEstimate: true } | null;
+export type ShoppingCurrency = "PLN" | "EUR";
+
+export interface ShoppingPrice {
+  original: { amountCents: number; currency: ShoppingCurrency } | null;
+  estimatedPLN:
+    | { amountCents: number; currency: "PLN"; isEstimate: true; eurPlnRate: number }
+    | { amountCents: number; currency: "PLN"; isEstimate: false }
+    | null;
+  sourceText: string | null;
 }
 
-export interface AlternateOffer {
-  provider: "everydata-alternate";
-  providerProductId: string;
-  productTitle: string;
-  manufacturer: string | null;
-  ean: string | null;
-  mpn: string | null;
-  categories: string[];
-  price: OfferMoney;
-  shipping: OfferMoney;
-  available: boolean | null;
-  warehouseAvailability: string | null;
-  sourceUrl: string | null;
+export interface SerpApiShoppingResult {
+  provider: "serpapi-google-shopping";
+  providerProductId: string | null;
+  title: string;
+  source: string | null;
+  price: ShoppingPrice;
+  link: string | null;
+  thumbnail: string | null;
+  sponsored: boolean;
 }
 
-export interface AlternateSearchCandidate extends AlternateOffer {
-  productDescription: string | null;
-  retailPrice: OfferMoney;
-  productRating: string | null;
-  deliveryMessage: string | null;
-  highlights: string[];
-  used: boolean | null;
-}
-
-export interface OffersLookupResponse {
-  data: AlternateOffer;
+export interface SerpApiSearchResponse {
+  data: SerpApiShoppingResult[];
   meta: {
-    source: "everydata-alternate";
-    queriedAt: string;
-    cache: "hit" | "miss";
-  };
-}
-
-export interface OffersSearchResponse {
-  data: AlternateSearchCandidate[];
-  meta: {
-    source: "everydata-alternate";
-    keyword: string;
+    source: "serpapi-google-shopping";
+    query: string;
+    expectedCategory: string | null;
     page: number;
-    sortBy: string;
-    resultCount: number;
-    nextPage: number | null;
-    lastPage: number | null;
+    limit: number;
+    total: number;
+    hasNext: boolean;
     queriedAt: string;
     cache: "hit" | "miss";
   };
@@ -54,7 +38,6 @@ export interface OffersSearchResponse {
 export type OffersErrorCode =
   | "source_not_configured"
   | "invalid_query"
-  | "offer_not_found"
   | "rate_limited"
   | "upstream_timeout"
   | "upstream_unavailable"

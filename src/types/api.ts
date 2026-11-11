@@ -15,17 +15,16 @@ export interface IntegrationsResponse {
 }
 
 export interface OffersQuery {
-  action?: "lookup" | "search";
-  productId?: string;
+  action?: "search";
+  keyword?: string;
   query?: string;
   category?: string;
   page?: number;
-  sortBy?: string;
   limit?: number;
 }
 
 export interface ApiErrorBody {
-  error: "source_not_configured" | "invalid_query" | "offer_not_found" | "rate_limited" | "upstream_timeout" | "upstream_unavailable" | "upstream_invalid";
+  error: "source_not_configured" | "invalid_query" | "rate_limited" | "upstream_timeout" | "upstream_unavailable" | "upstream_invalid";
   message: string;
   source: "offers";
 }

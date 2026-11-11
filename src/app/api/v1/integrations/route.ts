@@ -1,15 +1,15 @@
 import type { IntegrationsResponse } from "@/types/api";
 
 export function GET() {
-  const offersConfigured = Boolean(process.env.EVERYDATA_API_KEY?.trim());
+  const offersConfigured = Boolean(process.env.SERPAPI_API_KEY?.trim());
   const body: IntegrationsResponse = {
     data: [
       {
         key: "offers",
-        label: "Oferty sklepów",
+        label: "Google Shopping (SerpAPI)",
         state: offersConfigured ? "configured" : "not_configured",
         message: offersConfigured
-          ? "Klucz API jest ustawiony; połączenie jest sprawdzane dopiero przy jawnym żądaniu oferty."
+          ? "Klucz API jest ustawiony; wyszukiwanie jest wykonywane dopiero po jawnym zatwierdzeniu."
           : "Brak przyznanego dostępu do źródła ofert.",
       },
       { key: "auth", label: "Logowanie", state: "not_configured", message: "Moduł uwierzytelniania zostanie podłączony w kolejnym etapie." },

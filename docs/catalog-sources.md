@@ -9,7 +9,6 @@ Nie potwierdzono źródła, które jednocześnie zapewnia darmowy, ogólnodostę
 | [UserBenchmark CSV](https://www.userbenchmark.com/page/developer) | Bezpośredni plik CPU został odczytany. Nagłówek zawiera dane modeli i benchmarków, bez ceny, waluty, sklepu ani daty ceny. Strona opisowa wymagała CAPTCHA. | Import modeli, nie dostawca ofert PLN. |
 | [Ceneo — program partnerski](https://pp.ceneo.pl/api) | Klucz jest przyznawany partnerom; do ubiegania się o testowy dostęp wymagana jest działająca witryna kierująca ruch do Ceneo. | Kandydat do polskich cen po uzyskaniu dostępu i sprawdzeniu zakresu danych. Nie jest obecnie podłączony. |
 | [Allegro — oficjalny komunikat](https://github.com/allegro/allegro-api/issues/4566) | Produkcyjny `GET /offers/listing` wymaga zweryfikowanej aplikacji. | Sama rejestracja aplikacji nie wystarcza do porównywania cudzych ofert. |
-| [everydata — Alternate](https://everydata.io/apis/alternate) | Dostawca deklaruje aktualne dane alternate.de i plan 100 zapytań miesięcznie bez karty; dokumentowany przykład używa EUR. Usługa zewnętrzna, w wersji beta. | Darmowy limit testowy istnieje, ale dotyczy niemieckiego sklepu. Nie zastępuje polskich ofert ani ciągłej synchronizacji większego katalogu. Nie testowano wywołania z kluczem. |
 | [docyx/pc-part-dataset](https://github.com/docyx/pc-part-dataset) | Repozytorium publikuje CSV/JSON dla wielu kategorii i podaje aktualizację 2025-07-23; [opis danych](https://github.com/docyx/pc-part-dataset/blob/main/API.md) określa ceny jako USD. | Alternatywny statyczny katalog, nie API bieżących cen PLN. Nie importowano danych z tego źródła. |
 
 ## Potwierdzony format UserBenchmark
@@ -30,8 +29,14 @@ Wdrażamy katalog modeli, przykładowe rekordy i odczyt REST. Import CSV jest op
 
 Model bazy rozdziela komponent, specyfikacje, identyfikator w źródle, ofertę sklepu i historię ceny. Przed synchronizacją ofert potrzebne są: dostęp dostawcy, identyfikacja produktu po MPN/EAN, waluta, dostępność, koszt dostawy oraz czas obserwacji. Harmonogram odświeżania musi respektować limity przyznanego dostępu. Bez źródła ceny nie są automatycznie aktualizowane; nie ma deklaracji „na żywo”.
 
-## Rozszerzenie zaakceptowane przez użytkownika
+## Odrzucone źródło ofert
 
-Do ofert przyjęto Alternate przez everydata.io i stały kurs 1 EUR = 4,30 PLN, konfigurowany na serwerze. Bez zewnętrznego API kursów. GUI ma zawierać tylko informację, że cena jest orientacyjna i może się różnić. Oryginalna kwota EUR, kurs i źródło pozostają częścią danych technicznych, aby wycenę można było odtworzyć.
+Everydata/Alternate zostało rozpoznane, ale odrzucone z powodu ograniczenia do ofert alternate.de i warunków B2B. Nie jest już źródłem aplikacji, nie ma fallbacku ani aktywnego klucza w konfiguracji.
 
-Klucz everydata.io nie został jeszcze uzyskany. Integrację można zweryfikować na kontrolowanych odpowiedziach, ale nie potwierdza to działania konta dostawcy ani rzeczywistych ofert. Aktualny kontrakt wyszukiwania i szczegółów potwierdzono w publicznej [specyfikacji OpenAPI](https://api.everydata.io/openapi.json), wskazanej przez [interaktywną dokumentację](https://everydata.io/docs). Wyszukiwanie może zwracać przybliżone dopasowania; jego wyników nie należy automatycznie przypisywać do modeli katalogu jako dokładnych wycen.
+## Zmiana dostawcy na SerpApi — 2026-11-11
+
+Po stwierdzeniu ograniczenia poprzedniego dostawcy do przedsiębiorców, również w darmowym planie, użytkowniczka założyła konto SerpApi i zapisała lokalny klucz `SERPAPI_API_KEY`. Nowym źródłem ofert jest Google Shopping przez [SerpApi](https://serpapi.com/google-shopping-api). Nie ma automatycznego powrotu do odrzuconego źródła. Ceny PLN pochodzące z wyników nie wymagają przeliczania EUR.
+
+Zweryfikowano jedno rzeczywiste wyszukiwanie `AMD Ryzen 7 7800X3D` z `engine=google_shopping`, `gl=pl`, `hl=pl`, `google_domain=google.pl`: HTTP 200, status `Success`, 40 pozycji w `shopping_results`. Kwota występuje jako polski tekst `price` z oznaczeniem `zł` oraz liczba `extracted_price`. Nie było osobnego pola waluty. Nazwa sklepu pochodzi z `source`; zwracany `product_link` prowadzi do strony produktu Google, niekoniecznie bezpośrednio do sklepu. Klucz i surowe metadane odpowiedzi nie były publikowane ani zapisywane w repozytorium.
+
+Wyniki zawierają również całe komputery, zestawy oraz inne modele procesorów niż wpisany. Filtrowanie oczywistych zestawów w kontekście procesora jest heurystyką, nie dowodem zgodności konkretnego wariantu. Zapisany katalog modeli i znalezione oferty pozostają odrębne, a wybór oferty jest ręczny. Pobieranie jest inicjowane przez użytkownika i buforowane w celu ograniczenia liczby wywołań.

@@ -246,8 +246,8 @@ label input::placeholder, label textarea::placeholder { color: #b3bec8; }
 .catalog-detail-empty { margin-top: 25px; padding: 16px; border: 1px dashed #d3dfe4; border-radius: 6px; color: var(--muted); font-size: 10px; line-height: 1.55; }
 .offer-lookup { display: grid; gap: 18px; padding: 24px 27px; }
 .offer-lookup > div:first-child h2 { margin-top: 7px; }
-.offer-lookup-form { display: flex; align-items: end; gap: 12px; max-width: 620px; }
-.offer-lookup-form label { flex: 1; }
+.offer-lookup-form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; max-width: 100%; }
+.offer-lookup-form label { flex: 1 1 220px; min-width: 0; }
 .offer-lookup-form .button { flex: 0 0 auto; }
 .offer-lookup-form .button.secondary { white-space: nowrap; }
 .offer-lookup > .catalog-message { padding: 12px 16px; text-align: left; }
@@ -289,6 +289,7 @@ label input::placeholder, label textarea::placeholder { color: #b3bec8; }
   .catalog-price { min-width: 62px; }
   .catalog-specs { display: none; }
   .offer-lookup-form { align-items: stretch; flex-direction: column; }
+  .offer-lookup-form label { flex-basis: auto; }
   .offer-candidate { align-items: flex-start; flex-direction: column; }
   .offer-candidate-actions { width: 100%; justify-content: space-between; }
   .offer-result { grid-template-columns: 1fr; }

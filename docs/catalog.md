@@ -46,8 +46,10 @@ Podczas weryfikacji 2026-11-03 oficjalny CSV CPU dał 1427 rekordów bez pomini�
 
 Końcowe sprawdzenia: 5 testów `test:catalog`, TypeScript i build produkcyjny przeszły. Pakowanie istniejącego trybu `standalone` wymagało uruchomienia buildu poza sandboxem z powodu blokady zapisu plików przez Windows. Projekt SQL nie był wykonywany na bazie; żadne zmiany nie zostały wdrożone do Firebase.
 
-## Oferty Alternate
+## Oferty Google Shopping przez SerpAPI
 
-Adapter ofert jest oddzielony od katalogu kanonicznych modeli. Jawne `GET /api/v1/offers?action=search&keyword=...` wyszukuje kandydatów, a `GET /api/v1/offers?action=lookup&productId=...` pobiera jeden wybrany produkt z Alternate przez serwerowy `EVERYDATA_API_KEY`; żadne żądanie nie jest wykonywane przy otwarciu katalogu ani przy wpisywaniu tekstu. Odpowiedź przechowuje cenę i dostawę w oryginalnym EUR oraz osobną kwotę PLN oznaczoną `isEstimate: true`. Domyślna stała `EUR_PLN_RATE=4.30` jest wartością roboczą, a nie kursem live — nie ma zewnętrznego API FX.
+Adapter ofert jest oddzielony od katalogu kanonicznych modeli. Jawne `GET /api/v1/offers?action=search&keyword=...` pobiera wyniki Google Shopping przez serwerowy `SERPAPI_API_KEY`; żadne żądanie nie jest wykonywane przy otwarciu katalogu ani przy wpisywaniu tekstu. Znormalizowane wyniki mogą pochodzić z płaskiego `shopping_results`, grup `categorized_shopping_results` albo sponsorowanych `inline_shopping_results`. Surowe metadane SerpAPI nie opuszczają backendu.
 
-Wyniki wyszukiwania są kandydatami, nie automatycznym dopasowaniem do katalogu. Nie wolno przypisywać ceny do modelu katalogowego tylko na podstawie podobnej nazwy; użytkownik musi wybrać konkretną ofertę. Brak klucza daje `503 source_not_configured`, limit dostawcy `429 rate_limited`, timeout `504 upstream_timeout`, a inny błąd lub niepoprawna odpowiedź dostawcy sanitizowany `502`.
+Waluta jest rozpoznawana z tekstu ceny. PLN zachowuje kwotę źródłową, EUR może zostać przeliczone stałą `EUR_PLN_RATE=4.30` i jest oznaczone jako estymacja, a USD i nieznane waluty pozostają bez ceny. Brak ceny jest `null`, nigdy nie oznacza zera. Wyszukiwanie CPU odrzuca oczywiste zestawy PC/bundle, jeśli tytuł zawiera wystarczające sygnały; nie jest to uniwersalne dopasowanie kategorii.
+
+Wyniki są kandydatami i nie są automatycznie przypisywane do modelu katalogowego. Link jest używany tylko po walidacji HTTPS, bez poświadczeń, parametrów kluczy ani linków do SerpAPI. Brak klucza daje `503 source_not_configured`, limit dostawcy `429 rate_limited`, timeout `504 upstream_timeout`, a inny błąd lub niepoprawna odpowiedź dostawcy sanitizowany `502`. Cache jest ograniczony do procesu, 100 wpisów i TTL jednej godziny.
