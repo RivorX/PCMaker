@@ -17,6 +17,11 @@ query ListComponents($type: String) @auth(level: PUBLIC, insecureReason: "Public
     price
     performanceScore
     productUrl
+    specifications: componentSpecifications_on_component {
+      id
+      specificationName
+      specificationValue
+    }
   }
 }
 
@@ -32,6 +37,11 @@ query GetComponentById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Publicl
     price
     performanceScore
     productUrl
+    specifications: componentSpecifications_on_component {
+      id
+      specificationName
+      specificationValue
+    }
   }
 }
 

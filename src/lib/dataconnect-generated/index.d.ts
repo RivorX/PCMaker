@@ -131,6 +131,11 @@ export interface GetComponentByIdData {
     price: number;
     performanceScore?: number | null;
     productUrl?: string | null;
+    specifications: ({
+      id: UUIDString;
+      specificationName: string;
+      specificationValue: string;
+    } & ComponentSpecification_Key)[];
   } & Component_Key;
 }
 
@@ -187,6 +192,11 @@ export interface ListComponentsData {
     price: number;
     performanceScore?: number | null;
     productUrl?: string | null;
+    specifications: ({
+      id: UUIDString;
+      specificationName: string;
+      specificationValue: string;
+    } & ComponentSpecification_Key)[];
   } & Component_Key)[];
 }
 
