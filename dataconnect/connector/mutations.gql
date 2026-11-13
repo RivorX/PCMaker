@@ -9,6 +9,10 @@ mutation CreateUser(
   $email: String!
   $password: String!
   $phone: String
+  $role: String
+    @retired(
+      reason: "Role is no longer provided by the client. Registration always creates a CLIENT account; assigning ADMIN requires a separate administrative operation performed on the server side."
+    )
 ) @auth(level: PUBLIC, insecureReason: "Public registration operation.") {
   user_insert(
     data: {
