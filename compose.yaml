@@ -7,5 +7,14 @@ services:
     container_name: pcmaker
     env_file:
       - .env.local
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase-admin.json
     ports:
       - "3000:3000"
+    secrets:
+      - source: firebase_admin
+        target: firebase-admin.json
+
+secrets:
+  firebase_admin:
+    file: ./secrets/firebase-admin.json

@@ -21,6 +21,21 @@ docker compose up -d --build
 
 Później: **Docker Desktop → Containers → pcmaker → ▶ Start / ■ Stop**. Po zmianach w kodzie powtórz komendę powyżej.
 
+### Lokalne poświadczenia Firebase Admin SDK
+
+Logowanie korzysta po stronie serwera z Firebase Admin SDK. Każdy członek
+zespołu powinien pobrać własny klucz konta usługi Firebase i zapisać go lokalnie
+jako `secrets/firebase-admin.json`. Katalog i pliki JSON w nim są ignorowane
+przez Git oraz wykluczone z obrazu Dockera. Podczas uruchomienia Docker Compose
+montuje plik wyłącznie jako sekret wewnątrz kontenera.
+
+Do uruchomienia bez Dockera ustaw w `.env.local`:
+
+```env
+GOOGLE_APPLICATION_CREDENTIALS="./secrets/firebase-admin.json"
+FIREBASE_PROJECT_ID="pcmaker-b0b0a"
+```
+
 ---
 
 **ALBO**
