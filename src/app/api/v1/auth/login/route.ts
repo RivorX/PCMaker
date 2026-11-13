@@ -5,9 +5,17 @@ import {
   SESSION_DURATION,
   type UserRole,
 } from "@/lib/auth";
-import { getUserByEmail } from "@pcmaker/dataconnect";
-import { dataConnect } from "@/lib/firebase";
+import { adminDataConnect } from "@/lib/firebase-admin";
 import bcrypt from "bcryptjs";
+
+type GetUserByEmailData = {
+  users: Array<{
+    email: string;
+    password: string;
+    role: string;
+    isActive: boolean;
+  }>;
+};
 
 export async function POST(request: Request) {
   if (!process.env.SESSION_SECRET) {
@@ -60,9 +68,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { data: queryData } = await getUserByEmail(dataConnect, {
-      email: identifier.toLowerCase(),
-    });
+    const { data: queryData } =
+      await adminDataConnect.executeQuery<
+        GetUserByEmailData,
+        { email: string }
+      >("GetUserByEmail", { email: identifier.toLowerCase() });
 
     const user = queryData.users?.[0];
 
