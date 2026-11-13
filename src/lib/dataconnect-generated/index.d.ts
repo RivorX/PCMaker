@@ -118,7 +118,6 @@ export interface CreateUserVariables {
   email: string;
   password: string;
   phone?: string | null;
-  role?: UserRole | null;
 }
 
 export interface GetComponentByIdData {

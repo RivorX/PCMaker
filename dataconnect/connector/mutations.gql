@@ -9,7 +9,6 @@ mutation CreateUser(
   $email: String!
   $password: String!
   $phone: String
-  $role: UserRole = CLIENT
 ) @auth(level: PUBLIC, insecureReason: "Public registration operation.") {
   user_insert(
     data: {
@@ -18,12 +17,17 @@ mutation CreateUser(
       email: $email
       password: $password
       phone: $phone
-      role: $role
+      # Rola nie pochodzi z danych przesłanych przez klienta. Rejestracja
+      # zawsze tworzy konto CLIENT; nadanie ADMIN wymaga osobnej operacji
+      # administracyjnej wykonywanej po stronie serwera.
+      role: CLIENT
     }
   )
 }
 
-# Utworzenie nowego zgłoszenia serwisowego
+# Utworzenie nowego zgłoszenia serwisowego.
+# Przekazany clientId nie może być podstawą autoryzacji, dlatego operacja jest
+# zablokowana dla SDK klienta do czasu migracji na auth.uid.
 mutation CreateServiceTicket(
   $ticketNumber: String!
   $clientId: UUID!
@@ -33,7 +37,7 @@ mutation CreateServiceTicket(
   $deviceName: String
   $deviceSerialNumber: String
   $priority: TicketPriority = NORMAL
-) @auth(level: PUBLIC, insecureReason: "Public ticket submission.") {
+) @auth(level: NO_ACCESS) {
   serviceTicket_insert(
     data: {
       ticketNumber: $ticketNumber
@@ -48,13 +52,14 @@ mutation CreateServiceTicket(
   )
 }
 
-# Dodanie komentarza do zgłoszenia serwisowego
+# Dodanie komentarza do zgłoszenia serwisowego. Wymaga sprawdzenia autora i
+# dostępu do zgłoszenia; authorId oraz isInternal nie mogą być danymi klienta.
 mutation AddTicketComment(
   $ticketId: UUID!
   $authorId: UUID!
   $content: String!
   $isInternal: Boolean = false
-) @auth(level: PUBLIC, insecureReason: "Public ticket comments.") {
+) @auth(level: NO_ACCESS) {
   ticketComment_insert(
     data: {
       ticketId: $ticketId
@@ -65,7 +70,7 @@ mutation AddTicketComment(
   )
 }
 
-# Zapis nowej konfiguracji PC
+# Zapis nowej konfiguracji PC. Wymaga powiązania właściciela z auth.uid.
 mutation CreatePcConfiguration(
   $userId: UUID!
   $name: String!
@@ -73,7 +78,7 @@ mutation CreatePcConfiguration(
   $totalPrice: Float = 0.0
   $estimatedPerformance: Float
   $isPublic: Boolean = false
-) @auth(level: PUBLIC, insecureReason: "Public PC config creation.") {
+) @auth(level: NO_ACCESS) {
   pcConfiguration_insert(
     data: {
       userId: $userId
@@ -86,14 +91,15 @@ mutation CreatePcConfiguration(
   )
 }
 
-# Dodanie wybranego komponentu do zestawu PC
+# Dodanie wybranego komponentu do zestawu PC. Operacja musi najpierw
+# sprawdzać, czy konfiguracja należy do zalogowanego użytkownika.
 mutation AddConfigurationComponent(
   $configurationId: UUID!
   $componentId: UUID!
   $quantity: Int = 1
   $priceAtSelection: Float!
   $isSelected: Boolean = true
-) @auth(level: PUBLIC, insecureReason: "Public adding component to config.") {
+) @auth(level: NO_ACCESS) {
   configurationComponent_insert(
     data: {
       configurationId: $configurationId

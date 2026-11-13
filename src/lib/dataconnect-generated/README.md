@@ -901,7 +901,6 @@ export interface CreateUserVariables {
   email: string;
   password: string;
   phone?: string | null;
-  role?: UserRole | null;
 }
 ```
 ### Return Type
@@ -926,14 +925,13 @@ const createUserVars: CreateUserVariables = {
   email: ..., 
   password: ..., 
   phone: ..., // optional
-  role: ..., // optional
 };
 
 // Call the `createUser()` function to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await createUser(createUserVars);
 // Variables can be defined inline as well.
-const { data } = await createUser({ firstName: ..., lastName: ..., email: ..., password: ..., phone: ..., role: ..., });
+const { data } = await createUser({ firstName: ..., lastName: ..., email: ..., password: ..., phone: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -961,13 +959,12 @@ const createUserVars: CreateUserVariables = {
   email: ..., 
   password: ..., 
   phone: ..., // optional
-  role: ..., // optional
 };
 
 // Call the `createUserRef()` function to get a reference to the mutation.
 const ref = createUserRef(createUserVars);
 // Variables can be defined inline as well.
-const ref = createUserRef({ firstName: ..., lastName: ..., email: ..., password: ..., phone: ..., role: ..., });
+const ref = createUserRef({ firstName: ..., lastName: ..., email: ..., password: ..., phone: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
