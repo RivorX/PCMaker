@@ -117,7 +117,7 @@ export interface ListComponentsData {
     model?: string | null;
     componentType: string;
     description?: string | null;
-    price: number;
+    price?: number | null;
     performanceScore?: number | null;
     productUrl?: string | null;
     specifications: ({
@@ -245,7 +245,7 @@ export interface GetComponentByIdData {
     model?: string | null;
     componentType: string;
     description?: string | null;
-    price: number;
+    price?: number | null;
     performanceScore?: number | null;
     productUrl?: string | null;
     specifications: ({

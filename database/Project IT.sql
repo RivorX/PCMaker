@@ -75,7 +75,7 @@ CREATE TABLE `components` (
   `model` VARCHAR(150),
   `component_type` VARCHAR(255) NOT NULL,
   `description` TEXT,
-  `price` DECIMAL(10,2) NOT NULL,
+  `price` DECIMAL(10,2),
   `performance_score` DECIMAL(8,2),
   `product_url` VARCHAR(500)
 );

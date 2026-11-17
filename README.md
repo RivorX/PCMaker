@@ -49,6 +49,23 @@ npm install
 npm run dev
 ```
 
+## Wymagana aktualizacja bezpieczeństwa Next.js
+
+Projekt korzysta z **Next.js 16.4.6**. Po pobraniu zmian z gałęzi wykonaj
+`npm install`, aby lokalne zależności były zgodne z `package-lock.json`, a
+następnie uruchom `npm run typecheck` i `npm run build`.
+
+Nie cofaj wersji Next.js w `package.json` ani nie pomijaj aktualizacji
+lockfile'a. Gdy Next.js wyświetli komunikat o aktualizacji bezpieczeństwa,
+zaktualizuj projekt razem z lockfile'em i sprawdź build przed wysłaniem zmian.
+
+```bash
+npx next upgrade
+npm install
+npm run typecheck
+npm run build
+```
+
 ## Struktura pierwszego przyrostu
 
 ```text
