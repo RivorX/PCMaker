@@ -12,6 +12,7 @@
     "test:catalog": "node --experimental-strip-types --test tests/userbenchmark.test.mjs tests/catalog.test.mjs tests/firebase-catalog.test.mjs tests/firebase-import-preview.test.mjs tests/userbenchmark-batch.test.mjs tests/serpapi.test.mjs"
   },
   "dependencies": {
+    "@pcmaker/dataconnect": "file:src/lib/dataconnect-generated",
     "firebase": "^13.1.0",
     "jose": "^6.2.13",
     "next": "16.4.2",
