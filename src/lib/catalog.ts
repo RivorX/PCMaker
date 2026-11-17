@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import sampleData from "../data/components.sample.json" with { type: "json" };
 import type { CatalogComponent, ComponentCategory } from "../types/catalog";
 import { getFirebaseCatalogSnapshot } from "./firebase-catalog.ts";
+import { supplementFirebaseCpuSpecifications } from "./cpu-specifications.ts";
 
 const COMPONENT_CATEGORIES = [
   "cpu", "gpu", "motherboard", "memory", "storage", "psu", "case", "cooling",
@@ -57,6 +58,13 @@ const validComponent = (value: unknown): value is CatalogComponent => {
   if (!["name", "manufacturer", "model", "description", "currency"].every((key) => isString(value[key]))) return false;
   if (value.currency !== "PLN" || !isRecord(value.specifications)) return false;
   if (!Object.entries(value.specifications).every(([key, spec]) => key.length > 0 && key.length <= 100 && isString(spec) && spec.length <= 255)) return false;
+  if (value.specificationProvenance !== undefined) {
+    if (!isRecord(value.specificationProvenance) || !Object.entries(value.specificationProvenance).every(([key, provenance]) => {
+      if (key.length === 0 || key.length > 100 || !isRecord(provenance)) return false;
+      return isString(provenance.sourceLabel) && provenance.sourceLabel.length <= 160
+        && isString(provenance.sourceUrl) && safeHttpsUrl(provenance.sourceUrl, undefined);
+    })) return false;
+  }
   if (!isNullableNumber(value.performanceScore) || !isNullableNumber(value.price) || (value.price !== null && value.price < 0)) return false;
   if (!isRecord(value.source) || !isString(value.source.label) || !isString(value.source.capturedAt)) return false;
   if (!(value.source.kind === "sample" || value.source.kind === "external" || value.source.kind === "database")) return false;
@@ -128,7 +136,7 @@ export const getCatalogDatasetAsync = async (): Promise<CatalogDataset> => {
   try {
     const snapshot = await getFirebaseCatalogSnapshot();
     return {
-      components: snapshot.components,
+      components: supplementFirebaseCpuSpecifications(snapshot.components),
       source: "database",
       provider: "firebase-sql-connect",
     };

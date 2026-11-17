@@ -19,6 +19,11 @@ export interface CatalogSource {
   provider?: string;
 }
 
+export interface CatalogSpecificationProvenance {
+  sourceLabel: string;
+  sourceUrl: string;
+}
+
 export interface CatalogComponent {
   id: string;
   category: ComponentCategory;
@@ -27,6 +32,8 @@ export interface CatalogComponent {
   model: string;
   description: string;
   specifications: Record<string, string>;
+  buildCoresSourceUrl?: string;
+  specificationProvenance?: Record<string, CatalogSpecificationProvenance>;
   performanceScore: number | null;
   price: number | null;
   currency: "PLN";

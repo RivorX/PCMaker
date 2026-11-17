@@ -241,6 +241,8 @@ label input::placeholder, label textarea::placeholder { color: #b3bec8; }
 .catalog-detail dl div { display: flex; justify-content: space-between; gap: 12px; font-size: 10px; }
 .catalog-detail dt { color: var(--muted); }
 .catalog-detail dd { margin: 0; color: var(--ink); font-weight: 700; text-align: right; }
+.catalog-spec-source { display: block; margin-top: 4px; color: var(--muted); font-size: 8px; font-weight: 400; }
+.catalog-spec-source a { color: inherit; text-decoration: underline; }
 .catalog-detail-note { display: grid; gap: 6px; margin-top: 22px; padding: 12px; border-radius: 6px; background: var(--amber-pale); color: #99743e; font-size: 10px; line-height: 1.45; }
 .catalog-detail-note strong { color: #896327; }
 .catalog-detail-empty { margin-top: 25px; padding: 16px; border: 1px dashed #d3dfe4; border-radius: 6px; color: var(--muted); font-size: 10px; line-height: 1.55; }

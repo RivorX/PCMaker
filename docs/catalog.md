@@ -48,6 +48,21 @@ npm run import:firebase-admin -- --apply --batch-size 25
 
 CLI ładuje lokalne zmienne przez Next, używa ADC i czyta istniejące `Component` w stronach do 500 rekordów, z ustaloną kolejnością `id`. Przed zapisem ponownie generuje preview z oryginalnego snapshotu; nie ufa ręcznie edytowanemu preview. `--apply` jest wymagane do insertów, `--limit 1` służy do pilota, a `--batch-size` ogranicza porcję (maksymalnie 50). Operacja używa wyłącznie `insertMany` dla tabeli `Component`: nie wykonuje UPSERT, nie nadpisuje istniejących metadanych/cen/specyfikacji i nie zapisuje obecnie manifestu specyfikacji do drugiej tabeli. Specyfikacje są tylko bezpiecznie odczytywane przez katalog publiczny/admin query. Konflikt ID lub pary `manufacturer/model` blokuje zapis przed pierwszą mutacją. Raport `.local/catalog/firebase-admin-import.report.json` jest zapisywany przed i po każdej potwierdzonej porcji; błąd zatrzymuje import, a ponowne uruchomienie ponownie wykonuje preflight i pomija już istniejące rekordy.
 
+### Import specyfikacji BuildCores OpenDB
+
+W Firebase uzupełniono 1030 istniejących części o 4894 wartości specyfikacji i 1030 wpisów z odnośnikami do źródła. Ponowny odczyt potwierdził wszystkie wartości i odnośniki. Dane przeszły normalizację, a katalog pokazuje źródło i licencję w szczegółach części.
+
+Z pierwotnego katalogu usunięto 3548 rekordów bez specyfikacji i powiązań. Po operacji w bazie pozostało dokładnie 1030 części. Pełne dane usuniętych rekordów są w lokalnym pliku `.local/catalog/firebase-buildcores-cleanup-preview.json`, a wynik kontroli w `.local/catalog/firebase-buildcores-cleanup-result.json`.
+
+Lokalny `npm run import:buildcores-specs` jest domyślnie dry-runem. Czyta przypięte raporty pokrycia, snapshot UserBenchmark i lokalne archiwum `opendb-c9002fe308396c780d8a378cc93c10d85b215b8b.zip`, sprawdza hash snapshotu i archiwum oraz planuje wyłącznie dodatkowe rekordy `ComponentSpecification`. Zweryfikowane wejście daje 1030 unikalnych, dokładnie powiązanych komponentów (260 z MPN i 7 dodatkowych CPU po modelu, 276 GPU, 52 RAM, 435 Storage); wartości pochodzą z przypiętego commita BuildCores `c9002fe308396c780d8a378cc93c10d85b215b8b`, licencja źródła to `CC BY-NC-SA 4.0`.
+
+```powershell
+npm run import:buildcores-specs
+npm run import:buildcores-specs -- --existing .\.local\catalog\firebase-existing-components.json
+```
+
+Raport trafia do `.local/catalog/buildcores-spec-import.report.json` i zawiera liczniki `add`, `keep`, `conflicts` oraz `deleteCandidates`. Import zachowuje istniejące wartości i dodaje jeden zarezerwowany wpis `BuildCores OpenDB` z przypiętym URL-em rekordu, gdy dodaje pola tego źródła. `--apply-specs` jest osobną, jawną ścieżką administracyjną wykonującą atomizowane porcje per komponent przez `insertMany("ComponentSpecification")`; nie jest uruchamiana w zwykłym dry-runie. Narzędzie nie wykonuje DELETE. Raport zaznacza, że cleanup wymaga osobnego preflightu wszystkich referencji (`ComponentSpecification`, `ComponentCompatibility`, `ConfigurationComponent` i `ComponentRecommendation`) oraz backupu pełnych pól.
+
 Aby lokalny serwer używał snapshotu jako źródła katalogu, ustaw po stronie serwera `CATALOG_DATA_FILE` na ścieżkę tego pliku i uruchom ponownie aplikację. Gdy zmienna nie jest ustawiona, endpoint korzysta z `components.sample.json`. Gdy jest ustawiona, ale plik jest niedostępny lub nie przejdzie walidacji, endpoint zwraca `503 catalog_unavailable` i nie przełącza się po cichu na zbiór przykładowy. Ścieżka nie jest zwracana klientowi.
 
 Snapshot nie modyfikuje bazy ani nie pobiera sieci podczas żądania. Dla aplikacji opisanej w README (Node 20+) importer/testy używają `node --experimental-strip-types`, dlatego wymagają Node 24+ albo wcześniejszego skompilowania pliku TypeScript.
@@ -56,7 +71,9 @@ Snapshot nie modyfikuje bazy ani nie pobiera sieci podczas żądania. Dla aplika
 
 Po ustawieniu `CATALOG_SOURCE=firebase` katalog wykonuje serwerowy, wyłącznie read-only request `ListCatalogPage` do Firebase Data Connect. Stały limit zapytania wynosi 500 rekordów, a adapter pobiera kolejne strony przez `offset` aż do krótszej strony. Klucz `NEXT_PUBLIC_FIREBASE_API_KEY` jest używany tylko w nagłówku backendowego requestu i nie jest zwracany w odpowiedzi. Odczyt ma ogólny limit czasu około 30 sekund, limit rozmiaru pojedynczej odpowiedzi i pamięć podręczną procesu przez 60 sekund; błąd dowolnej strony zwraca `503 catalog_unavailable` bez fallbacku ani częściowego cache. Puste, poprawne `data.components` jest poprawnym wynikiem.
 
-Mapowane są wyłącznie znane typy (`CPU`, `GPU`, `Motherboard`, `RAM`/`Memory`, `SSD`/`HDD`/`Storage`, `PSU`, `Case`, `Cooling`). Nieznany typ lub niepoprawny rekord powoduje `503`, zamiast cichego pominięcia. `specifications` pozostaje `{}`, a `price` i `performanceScore` są `null`, ponieważ kontrakt zapytania nie potwierdza waluty ani jednostek benchmarku. `source.kind` ma wartość `database`, a `source.provider` — `firebase-sql-connect`; `capturedAt` oznacza czas odczytu, nie czas aktualizacji rekordu w bazie.
+Mapowane są wyłącznie znane typy (`CPU`, `GPU`, `Motherboard`, `RAM`/`Memory`, `SSD`/`HDD`/`Storage`, `PSU`, `Case`, `Cooling`). Nieznany typ lub niepoprawny rekord powoduje `503`, zamiast cichego pominięcia. Bazowe `specifications` pochodzą wyłącznie z kontraktu zapytania, a `price` i `performanceScore` są `null`, ponieważ kontrakt nie potwierdza waluty ani jednostek benchmarku. `source.kind` ma wartość `database`, a `source.provider` — `firebase-sql-connect`; `capturedAt` oznacza czas odczytu, nie czas aktualizacji rekordu w bazie.
+
+Przy odczycie Firebase wykonywany jest dodatkowo mały, read-only pilotaż specyfikacji dla dokładnych par producent/model: `AMD Ryzen 7 7800X3D`, `AMD Ryzen 5 7600` oraz `Intel Core i5-14600K`. Wartości pochodzą ze stron producentów, a API/UI pokazują przy nich osobną informację o źródle. Pilotaż nie dopasowuje wariantów sąsiednich (`7800X`, `7600X`, `14600KF`), nie nadpisuje istniejącej specyfikacji z bazy i nie zmienia snapshotu ani danych Firebase. Rozszerzenie kolejnych modeli wymaga dodania jawnej pary producent/model, wartości i URL-a producenta w wersjonowanym module pilotażu oraz testu niezgodnego wariantu.
 
 Paginacja ma limit bezpieczeństwa 100 000 rekordów i sprawdza powtórzone lub nieuporządkowane ID. `meta.total` oznacza liczbę rekordów pełnego ukończonego snapshotu po filtrach; kolejność/offset nie daje migawkowej izolacji przy równoczesnych mutacjach bazy.
 

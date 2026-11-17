@@ -126,6 +126,9 @@ const mapComponent = (value: unknown, capturedAt: string): CatalogComponent => {
   const id = normalizeComponentId(textField(value.id, true, 255));
   const category = categoryFromValue(value.componentType);
   const sourceUrl = safeHttpsUrl(value.productUrl);
+  const specifications = mapSpecifications(value.specifications);
+  const buildCoresSourceUrl = specifications["BuildCores OpenDB"];
+  delete specifications["BuildCores OpenDB"];
   return {
     id,
     category,
@@ -133,7 +136,10 @@ const mapComponent = (value: unknown, capturedAt: string): CatalogComponent => {
     manufacturer: textField(value.manufacturer, false, 100),
     model: textField(value.model, false, 150),
     description: textField(value.description, false, 10_000),
-    specifications: mapSpecifications(value.specifications),
+    specifications,
+    ...(/^https:\/\/github\.com\/buildcores\/buildcores-open-db\/blob\/[0-9a-f]{40}\/open-db\/(CPU|GPU|RAM|Storage)\/[0-9a-f-]{36}\.json$/.test(buildCoresSourceUrl ?? "")
+      ? { buildCoresSourceUrl }
+      : {}),
     // Data Connect currently exposes no currency contract for this column.
     // Keep the nullable values honest instead of treating the Float as PLN.
     price: null,

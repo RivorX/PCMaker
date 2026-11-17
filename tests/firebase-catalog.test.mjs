@@ -86,6 +86,7 @@ test("maps Firebase records and canonical category aliases without inventing dat
 test("maps validated specifications and rejects duplicate or prototype keys", async () => {
   await withFirebaseEnv(async () => {
     const previousFetch = globalThis.fetch;
+    const buildCoresUrl = "https://github.com/buildcores/buildcores-open-db/blob/c9002fe308396c780d8a378cc93c10d85b215b8b/open-db/CPU/00000000-0000-4000-8000-000000000001.json";
     resetFirebaseCatalogCache();
     globalThis.fetch = async () => jsonResponse({ data: { components: [{
       id: "cpu-spec",
@@ -94,11 +95,13 @@ test("maps validated specifications and rejects duplicate or prototype keys", as
       specifications: [
         { specificationName: "socket", specificationValue: "AM5" },
         { specificationName: "cores", specificationValue: "8" },
+        { specificationName: "BuildCores OpenDB", specificationValue: buildCoresUrl },
       ],
     }] } });
     try {
       const snapshot = await getFirebaseCatalogSnapshot();
       assert.deepEqual(snapshot.components[0].specifications, { socket: "AM5", cores: "8" });
+      assert.equal(snapshot.components[0].buildCoresSourceUrl, buildCoresUrl);
       assert.equal(Object.prototype.polluted, undefined);
     } finally {
       globalThis.fetch = previousFetch;

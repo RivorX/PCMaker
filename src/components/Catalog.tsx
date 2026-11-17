@@ -22,6 +22,55 @@ const moneyLabel = (item: SerpApiShoppingResult): string => {
   return amount ? new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(amount.amountCents / 100) : "Cena niedostępna";
 };
 
+const specificationLabels: Record<string, string> = {
+  socket: "Socket",
+  memoryType: "Typ pamięci",
+  cores: "Rdzenie",
+  threads: "Wątki",
+  tdp: "TDP",
+  memoryGB: "Pamięć karty",
+  lengthMM: "Długość",
+  slotWidth: "Liczba zajmowanych slotów",
+  interface: "Interfejs",
+  powerConnectors: "Złącza zasilania",
+  capacityGB: "Pojemność",
+  modules: "Liczba modułów",
+  speed: "Szybkość",
+  formFactor: "Format",
+  storageType: "Rodzaj dysku",
+};
+
+const specificationLabel = (key: string) => Object.hasOwn(specificationLabels, key) ? specificationLabels[key] : key;
+
+const specificationRows = (component: CatalogComponent) => Object.entries(component.specifications).map(([key, value]) => {
+  const provenance = component.specificationProvenance?.[key];
+  return (
+    <div key={key}>
+      <dt>{specificationLabel(key)}</dt>
+      <dd>
+        {value}
+        {provenance && (
+          <small className="catalog-spec-source">
+            Źródło: <a href={provenance.sourceUrl} target="_blank" rel="noreferrer">{provenance.sourceLabel}</a>
+          </small>
+        )}
+      </dd>
+    </div>
+  );
+});
+
+const buildCoresAttribution = (sourceUrl?: string) => {
+  if (typeof sourceUrl !== "string" || !sourceUrl.startsWith("https://github.com/buildcores/buildcores-open-db/blob/")) return null;
+  return (
+    <p className="catalog-detail-description">
+      Specyfikacje uzupełniono na podstawie danych{" "}
+      <a href={sourceUrl} target="_blank" rel="noreferrer">BuildCores OpenDB</a>.
+      Wybrane pola przetłumaczono i ujednolicono.{" "}
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noreferrer">CC BY-NC-SA 4.0</a>.
+    </p>
+  );
+};
+
 export default function Catalog() {
   const [items, setItems] = useState<CatalogComponent[]>([]);
   const [query, setQuery] = useState("");
@@ -175,10 +224,10 @@ export default function Catalog() {
           {loading && <div className="card catalog-message">Ładowanie katalogu…</div>}
           {error && <div className="card catalog-message error" role="alert">{error}</div>}
           {!loading && !error && items.length === 0 && <div className="card catalog-message">{source === "database" && total === 0 ? "Zapytanie do bazy nie zwróciło podzespołów" : "Nie znaleziono podzespołów dla tych filtrów."}</div>}
-          {!loading && !error && items.map((item) => <button className={`catalog-item card ${selected?.id === item.id ? "selected" : ""}`} key={item.id} type="button" onClick={() => setSelected(item)}><span className="catalog-type-icon">{item.category.slice(0, 3).toUpperCase()}</span><span className="catalog-item-copy"><strong>{item.name}</strong><small>{categoryLabels[item.category]} · {item.manufacturer}</small><span className="catalog-specs">{Object.entries(item.specifications).length > 0 ? Object.entries(item.specifications).slice(0, 3).map(([key, value]) => <em key={key}>{key}: {value}</em>) : <em>specyfikacje niedostępne</em>}</span></span><span className="catalog-price">{item.price === null ? "brak ceny" : `${item.price.toFixed(2)} ${item.currency}`}<small>źródło: {item.source.kind}</small></span></button>)}
+          {!loading && !error && items.map((item) => <button className={`catalog-item card ${selected?.id === item.id ? "selected" : ""}`} key={item.id} type="button" onClick={() => setSelected(item)}><span className="catalog-type-icon">{item.category.slice(0, 3).toUpperCase()}</span><span className="catalog-item-copy"><strong>{item.name}</strong><small>{categoryLabels[item.category]} · {item.manufacturer}</small><span className="catalog-specs">{Object.entries(item.specifications).length > 0 ? Object.entries(item.specifications).slice(0, 3).map(([key, value]) => <em key={key}>{specificationLabel(key)}: {value}</em>) : <em>specyfikacje niedostępne</em>}</span></span><span className="catalog-price">{item.price === null ? "brak ceny" : `${item.price.toFixed(2)} ${item.currency}`}<small>źródło: {item.source.kind}</small></span></button>)}
           <div className="catalog-pagination"><button className="text-button" disabled={page <= 1} type="button" onClick={() => setPage((value) => value - 1)}>← Poprzednia</button><span>Strona {page} z {pages}</span><button className="text-button" disabled={page >= pages} type="button" onClick={() => setPage((value) => value + 1)}>Następna →</button></div>
         </section>
-        <aside className="catalog-detail card">{selected ? <><span className="section-kicker">SZCZEGÓŁY REKORDU</span><h2>{selected.name}</h2><p className="catalog-detail-description">{selected.description}</p>{Object.entries(selected.specifications).length > 0 ? <dl>{Object.entries(selected.specifications).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl> : <div className="catalog-detail-empty">Specyfikacje są niedostępne w tym źródle.</div>}<div className="catalog-detail-note"><strong>Cena katalogowa niedostępna</strong><span>To opis modelu bez automatycznego przypisywania ceny z podobnej oferty.</span></div>{selected.category === "cpu" && <div className="catalog-auto-offers"><span className="section-kicker">AUTOMATYCZNE DOPASOWANIE</span><h3>Oferty tego modelu</h3><p className="catalog-detail-description">Oferty dopasowane po nazwie. Sprawdź model i wariant przed zakupem.</p>{selectedAutoOfferStatus === "loading" && <div className="catalog-detail-empty">Sprawdzam oferty…</div>}{selectedAutoOfferStatus === "error" && <div className="catalog-message error" role="alert">{autoOfferError}</div>}{selectedAutoOfferStatus === "unsupported" && <div className="catalog-detail-empty">Ten model nie jest jeszcze obsługiwany przez automatyczne dopasowanie.</div>}{selectedAutoOfferStatus === "no_matches" && <div className="catalog-detail-empty">Nie znaleziono ofert z pasującą nazwą modelu.</div>}{autoOfferComponentId === selected.id && autoOfferCandidates.length > 0 && <div className="offer-candidates">{autoOfferCandidates.map((candidate) => <article className="offer-candidate" key={JSON.stringify([candidate.providerProductId ?? candidate.title, candidate.source, candidate.price.original])}><div><strong>{candidate.title}</strong><small>{candidate.source ?? "Sklep nieznany"}{candidate.sponsored ? " · sponsorowane" : ""}</small></div><div className="offer-candidate-actions"><span className="offer-result-price">{moneyLabel(candidate)}<small>Cena orientacyjna, może się różnić</small></span>{candidate.link && <a className="text-button" href={candidate.link} target="_blank" rel="noreferrer">Zobacz ofertę ↗</a>}</div></article>)}</div>}</div>}</> : <><span className="section-kicker">SZCZEGÓŁY REKORDU</span><h2>Wybierz element</h2><p className="catalog-detail-description">Kliknij rekord, aby zobaczyć znane specyfikacje i pochodzenie danych.</p><div className="catalog-detail-empty">Wybierz procesor, aby automatycznie wyszukać jego oferty.</div></>}</aside>
+        <aside className="catalog-detail card">{selected ? <><span className="section-kicker">SZCZEGÓŁY REKORDU</span><h2>{selected.name}</h2><p className="catalog-detail-description">{selected.description}</p>{Object.entries(selected.specifications).length > 0 ? <><dl>{specificationRows(selected)}</dl>{buildCoresAttribution(selected.buildCoresSourceUrl)}</> : <div className="catalog-detail-empty">Specyfikacje są niedostępne w tym źródle.</div>}<div className="catalog-detail-note"><strong>Cena katalogowa niedostępna</strong><span>To opis modelu bez automatycznego przypisywania ceny z podobnej oferty.</span></div>{selected.category === "cpu" && <div className="catalog-auto-offers"><span className="section-kicker">AUTOMATYCZNE DOPASOWANIE</span><h3>Oferty tego modelu</h3><p className="catalog-detail-description">Oferty dopasowane po nazwie. Sprawdź model i wariant przed zakupem.</p>{selectedAutoOfferStatus === "loading" && <div className="catalog-detail-empty">Sprawdzam oferty…</div>}{selectedAutoOfferStatus === "error" && <div className="catalog-message error" role="alert">{autoOfferError}</div>}{selectedAutoOfferStatus === "unsupported" && <div className="catalog-detail-empty">Ten model nie jest jeszcze obsługiwany przez automatyczne dopasowanie.</div>}{selectedAutoOfferStatus === "no_matches" && <div className="catalog-detail-empty">Nie znaleziono ofert z pasującą nazwą modelu.</div>}{autoOfferComponentId === selected.id && autoOfferCandidates.length > 0 && <div className="offer-candidates">{autoOfferCandidates.map((candidate) => <article className="offer-candidate" key={JSON.stringify([candidate.providerProductId ?? candidate.title, candidate.source, candidate.price.original])}><div><strong>{candidate.title}</strong><small>{candidate.source ?? "Sklep nieznany"}{candidate.sponsored ? " · sponsorowane" : ""}</small></div><div className="offer-candidate-actions"><span className="offer-result-price">{moneyLabel(candidate)}<small>Cena orientacyjna, może się różnić</small></span>{candidate.link && <a className="text-button" href={candidate.link} target="_blank" rel="noreferrer">Zobacz ofertę ↗</a>}</div></article>)}</div>}</div>}</> : <><span className="section-kicker">SZCZEGÓŁY REKORDU</span><h2>Wybierz element</h2><p className="catalog-detail-description">Kliknij rekord, aby zobaczyć znane specyfikacje i pochodzenie danych.</p><div className="catalog-detail-empty">Wybierz procesor, aby automatycznie wyszukać jego oferty.</div></>}</aside>
       </div>
       <section className="offer-lookup card">
         <div>
