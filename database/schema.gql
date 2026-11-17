@@ -124,7 +124,9 @@ type Component @table(name: "components")
   model: String @col(name: "model", dataType: "varchar(150)")
   componentType: String! @index @col(name: "component_type", dataType: "varchar(255)")
   description: String
-  price: Float! @col(name: "price", dataType: "decimal(10,2)")
+  # Katalog może zawierać komponent bez aktualnej oferty. Cena jest wtedy
+  # nieznana, a nie sztucznie ustawiana na 0.
+  price: Float @col(name: "price", dataType: "decimal(10,2)")
   performanceScore: Float @col(name: "performance_score", dataType: "decimal(8,2)")
   productUrl: String @col(name: "product_url", dataType: "varchar(500)")
 }

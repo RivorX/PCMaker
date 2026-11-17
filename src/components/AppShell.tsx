@@ -40,7 +40,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
         setIsAdminSession(
           data?.authenticated === true &&
-          data?.user?.role === "admin"
+          data?.user?.role === "ADMIN"
         );
       })
       .catch(() => {

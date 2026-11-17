@@ -21,6 +21,21 @@ docker compose up -d --build
 
 Później: **Docker Desktop → Containers → pcmaker → ▶ Start / ■ Stop**. Po zmianach w kodzie powtórz komendę powyżej.
 
+### Lokalne poświadczenia Firebase Admin SDK
+
+Logowanie korzysta po stronie serwera z Firebase Admin SDK. Każdy członek
+zespołu powinien pobrać własny klucz konta usługi Firebase i zapisać go lokalnie
+jako `secrets/firebase-admin.json`. Katalog i pliki JSON w nim są ignorowane
+przez Git oraz wykluczone z obrazu Dockera. Podczas uruchomienia Docker Compose
+montuje plik wyłącznie jako sekret wewnątrz kontenera.
+
+Do uruchomienia bez Dockera ustaw w `.env.local`:
+
+```env
+GOOGLE_APPLICATION_CREDENTIALS="./secrets/firebase-admin.json"
+FIREBASE_PROJECT_ID="pcmaker-b0b0a"
+```
+
 ---
 
 **ALBO**
@@ -32,6 +47,23 @@ Wymagany **Node.js 20.9+**.
 ```bash
 npm install
 npm run dev
+```
+
+## Wymagana aktualizacja bezpieczeństwa Next.js
+
+Projekt korzysta z **Next.js 16.4.6**. Po pobraniu zmian z gałęzi wykonaj
+`npm install`, aby lokalne zależności były zgodne z `package-lock.json`, a
+następnie uruchom `npm run typecheck` i `npm run build`.
+
+Nie cofaj wersji Next.js w `package.json` ani nie pomijaj aktualizacji
+lockfile'a. Gdy Next.js wyświetli komunikat o aktualizacji bezpieczeństwa,
+zaktualizuj projekt razem z lockfile'em i sprawdź build przed wysłaniem zmian.
+
+```bash
+npx next upgrade
+npm install
+npm run typecheck
+npm run build
 ```
 
 ## Struktura pierwszego przyrostu
