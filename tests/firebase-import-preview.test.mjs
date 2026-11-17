@@ -52,8 +52,8 @@ test("prepares GraphQL-shaped fields with stable UUIDs and separate provenance",
   assert.deepEqual(preview.manifest[0].specifications, { socket: "AM5" });
   assert.equal(preview.manifest[0].sourceMetrics.benchmark, 123);
   assert.equal(preview.blockers.length, 2);
-  assert.match(preview.blockers.join("\n"), /Component\.price/);
-  assert.match(preview.blockers.join("\n"), /No approved catalog-write operation/);
+  assert.match(preview.blockers.join("\n"), /not a write request/);
+  assert.match(preview.blockers.join("\n"), /insert-only/);
 });
 
 test("uses deterministic UUID identity and validates malformed or negative input", () => {

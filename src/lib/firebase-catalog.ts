@@ -93,9 +93,35 @@ const categoryFromValue = (value: unknown): ComponentCategory => {
   return category;
 };
 
+const normalizeComponentId = (value: string): string => {
+  const normalized = value.trim();
+  if (/^[0-9a-f]{32}$/i.test(normalized)) {
+    const lower = normalized.toLowerCase();
+    return `${lower.slice(0, 8)}-${lower.slice(8, 12)}-${lower.slice(12, 16)}-${lower.slice(16, 20)}-${lower.slice(20)}`;
+  }
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalized)) return normalized.toLowerCase();
+  return value;
+};
+
+const mapSpecifications = (value: unknown): Record<string, string> => {
+  if (value === undefined) return {};
+  if (!Array.isArray(value)) throw new FirebaseCatalogUnavailableError();
+  const specifications: Record<string, string> = {};
+  for (const entry of value) {
+    if (!isRecord(entry)) throw new FirebaseCatalogUnavailableError();
+    const name = textField(entry.specificationName, true, 100);
+    const specificationValue = textField(entry.specificationValue, true, 255);
+    if (name === "__proto__" || name === "prototype" || name === "constructor" || Object.prototype.hasOwnProperty.call(specifications, name)) {
+      throw new FirebaseCatalogUnavailableError();
+    }
+    specifications[name] = specificationValue;
+  }
+  return specifications;
+};
+
 const mapComponent = (value: unknown, capturedAt: string): CatalogComponent => {
   if (!isRecord(value)) throw new FirebaseCatalogUnavailableError();
-  const id = textField(value.id, true, 255);
+  const id = normalizeComponentId(textField(value.id, true, 255));
   const category = categoryFromValue(value.componentType);
   const sourceUrl = safeHttpsUrl(value.productUrl);
   return {
@@ -105,7 +131,7 @@ const mapComponent = (value: unknown, capturedAt: string): CatalogComponent => {
     manufacturer: textField(value.manufacturer, false, 100),
     model: textField(value.model, false, 150),
     description: textField(value.description, false, 10_000),
-    specifications: {},
+    specifications: mapSpecifications(value.specifications),
     // Data Connect currently exposes no currency contract for this column.
     // Keep the nullable values honest instead of treating the Float as PLN.
     price: null,

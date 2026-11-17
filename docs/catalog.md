@@ -34,7 +34,19 @@ node --experimental-strip-types scripts/prepare-firebase-catalog.mjs .\\data\\us
 
 Narzędzie przyjmuje wyłącznie snapshot `version: 1` z tablicą `components` (czyli wynik importera, a nie surowy alternatywny format `components.sample.json`). Zapisuje domyślnie `.local/catalog/firebase-import.preview.json`, tworzy katalog wyjściowy i ustawia `readyToWrite: false`. Podgląd zawiera wyłącznie pola `Component`, ceny i wyniki wydajności pozostawia jako `null`, a źródłową tożsamość, czas i metryki zachowuje w osobnym `manifest`. Identyfikatory są deterministycznymi UUID opartymi o `sourceIdentity` albo istniejące ID katalogu, więc ponowienie przygotowania nie losuje nowych rekordów. Błędne rekordy, nieznane kategorie, duplikaty ID oraz powtórzone pary `manufacturer`/`model` kończą się błędem zamiast cichego nadpisania.
 
-Podgląd jest celowo zablokowany: obecny schemat wymaga nie-null `Component.price`, a repozytorium nie ma zatwierdzonej operacji zapisu katalogu. Skrypt nie wykonuje sieci, SQL ani mutacji Firebase. Aby obejrzeć snapshot lokalnie, ustaw `CATALOG_SOURCE=file` i `CATALOG_DATA_FILE` na jego ścieżkę; po zakończeniu lokalnego sprawdzenia przywróć `CATALOG_SOURCE=firebase`. Pliki `.local/`, wygenerowany snapshot oraz rozpoznawalne surowe CSV UserBenchmark i pliki service-account są ignorowane przez Git, ale katalog `data/` jako całość pozostaje śledzony.
+Podgląd pozostaje opisowy i ma `readyToWrite: false`; nie jest żądaniem zapisu. Jawny CLI administracyjny może wykonać wyłącznie kontrolowane inserty po ponownym odczycie istniejących rekordów, bez nadpisywania metadanych, cen i specyfikacji. Sam generator podglądu nie wykonuje sieci, SQL ani mutacji Firebase. Aby obejrzeć snapshot lokalnie, ustaw `CATALOG_SOURCE=file` i `CATALOG_DATA_FILE` na jego ścieżkę; po zakończeniu lokalnego sprawdzenia przywróć `CATALOG_SOURCE=firebase`. Pliki `.local/`, wygenerowany snapshot oraz rozpoznawalne surowe CSV UserBenchmark i pliki service-account są ignorowane przez Git, ale katalog `data/` jako całość pozostaje śledzony.
+
+### Jawny import administracyjny
+
+Import do Firebase jest osobnym, serwerowym CLI i domyślnie wykonuje tylko plan odczytowy:
+
+```bash
+npm run import:firebase-admin -- --limit 1
+npm run import:firebase-admin -- --apply --limit 1 --batch-size 25
+npm run import:firebase-admin -- --apply --batch-size 25
+```
+
+CLI ładuje lokalne zmienne przez Next, używa ADC i czyta istniejące `Component` w stronach do 500 rekordów, z ustaloną kolejnością `id`. Przed zapisem ponownie generuje preview z oryginalnego snapshotu; nie ufa ręcznie edytowanemu preview. `--apply` jest wymagane do insertów, `--limit 1` służy do pilota, a `--batch-size` ogranicza porcję (maksymalnie 50). Operacja używa wyłącznie `insertMany` dla tabeli `Component`: nie wykonuje UPSERT, nie nadpisuje istniejących metadanych/cen/specyfikacji i nie zapisuje obecnie manifestu specyfikacji do drugiej tabeli. Specyfikacje są tylko bezpiecznie odczytywane przez katalog publiczny/admin query. Konflikt ID lub pary `manufacturer/model` blokuje zapis przed pierwszą mutacją. Raport `.local/catalog/firebase-admin-import.report.json` jest zapisywany przed i po każdej potwierdzonej porcji; błąd zatrzymuje import, a ponowne uruchomienie ponownie wykonuje preflight i pomija już istniejące rekordy.
 
 Aby lokalny serwer używał snapshotu jako źródła katalogu, ustaw po stronie serwera `CATALOG_DATA_FILE` na ścieżkę tego pliku i uruchom ponownie aplikację. Gdy zmienna nie jest ustawiona, endpoint korzysta z `components.sample.json`. Gdy jest ustawiona, ale plik jest niedostępny lub nie przejdzie walidacji, endpoint zwraca `503 catalog_unavailable` i nie przełącza się po cichu na zbiór przykładowy. Ścieżka nie jest zwracana klientowi.
 
@@ -50,6 +62,12 @@ Domyślne zapytanie pobiera najwyżej 100 rekordów. `meta.total` oznacza liczb�
 
 Weryfikacja 2026-11-11: rzeczywisty `ListComponents` i lokalny `GET /api/v1/components` zwróciły HTTP 200 oraz pustą listę z `source: "database"`. Sprawdzono również endpoint kategorii, stan konfiguracji bazy i odpowiedzi 400/404. Testy kontrolowanych odpowiedzi obejmują niepuste rekordy; nie potwierdzono jeszcze odczytu niepustego katalogu zdalnego. Przeszło 16 testów katalogu, sprawdzenie TypeScript i kompilacja produkcyjna. Nie wykonywano mutacji ani wdrożenia schematu.
 
+### Wykonany import — 2026-11-17
+
+Odczyt administracyjny potwierdził działanie poświadczeń i wdrożoną relację specyfikacji. Dodano pilota `Intel Core i9-14900KS` z `price: null`, potwierdzono jego odczyt przez publiczny `GetComponentById`, a następnie dodano pozostałe 4577 rekordów w porcjach po 25. Firebase zwraca UUID również jako 32 znaki bez myślników; adapter i importer normalizują je do wspólnej postaci. Końcowy preflight odczytał 4578 komponentów, pominął wszystkie 4578, zaplanował 0 insertów i nie wykrył konfliktów. Raporty są lokalne w `.local/catalog/firebase-admin-*.json`.
+
+Przeszło 30 testów, TypeScript i build produkcyjny. CSV nie zawiera cen ani kompletnych specyfikacji; import nie wypełnia ich domysłami. Lokalny interfejs nadal korzysta z pełnego snapshotu (`CATALOG_SOURCE=file`). Publiczny `ListComponents` ma domyślny limit 100 — przed przełączeniem pełnego katalogu na Firebase trzeba dodać stronicowanie po stronie zapytania.
+
 ## API
 
 - `GET /api/v1/components` — listuje katalog; parametry `q`/`query`, `category`, `manufacturer`, `page` (1–1000) i `limit` (1–50).
@@ -60,7 +78,7 @@ Lista jest deterministycznie sortowana po nazwie. Nieznana kategoria, zbyt dług
 
 ## Przejście do bazy i ofert
 
-Istniejący Firebase Data Connect ma `components` i `component_specifications`, lecz jego `Component.price` jest wymagane, a obecny typ jest `Float`. Dla katalogu produkcyjnego cena powinna należeć do oferty, a nie do kanonicznego produktu. Proponowane tabele i ograniczenia są w [database/catalog-reference.sql](../database/catalog-reference.sql). Plik jest dokumentem referencyjnym, nie uruchomioną migracją.
+Istniejący Firebase Data Connect ma `components` i `component_specifications`; `Component.price` jest nullable, a obecny typ to `Float`. Dla katalogu produkcyjnego cena powinna należeć do oferty, a nie do kanonicznego produktu. Proponowane tabele i ograniczenia są w [database/catalog-reference.sql](../database/catalog-reference.sql). Plik jest dokumentem referencyjnym, nie uruchomioną migracją.
 
 Projekt obejmuje komponenty, specyfikacje, źródła, identyfikatory zewnętrzne, obserwacje benchmarków, oferty oraz historię cen. `components.public_id` przechowuje identyfikator używany przez REST/importer; wewnętrzny UUID bazy pozostaje osobnym kluczem. Metryki UserBenchmark zachowują własne źródło i czas importu. Oferta i historia mają kwoty w groszach, osobny koszt dostawy i walutę PLN. Nieznany koszt dostawy jest `NULL`, nie oznacza darmowej wysyłki.
 

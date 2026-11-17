@@ -7,8 +7,8 @@ const UUID_NAMESPACE = "pcmaker-firebase-component-preview-v1";
 const SENSITIVE_QUERY_KEYS = /^(?:api[_-]?key|x-goog-api-key|key|token|access[_-]?token|auth(?:orization)?|secret|password|credential|signature|sig)$/i;
 
 export const FIREBASE_PREVIEW_BLOCKERS = [
-  "Component.price requires a non-null value in the current schema; preview assigns no guessed price.",
-  "No approved catalog-write operation is available; no network, SQL, or mutation is executed.",
+  "Preview is not a write request; use the explicit Firebase admin CLI --apply for controlled inserts.",
+  "Admin import is insert-only; existing metadata, prices, and specifications are never overwritten.",
 ] as const;
 
 export class FirebaseImportPreviewError extends Error {

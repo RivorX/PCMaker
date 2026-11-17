@@ -83,6 +83,55 @@ test("maps Firebase records and canonical category aliases without inventing dat
   });
 });
 
+test("maps validated specifications and rejects duplicate or prototype keys", async () => {
+  await withFirebaseEnv(async () => {
+    const previousFetch = globalThis.fetch;
+    resetFirebaseCatalogCache();
+    globalThis.fetch = async () => jsonResponse({ data: { components: [{
+      id: "cpu-spec",
+      name: "CPU spec",
+      componentType: "CPU",
+      specifications: [
+        { specificationName: "socket", specificationValue: "AM5" },
+        { specificationName: "cores", specificationValue: "8" },
+      ],
+    }] } });
+    try {
+      const snapshot = await getFirebaseCatalogSnapshot();
+      assert.deepEqual(snapshot.components[0].specifications, { socket: "AM5", cores: "8" });
+      assert.equal(Object.prototype.polluted, undefined);
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
+    resetFirebaseCatalogCache();
+    globalThis.fetch = async () => jsonResponse({ data: { components: [{ id: "bad-spec", name: "Bad", componentType: "CPU", specifications: [{ specificationName: "__proto__", specificationValue: "x" }] }] } });
+    try {
+      await assert.rejects(() => getFirebaseCatalogSnapshot(), FirebaseCatalogUnavailableError);
+      assert.equal(Object.prototype.polluted, undefined);
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
+  });
+});
+
+test("canonicalizes compact Firebase UUIDs while preserving opaque IDs", async () => {
+  await withFirebaseEnv(async () => {
+    const previousFetch = globalThis.fetch;
+    resetFirebaseCatalogCache();
+    globalThis.fetch = async () => jsonResponse({ data: { components: [
+      { id: "6af78ea298568f3ea95cc394ebd618fb", name: "UUID CPU", componentType: "CPU" },
+      { id: "opaque-id", name: "Opaque CPU", componentType: "CPU" },
+    ] } });
+    try {
+      const snapshot = await getFirebaseCatalogSnapshot();
+      assert.equal(snapshot.components[0].id, "6af78ea2-9856-8f3e-a95c-c394ebd618fb");
+      assert.equal(snapshot.components[1].id, "opaque-id");
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
+  });
+});
+
 test("accepts a valid empty Firebase catalog", async () => {
   await withFirebaseEnv(async () => {
     resetFirebaseCatalogCache();
