@@ -244,6 +244,15 @@ label input::placeholder, label textarea::placeholder { color: #b3bec8; }
 .catalog-detail-note { display: grid; gap: 6px; margin-top: 22px; padding: 12px; border-radius: 6px; background: var(--amber-pale); color: #99743e; font-size: 10px; line-height: 1.45; }
 .catalog-detail-note strong { color: #896327; }
 .catalog-detail-empty { margin-top: 25px; padding: 16px; border: 1px dashed #d3dfe4; border-radius: 6px; color: var(--muted); font-size: 10px; line-height: 1.55; }
+.catalog-auto-offers { display: grid; gap: 9px; margin-top: 22px; padding-top: 19px; border-top: 1px solid var(--line); }
+.catalog-auto-offers h3 { margin: 0; color: var(--ink); font-size: 13px; }
+.catalog-auto-offers .catalog-detail-description { margin: 0; }
+.catalog-auto-offers .catalog-detail-empty { margin-top: 0; }
+.catalog-auto-offers .offer-candidates { max-height: 480px; overflow-y: auto; padding-right: 4px; }
+.catalog-auto-offers .offer-candidate { flex-direction: column; align-items: stretch; gap: 9px; }
+.catalog-auto-offers .offer-candidate strong { overflow-wrap: anywhere; }
+.catalog-auto-offers .offer-candidate-actions { justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.catalog-auto-offers .offer-result-price { text-align: left; }
 .offer-lookup { display: grid; gap: 18px; padding: 24px 27px; }
 .offer-lookup > div:first-child h2 { margin-top: 7px; }
 .offer-lookup-form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; max-width: 100%; }

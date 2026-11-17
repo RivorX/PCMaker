@@ -1,8 +1,8 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { CatalogComponent, CatalogListResponse, ComponentCategory } from "@/types/catalog";
-import type { OffersErrorResponse, SerpApiSearchResponse, SerpApiShoppingResult } from "@/types/offers";
+import type { ComponentOffersResponse, OffersErrorResponse, SerpApiSearchResponse, SerpApiShoppingResult } from "@/types/offers";
 
 const categoryLabels: Record<ComponentCategory, string> = {
   cpu: "Procesory",
@@ -39,6 +39,11 @@ export default function Catalog() {
   const [offerLoading, setOfferLoading] = useState(false);
   const [offerError, setOfferError] = useState<string | null>(null);
   const [offerMeta, setOfferMeta] = useState<SerpApiSearchResponse["meta"] | null>(null);
+  const [autoOfferCandidates, setAutoOfferCandidates] = useState<SerpApiShoppingResult[]>([]);
+  const [autoOfferStatus, setAutoOfferStatus] = useState<ComponentOffersResponse["meta"]["matchStatus"] | "idle" | "loading" | "error">("idle");
+  const [autoOfferError, setAutoOfferError] = useState<string | null>(null);
+  const [autoOfferComponentId, setAutoOfferComponentId] = useState<string | null>(null);
+  const autoOfferSequence = useRef(0);
   const limit = 6;
 
   const loadOffers = async (keyword: string, expectedCategory: string, resultPage = 1) => {
@@ -103,7 +108,47 @@ export default function Catalog() {
     return () => controller.abort();
   }, [category, page, query]);
 
+  useEffect(() => {
+    const sequence = autoOfferSequence.current + 1;
+    autoOfferSequence.current = sequence;
+    setAutoOfferComponentId(selected?.id ?? null);
+    setAutoOfferCandidates([]);
+    setAutoOfferError(null);
+    if (!selected || selected.category !== "cpu") {
+      setAutoOfferStatus("idle");
+      return;
+    }
+    setAutoOfferStatus("loading");
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      void fetch(`/api/v1/components/${encodeURIComponent(selected.id)}/offers`, { signal: controller.signal })
+        .then(async (response) => {
+          const body = await response.json() as ComponentOffersResponse & { message?: string };
+          if (!response.ok || !Array.isArray(body.data)) throw new Error(body.message ?? "Nie udało się pobrać dopasowanych ofert.");
+          return body;
+        })
+        .then((body) => {
+          if (controller.signal.aborted || autoOfferSequence.current !== sequence) return;
+          setAutoOfferCandidates(body.data);
+          setAutoOfferStatus(body.meta.matchStatus);
+        })
+        .catch((reason: unknown) => {
+          if (controller.signal.aborted || autoOfferSequence.current !== sequence) return;
+          setAutoOfferCandidates([]);
+          setAutoOfferStatus("error");
+          setAutoOfferError(reason instanceof Error ? reason.message : "Nie udało się pobrać dopasowanych ofert.");
+        });
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [selected]);
+
   const pages = Math.max(1, Math.ceil(total / limit));
+  const selectedAutoOfferStatus = autoOfferComponentId === selected?.id
+    ? autoOfferStatus
+    : selected?.category === "cpu" ? "loading" : "idle";
   const sourceLabel = useMemo(() => {
     if (source === "external") return provider ? `snapshot · ${provider}` : "snapshot zewnętrzny";
     if (source === "database") return "baza danych";
@@ -133,7 +178,7 @@ export default function Catalog() {
           {!loading && !error && items.map((item) => <button className={`catalog-item card ${selected?.id === item.id ? "selected" : ""}`} key={item.id} type="button" onClick={() => setSelected(item)}><span className="catalog-type-icon">{item.category.slice(0, 3).toUpperCase()}</span><span className="catalog-item-copy"><strong>{item.name}</strong><small>{categoryLabels[item.category]} · {item.manufacturer}</small><span className="catalog-specs">{Object.entries(item.specifications).length > 0 ? Object.entries(item.specifications).slice(0, 3).map(([key, value]) => <em key={key}>{key}: {value}</em>) : <em>specyfikacje niedostępne</em>}</span></span><span className="catalog-price">{item.price === null ? "brak ceny" : `${item.price.toFixed(2)} ${item.currency}`}<small>źródło: {item.source.kind}</small></span></button>)}
           <div className="catalog-pagination"><button className="text-button" disabled={page <= 1} type="button" onClick={() => setPage((value) => value - 1)}>← Poprzednia</button><span>Strona {page} z {pages}</span><button className="text-button" disabled={page >= pages} type="button" onClick={() => setPage((value) => value + 1)}>Następna →</button></div>
         </section>
-        <aside className="catalog-detail card">{selected ? <><span className="section-kicker">SZCZEGÓŁY REKORDU</span><h2>{selected.name}</h2><p className="catalog-detail-description">{selected.description}</p>{Object.entries(selected.specifications).length > 0 ? <dl>{Object.entries(selected.specifications).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl> : <div className="catalog-detail-empty">Specyfikacje są niedostępne w tym źródle.</div>}<div className="catalog-detail-note"><strong>Cena katalogowa niedostępna</strong><span>To opis modelu bez automatycznego przypisywania ceny z podobnej oferty.</span></div></> : <><span className="section-kicker">SZCZEGÓŁY REKORDU</span><h2>Wybierz element</h2><p className="catalog-detail-description">Kliknij rekord, aby zobaczyć znane specyfikacje i pochodzenie danych.</p><div className="catalog-detail-empty">Oferty są wyszukiwane osobno i wymagają jawnego zatwierdzenia.</div></>}</aside>
+        <aside className="catalog-detail card">{selected ? <><span className="section-kicker">SZCZEGÓŁY REKORDU</span><h2>{selected.name}</h2><p className="catalog-detail-description">{selected.description}</p>{Object.entries(selected.specifications).length > 0 ? <dl>{Object.entries(selected.specifications).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl> : <div className="catalog-detail-empty">Specyfikacje są niedostępne w tym źródle.</div>}<div className="catalog-detail-note"><strong>Cena katalogowa niedostępna</strong><span>To opis modelu bez automatycznego przypisywania ceny z podobnej oferty.</span></div>{selected.category === "cpu" && <div className="catalog-auto-offers"><span className="section-kicker">AUTOMATYCZNE DOPASOWANIE</span><h3>Oferty tego modelu</h3><p className="catalog-detail-description">Oferty dopasowane po nazwie. Sprawdź model i wariant przed zakupem.</p>{selectedAutoOfferStatus === "loading" && <div className="catalog-detail-empty">Sprawdzam oferty…</div>}{selectedAutoOfferStatus === "error" && <div className="catalog-message error" role="alert">{autoOfferError}</div>}{selectedAutoOfferStatus === "unsupported" && <div className="catalog-detail-empty">Ten model nie jest jeszcze obsługiwany przez automatyczne dopasowanie.</div>}{selectedAutoOfferStatus === "no_matches" && <div className="catalog-detail-empty">Nie znaleziono ofert z pasującą nazwą modelu.</div>}{autoOfferComponentId === selected.id && autoOfferCandidates.length > 0 && <div className="offer-candidates">{autoOfferCandidates.map((candidate) => <article className="offer-candidate" key={JSON.stringify([candidate.providerProductId ?? candidate.title, candidate.source, candidate.price.original])}><div><strong>{candidate.title}</strong><small>{candidate.source ?? "Sklep nieznany"}{candidate.sponsored ? " · sponsorowane" : ""}</small></div><div className="offer-candidate-actions"><span className="offer-result-price">{moneyLabel(candidate)}<small>Cena orientacyjna, może się różnić</small></span>{candidate.link && <a className="text-button" href={candidate.link} target="_blank" rel="noreferrer">Zobacz ofertę ↗</a>}</div></article>)}</div>}</div>}</> : <><span className="section-kicker">SZCZEGÓŁY REKORDU</span><h2>Wybierz element</h2><p className="catalog-detail-description">Kliknij rekord, aby zobaczyć znane specyfikacje i pochodzenie danych.</p><div className="catalog-detail-empty">Wybierz procesor, aby automatycznie wyszukać jego oferty.</div></>}</aside>
       </div>
       <section className="offer-lookup card">
         <div>

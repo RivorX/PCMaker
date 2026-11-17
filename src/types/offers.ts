@@ -48,3 +48,25 @@ export interface OffersErrorResponse {
   message: string;
   source: "offers";
 }
+
+export type ComponentOffersMatchStatus = "candidates" | "no_matches" | "unsupported";
+
+export interface ComponentOffersResponse {
+  data: SerpApiShoppingResult[];
+  meta: {
+    componentId: string;
+    componentName: string;
+    matchingBasis: "title";
+    matchStatus: ComponentOffersMatchStatus;
+    query?: string;
+    pages?: number;
+  };
+}
+
+export type ComponentOffersErrorCode = OffersErrorCode | "not_found" | "catalog_unavailable";
+
+export interface ComponentOffersErrorResponse {
+  error: ComponentOffersErrorCode;
+  message: string;
+  source: "components";
+}

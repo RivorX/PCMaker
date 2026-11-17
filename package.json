@@ -10,7 +10,7 @@
     "prepare:firebase-catalog": "node --experimental-strip-types scripts/prepare-firebase-catalog.mjs",
     "import:userbenchmark-batch": "node --experimental-strip-types scripts/import-userbenchmark-batch.mjs",
     "import:firebase-admin": "node --experimental-strip-types scripts/import-firebase-admin.mjs",
-    "test:catalog": "node --experimental-strip-types --test tests/userbenchmark.test.mjs tests/catalog.test.mjs tests/firebase-catalog.test.mjs tests/firebase-import-preview.test.mjs tests/userbenchmark-batch.test.mjs tests/firebase-admin-import.test.mjs tests/serpapi.test.mjs"
+    "test:catalog": "node --experimental-strip-types --test tests/userbenchmark.test.mjs tests/catalog.test.mjs tests/firebase-catalog.test.mjs tests/firebase-import-preview.test.mjs tests/userbenchmark-batch.test.mjs tests/firebase-admin-import.test.mjs tests/serpapi.test.mjs tests/cpu-offer-matcher.test.mjs tests/cpu-offers.test.mjs"
   },
   "dependencies": {
     "@pcmaker/dataconnect": "file:src/lib/dataconnect-generated",

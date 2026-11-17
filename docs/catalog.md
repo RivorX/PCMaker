@@ -78,6 +78,7 @@ Lokalna konfiguracja używa teraz `CATALOG_SOURCE=firebase`. Rzeczywisty odczyt 
 
 - `GET /api/v1/components` — listuje katalog; parametry `q`/`query`, `category`, `manufacturer`, `page` (1–1000) i `limit` (1–50).
 - `GET /api/v1/components/:id` — zwraca szczegóły albo `404`.
+- `GET /api/v1/components/:id/offers` — automatycznie dopasowuje oferty tylko dla wybranego, obsługiwanego CPU po tytule modelu.
 - `GET /api/v1/components/categories` — zwraca kategorie i producentów obecnego źródła.
 
 Lista jest deterministycznie sortowana po nazwie. Nieznana kategoria, zbyt długie wyszukiwanie i błędna paginacja zwracają `400`. Dane pozostają publiczne na potrzeby demonstracji; po podłączeniu bazy i autoryzacji zasady dostępu ustala właściciel tych modułów.
@@ -108,6 +109,12 @@ Końcowe sprawdzenia: 5 testów `test:catalog`, TypeScript i build produkcyjny p
 
 Adapter ofert jest oddzielony od katalogu kanonicznych modeli. Jawne `GET /api/v1/offers?action=search&keyword=...` pobiera wyniki Google Shopping przez serwerowy `SERPAPI_API_KEY`; żadne żądanie nie jest wykonywane przy otwarciu katalogu ani przy wpisywaniu tekstu. Znormalizowane wyniki mogą pochodzić z płaskiego `shopping_results`, grup `categorized_shopping_results` albo sponsorowanych `inline_shopping_results`. Surowe metadane SerpAPI nie opuszczają backendu.
 
+Po wybraniu procesora widok wykonuje po krótkim opóźnieniu dodatkowy, automatyczny odczyt `GET /api/v1/components/:id/offers`. Endpoint najpierw pobiera zaufany rekord katalogowy, a dopiero potem — wyłącznie dla obsługiwanych rodzin AMD Ryzen i Intel Core/Core Ultra — pyta SerpAPI nazwą tego modelu. Wyniki są filtrowane po pełnym tytule modelu (w tym rodzinie, tierze i przyrostku, więc `7800X` nie pasuje do `7800X3D`, a `14600K` do `14600KF`). Odrzucane są m.in. zestawy, kompletne komputery, akcesoria i tytuły z wieloma kodami CPU. Dopasowanie jest heurystyką nazwy; nie potwierdza MPN/EAN i nie zapisuje ceny do `CatalogComponent.price`.
+
+Automatyczne sprawdzenie nie uruchamia się dla GPU ani pozostałych kategorii, a nieobsługiwany/niejednoznaczny model dostaje stan `unsupported` bez wywołania dostawcy. Brak zgodnych tytułów to `no_matches`; błąd dostawcy jest pokazywany osobno. Ręczne wyszukiwanie w sekcji Google Shopping pozostaje dostępne dla wszystkich kategorii i nadal wymaga jawnego działania użytkownika.
+
 Waluta jest rozpoznawana z tekstu ceny. PLN zachowuje kwotę źródłową, EUR może zostać przeliczone stałą `EUR_PLN_RATE=4.30` i jest oznaczone jako estymacja, a USD i nieznane waluty pozostają bez ceny. Brak ceny jest `null`, nigdy nie oznacza zera. Wyszukiwanie CPU odrzuca oczywiste zestawy PC/bundle, jeśli tytuł zawiera wystarczające sygnały; nie jest to uniwersalne dopasowanie kategorii.
 
 Wyniki są kandydatami i nie są automatycznie przypisywane do modelu katalogowego. Link jest używany tylko po walidacji HTTPS, bez poświadczeń, parametrów kluczy ani linków do SerpAPI. Brak klucza daje `503 source_not_configured`, limit dostawcy `429 rate_limited`, timeout `504 upstream_timeout`, a inny błąd lub niepoprawna odpowiedź dostawcy sanitizowany `502`. Cache jest ograniczony do procesu, 100 wpisów i TTL jednej godziny.
+
+Weryfikacja automatycznych ofert 2026-11-17: rzeczywisty endpoint dla Intel Core i5-14600K zwrócił 8 ofert po filtrowaniu tytułów; warianty KF/T i model bez przyrostka zostały odrzucone. Powtórny odczyt zwrócił te same wyniki; GPU otrzymał `unsupported`, a nieistniejący rekord 404. W interfejsie samo wybranie CPU uruchomiło oferty, a zmiana kategorii usunęła poprzedni panel. Wyniki i stany widoku są powiązane z identyfikatorem zaznaczonej części. Przeszło 36 testów, dodatkowych 14 sprawdzeń tytułów, TypeScript i build. Nie zapisywano cen w Firebase. Zrzut testowy jest lokalny w ignorowanym `.local/catalog/cpu-auto-offers.png`.
