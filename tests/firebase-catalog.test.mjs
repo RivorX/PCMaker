@@ -76,7 +76,7 @@ test("maps Firebase records and canonical category aliases without inventing dat
       assert.doesNotMatch(JSON.stringify(snapshot), new RegExp(API_KEY));
       assert.equal(request.init.method, "POST");
       assert.equal(request.init.headers["x-goog-api-key"], API_KEY);
-      assert.deepEqual(JSON.parse(request.init.body), { operationName: "ListComponents", variables: {} });
+      assert.deepEqual(JSON.parse(request.init.body), { operationName: "ListCatalogPage", variables: { offset: 0 } });
     } finally {
       globalThis.fetch = previousFetch;
     }
@@ -196,6 +196,61 @@ test("deduplicates concurrent requests and serves the sixty-second cache", async
       await Promise.all([getFirebaseCatalogSnapshot(), getFirebaseCatalogSnapshot()]);
       await getFirebaseCatalogSnapshot();
       assert.equal(calls, 1);
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
+  });
+});
+
+test("loads complete 500-row pages sequentially and commits one complete snapshot", async () => {
+  await withFirebaseEnv(async () => {
+    resetFirebaseCatalogCache();
+    const previousFetch = globalThis.fetch;
+    const offsets = [];
+    const records = Array.from({ length: 501 }, (_, index) => ({ id: index.toString().padStart(32, "0"), name: `CPU ${index}`, componentType: "CPU" }));
+    globalThis.fetch = async (_input, init) => {
+      const body = JSON.parse(init.body);
+      offsets.push(body.variables.offset);
+      const start = body.variables.offset;
+      return jsonResponse({ data: { components: records.slice(start, start + 500) } });
+    };
+    try {
+      const snapshot = await getFirebaseCatalogSnapshot();
+      assert.equal(snapshot.components.length, 501);
+      assert.deepEqual(offsets, [0, 500]);
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
+  });
+});
+
+test("does not cache partial pages or accept duplicate/out-of-order pages", async () => {
+  await withFirebaseEnv(async () => {
+    const previousFetch = globalThis.fetch;
+    resetFirebaseCatalogCache();
+    let calls = 0;
+    globalThis.fetch = async (_input, init) => {
+      calls += 1;
+      const offset = JSON.parse(init.body).variables.offset;
+      if (offset === 0) return jsonResponse({ data: { components: Array.from({ length: 500 }, (_, index) => ({ id: index.toString().padStart(32, "0"), name: `CPU ${index}`, componentType: "CPU" })) } });
+      return jsonResponse({ errors: [{ message: "page two failed" }] });
+    };
+    try {
+      await assert.rejects(() => getFirebaseCatalogSnapshot(), FirebaseCatalogUnavailableError);
+      await assert.rejects(() => getFirebaseCatalogSnapshot(), FirebaseCatalogUnavailableError);
+      assert.equal(calls, 4);
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
+    resetFirebaseCatalogCache();
+    globalThis.fetch = async (_input, init) => {
+      const offset = JSON.parse(init.body).variables.offset;
+      return jsonResponse({ data: { components: offset === 0
+        ? [...Array.from({ length: 499 }, (_, index) => ({ id: index.toString().padStart(32, "0"), name: `CPU ${index}`, componentType: "CPU" })), { id: "f", name: "F", componentType: "CPU" }]
+        : [{ id: "e", name: "E", componentType: "CPU" }] } });
+    };
+    try {
+      await assert.rejects(() => getFirebaseCatalogSnapshot(), FirebaseCatalogUnavailableError);
     } finally {
       globalThis.fetch = previousFetch;
     }

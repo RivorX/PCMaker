@@ -54,11 +54,11 @@ Snapshot nie modyfikuje bazy ani nie pobiera sieci podczas żądania. Dla aplika
 
 ### Firebase Data Connect (odczyt)
 
-Po ustawieniu `CATALOG_SOURCE=firebase` katalog wykonuje serwerowy, wyłącznie read-only request `ListComponents` do Firebase Data Connect. Klucz `NEXT_PUBLIC_FIREBASE_API_KEY` jest używany tylko w nagłówku backendowego requestu i nie jest zwracany w odpowiedzi. Odczyt ma limit czasu około 8 sekund, limit rozmiaru odpowiedzi i pamięć podręczną procesu przez 60 sekund; błąd źródła zwraca `503 catalog_unavailable` bez fallbacku do próbki. Puste, poprawne `data.components` jest poprawnym wynikiem.
+Po ustawieniu `CATALOG_SOURCE=firebase` katalog wykonuje serwerowy, wyłącznie read-only request `ListCatalogPage` do Firebase Data Connect. Stały limit zapytania wynosi 500 rekordów, a adapter pobiera kolejne strony przez `offset` aż do krótszej strony. Klucz `NEXT_PUBLIC_FIREBASE_API_KEY` jest używany tylko w nagłówku backendowego requestu i nie jest zwracany w odpowiedzi. Odczyt ma ogólny limit czasu około 30 sekund, limit rozmiaru pojedynczej odpowiedzi i pamięć podręczną procesu przez 60 sekund; błąd dowolnej strony zwraca `503 catalog_unavailable` bez fallbacku ani częściowego cache. Puste, poprawne `data.components` jest poprawnym wynikiem.
 
 Mapowane są wyłącznie znane typy (`CPU`, `GPU`, `Motherboard`, `RAM`/`Memory`, `SSD`/`HDD`/`Storage`, `PSU`, `Case`, `Cooling`). Nieznany typ lub niepoprawny rekord powoduje `503`, zamiast cichego pominięcia. `specifications` pozostaje `{}`, a `price` i `performanceScore` są `null`, ponieważ kontrakt zapytania nie potwierdza waluty ani jednostek benchmarku. `source.kind` ma wartość `database`, a `source.provider` — `firebase-sql-connect`; `capturedAt` oznacza czas odczytu, nie czas aktualizacji rekordu w bazie.
 
-Domyślne zapytanie pobiera najwyżej 100 rekordów. `meta.total` oznacza liczbę rekordów zwróconych przez to zapytanie po filtrach, a nie gwarantowaną liczbę wszystkich rekordów w bazie.
+Paginacja ma limit bezpieczeństwa 100 000 rekordów i sprawdza powtórzone lub nieuporządkowane ID. `meta.total` oznacza liczbę rekordów pełnego ukończonego snapshotu po filtrach; kolejność/offset nie daje migawkowej izolacji przy równoczesnych mutacjach bazy.
 
 Weryfikacja 2026-11-11: rzeczywisty `ListComponents` i lokalny `GET /api/v1/components` zwróciły HTTP 200 oraz pustą listę z `source: "database"`. Sprawdzono również endpoint kategorii, stan konfiguracji bazy i odpowiedzi 400/404. Testy kontrolowanych odpowiedzi obejmują niepuste rekordy; nie potwierdzono jeszcze odczytu niepustego katalogu zdalnego. Przeszło 16 testów katalogu, sprawdzenie TypeScript i kompilacja produkcyjna. Nie wykonywano mutacji ani wdrożenia schematu.
 
@@ -66,7 +66,13 @@ Weryfikacja 2026-11-11: rzeczywisty `ListComponents` i lokalny `GET /api/v1/comp
 
 Odczyt administracyjny potwierdził działanie poświadczeń i wdrożoną relację specyfikacji. Dodano pilota `Intel Core i9-14900KS` z `price: null`, potwierdzono jego odczyt przez publiczny `GetComponentById`, a następnie dodano pozostałe 4577 rekordów w porcjach po 25. Firebase zwraca UUID również jako 32 znaki bez myślników; adapter i importer normalizują je do wspólnej postaci. Końcowy preflight odczytał 4578 komponentów, pominął wszystkie 4578, zaplanował 0 insertów i nie wykrył konfliktów. Raporty są lokalne w `.local/catalog/firebase-admin-*.json`.
 
-Przeszło 30 testów, TypeScript i build produkcyjny. CSV nie zawiera cen ani kompletnych specyfikacji; import nie wypełnia ich domysłami. Lokalny interfejs nadal korzysta z pełnego snapshotu (`CATALOG_SOURCE=file`). Publiczny `ListComponents` ma domyślny limit 100 — przed przełączeniem pełnego katalogu na Firebase trzeba dodać stronicowanie po stronie zapytania.
+Przeszło 30 testów, TypeScript i build produkcyjny. CSV nie zawiera cen ani kompletnych specyfikacji; import nie wypełnia ich domysłami.
+
+### Pełny katalog z Firebase — 2026-11-17
+
+Zwalidowano i wdrożono `ListCatalogPage` do konektora `default`, dodając wyłącznie nowe zapytanie. Przed wdrożeniem porównano istniejące źródła z repozytorium; aktualizację zabezpieczono znacznikiem `etag`. Pozostałe operacje, schemat i dane pozostały bez zmian.
+
+Lokalna konfiguracja używa teraz `CATALOG_SOURCE=firebase`. Rzeczywisty odczyt zwrócił 4578 unikalnych części i potwierdził wszystkie identyfikatory importu. API zwróciło `source: database`; sprawdzono rozłączne strony 1 i 2, ostatnią stronę 763, wyszukiwanie `7800X3D`, filtr 88 pamięci RAM i szczegóły części. Widok katalogu pokazał źródło „baza danych” i 4578 rekordów. Przeszły 32 testy, TypeScript i build produkcyjny. Ponowny odczyt używa kompletnego cache; błąd dowolnej strony nie zwraca częściowego katalogu.
 
 ## API
 

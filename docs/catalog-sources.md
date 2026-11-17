@@ -31,9 +31,9 @@ Model bazy rozdziela komponent, specyfikacje, identyfikator w źródle, ofertę 
 
 ## Firebase Data Connect — odczyt katalogu
 
-Firebase Data Connect jest skonfigurowany jako opcjonalne źródło kanonicznych modeli, bez mutacji, uwierzytelniania użytkownika ani automatycznego pobierania ofert. `CATALOG_SOURCE=firebase` wysyła `ListComponents` przez stały endpoint projektu i mapuje tylko potwierdzone pola. Brak klucza, błąd HTTP, niepoprawna odpowiedź albo nieznany `componentType` daje `503`, bez powrotu do danych przykładowych. Pusty wynik jest prawidłowy i jest pokazany w UI jako brak rekordów zwróconych przez bazę.
+Firebase Data Connect jest skonfigurowany jako opcjonalne źródło kanonicznych modeli, bez mutacji, uwierzytelniania użytkownika ani automatycznego pobierania ofert. `CATALOG_SOURCE=firebase` wysyła kolejne read-only strony `ListCatalogPage` po 500 rekordów przez stały endpoint projektu i mapuje tylko potwierdzone pola. Brak klucza, błąd dowolnej strony, niepoprawna odpowiedź albo nieznany `componentType` daje `503`, bez powrotu do danych przykładowych i bez cache częściowego wyniku. Pusty wynik jest prawidłowy i jest pokazany w UI jako brak rekordów zwróconych przez bazę.
 
-Wynik ma limit 100 rekordów na zapytanie, więc `meta.total` opisuje zwrócony wycinek, nie pełny rozmiar tabeli. Ceny i wyniki wydajności pozostają `null`, a brak specyfikacji jest jawnie oznaczony jako niedostępny.
+Snapshot ma limit bezpieczeństwa 100 000 rekordów, sprawdza powtórzone/nieuporządkowane ID i zachowuje `capturedAt` z czasu odczytu. Ceny i wyniki wydajności pozostają `null`, a brak specyfikacji jest jawnie oznaczony jako niedostępny. Offset nie zapewnia migawkowej izolacji przy równoczesnych zmianach bazy.
 
 ## Odrzucone źródło ofert
 

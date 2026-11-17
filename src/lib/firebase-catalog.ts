@@ -6,8 +6,10 @@ const DEFAULT_PROJECT_ID = "pcmaker-b0b0a";
 const DEFAULT_LOCATION = "europe-central2";
 const DEFAULT_SERVICE = "pcmaker-service";
 const DEFAULT_CONNECTOR = "default";
-const REQUEST_TIMEOUT_MS = 8_000;
+const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_RESPONSE_BYTES = 1_000_000;
+const PAGE_SIZE = 500;
+const MAX_COMPONENTS = 100_000;
 const CACHE_TTL_MS = 60_000;
 
 const CATEGORY_ALIASES: Record<string, ComponentCategory> = {
@@ -204,27 +206,24 @@ const readBoundedResponse = async (response: Response): Promise<string> => {
   }
 };
 
-const fetchSnapshot = async (config: FirebaseCatalogConfig): Promise<FirebaseCatalogSnapshot> => {
-  const capturedAt = new Date().toISOString();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+const fetchPage = async (config: FirebaseCatalogConfig, offset: number, signal: AbortSignal): Promise<unknown[]> => {
+  let response: Response;
   try {
-    let response: Response;
-    try {
-      response = await fetch(endpointFor(config), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": config.apiKey,
-        },
-        body: JSON.stringify({ operationName: "ListComponents", variables: {} }),
-        cache: "no-store",
-        redirect: "error",
-        signal: controller.signal,
-      });
-    } catch {
-      throw new FirebaseCatalogUnavailableError();
-    }
+    response = await fetch(endpointFor(config), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": config.apiKey,
+      },
+      body: JSON.stringify({ operationName: "ListCatalogPage", variables: { offset } }),
+      cache: "no-store",
+      redirect: "error",
+      signal,
+    });
+  } catch {
+    throw new FirebaseCatalogUnavailableError();
+  }
+  try {
     if (!response.ok) throw new FirebaseCatalogUnavailableError();
     const contentLength = response.headers.get("content-length");
     if (contentLength && Number(contentLength) > MAX_RESPONSE_BYTES) throw new FirebaseCatalogUnavailableError();
@@ -250,13 +249,36 @@ const fetchSnapshot = async (config: FirebaseCatalogConfig): Promise<FirebaseCat
     if (!isRecord(data) || !Array.isArray(data.components)) {
       throw new FirebaseCatalogUnavailableError();
     }
-    const components = data.components.map((component) => mapComponent(component, capturedAt));
+    if (data.components.length > PAGE_SIZE) throw new FirebaseCatalogUnavailableError();
+    return data.components;
+  } catch (error) {
+    if (error instanceof FirebaseCatalogUnavailableError) throw error;
+    throw new FirebaseCatalogUnavailableError();
+  }
+};
+
+const fetchSnapshot = async (config: FirebaseCatalogConfig): Promise<FirebaseCatalogSnapshot> => {
+  const capturedAt = new Date().toISOString();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const components: CatalogComponent[] = [];
     const ids = new Set<string>();
-    for (const component of components) {
-      if (ids.has(component.id)) throw new FirebaseCatalogUnavailableError();
-      ids.add(component.id);
+    let previousId: string | undefined;
+    for (let offset = 0; ; offset += PAGE_SIZE) {
+      const page = await fetchPage(config, offset, controller.signal);
+      for (const rawComponent of page) {
+        const component = mapComponent(rawComponent, capturedAt);
+        if (ids.has(component.id) || (previousId !== undefined && component.id < previousId)) {
+          throw new FirebaseCatalogUnavailableError();
+        }
+        ids.add(component.id);
+        previousId = component.id;
+        components.push(component);
+      }
+      if (components.length > MAX_COMPONENTS) throw new FirebaseCatalogUnavailableError();
+      if (page.length < PAGE_SIZE) return { components, capturedAt };
     }
-    return { components, capturedAt };
   } finally {
     clearTimeout(timeout);
   }
