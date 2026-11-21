@@ -3075,6 +3075,3 @@ enum _PostgresLintCategory {
   SECURITY
   PERFORMANCE
 }
-
-
-

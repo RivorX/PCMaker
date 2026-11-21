@@ -264,7 +264,7 @@ import { connectorConfig, getComponentById, GetComponentByIdVariables } from '@p
 
 // The `GetComponentById` query requires an argument of type `GetComponentByIdVariables`:
 const getComponentByIdVars: GetComponentByIdVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `getComponentById()` function to execute the query.
@@ -294,7 +294,7 @@ import { connectorConfig, getComponentByIdRef, GetComponentByIdVariables } from 
 
 // The `GetComponentById` query requires an argument of type `GetComponentByIdVariables`:
 const getComponentByIdVars: GetComponentByIdVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `getComponentByIdRef()` function to get a reference to the query.
@@ -587,7 +587,7 @@ import { connectorConfig, getServiceTicketById, GetServiceTicketByIdVariables } 
 
 // The `GetServiceTicketById` query requires an argument of type `GetServiceTicketByIdVariables`:
 const getServiceTicketByIdVars: GetServiceTicketByIdVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `getServiceTicketById()` function to execute the query.
@@ -617,7 +617,7 @@ import { connectorConfig, getServiceTicketByIdRef, GetServiceTicketByIdVariables
 
 // The `GetServiceTicketById` query requires an argument of type `GetServiceTicketByIdVariables`:
 const getServiceTicketByIdVars: GetServiceTicketByIdVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `getServiceTicketByIdRef()` function to get a reference to the query.
@@ -802,7 +802,7 @@ import { connectorConfig, getUserByEmail, GetUserByEmailVariables } from '@pcmak
 
 // The `GetUserByEmail` query requires an argument of type `GetUserByEmailVariables`:
 const getUserByEmailVars: GetUserByEmailVariables = {
-  email: ..., 
+  email: ...,
 };
 
 // Call the `getUserByEmail()` function to execute the query.
@@ -832,7 +832,7 @@ import { connectorConfig, getUserByEmailRef, GetUserByEmailVariables } from '@pc
 
 // The `GetUserByEmail` query requires an argument of type `GetUserByEmailVariables`:
 const getUserByEmailVars: GetUserByEmailVariables = {
-  email: ..., 
+  email: ...,
 };
 
 // Call the `getUserByEmailRef()` function to get a reference to the query.
@@ -930,10 +930,10 @@ import { connectorConfig, createUser, CreateUserVariables } from '@pcmaker/datac
 
 // The `CreateUser` mutation requires an argument of type `CreateUserVariables`:
 const createUserVars: CreateUserVariables = {
-  firstName: ..., 
-  lastName: ..., 
-  email: ..., 
-  password: ..., 
+  firstName: ...,
+  lastName: ...,
+  email: ...,
+  password: ...,
   phone: ..., // optional
 };
 
@@ -964,10 +964,10 @@ import { connectorConfig, createUserRef, CreateUserVariables } from '@pcmaker/da
 
 // The `CreateUser` mutation requires an argument of type `CreateUserVariables`:
 const createUserVars: CreateUserVariables = {
-  firstName: ..., 
-  lastName: ..., 
-  email: ..., 
-  password: ..., 
+  firstName: ...,
+  lastName: ...,
+  email: ...,
+  password: ...,
   phone: ..., // optional
 };
 
@@ -1054,11 +1054,11 @@ import { connectorConfig, createServiceTicket, CreateServiceTicketVariables } fr
 
 // The `CreateServiceTicket` mutation requires an argument of type `CreateServiceTicketVariables`:
 const createServiceTicketVars: CreateServiceTicketVariables = {
-  ticketNumber: ..., 
-  clientId: ..., 
-  serviceTypeId: ..., 
-  title: ..., 
-  description: ..., 
+  ticketNumber: ...,
+  clientId: ...,
+  serviceTypeId: ...,
+  title: ...,
+  description: ...,
   deviceName: ..., // optional
   deviceSerialNumber: ..., // optional
   priority: ..., // optional
@@ -1091,11 +1091,11 @@ import { connectorConfig, createServiceTicketRef, CreateServiceTicketVariables }
 
 // The `CreateServiceTicket` mutation requires an argument of type `CreateServiceTicketVariables`:
 const createServiceTicketVars: CreateServiceTicketVariables = {
-  ticketNumber: ..., 
-  clientId: ..., 
-  serviceTypeId: ..., 
-  title: ..., 
-  description: ..., 
+  ticketNumber: ...,
+  clientId: ...,
+  serviceTypeId: ...,
+  title: ...,
+  description: ...,
   deviceName: ..., // optional
   deviceSerialNumber: ..., // optional
   priority: ..., // optional
@@ -1180,9 +1180,9 @@ import { connectorConfig, addTicketComment, AddTicketCommentVariables } from '@p
 
 // The `AddTicketComment` mutation requires an argument of type `AddTicketCommentVariables`:
 const addTicketCommentVars: AddTicketCommentVariables = {
-  ticketId: ..., 
-  authorId: ..., 
-  content: ..., 
+  ticketId: ...,
+  authorId: ...,
+  content: ...,
   isInternal: ..., // optional
 };
 
@@ -1213,9 +1213,9 @@ import { connectorConfig, addTicketCommentRef, AddTicketCommentVariables } from 
 
 // The `AddTicketComment` mutation requires an argument of type `AddTicketCommentVariables`:
 const addTicketCommentVars: AddTicketCommentVariables = {
-  ticketId: ..., 
-  authorId: ..., 
-  content: ..., 
+  ticketId: ...,
+  authorId: ...,
+  content: ...,
   isInternal: ..., // optional
 };
 
@@ -1300,8 +1300,8 @@ import { connectorConfig, createPcConfiguration, CreatePcConfigurationVariables 
 
 // The `CreatePcConfiguration` mutation requires an argument of type `CreatePcConfigurationVariables`:
 const createPcConfigurationVars: CreatePcConfigurationVariables = {
-  userId: ..., 
-  name: ..., 
+  userId: ...,
+  name: ...,
   description: ..., // optional
   totalPrice: ..., // optional
   estimatedPerformance: ..., // optional
@@ -1335,8 +1335,8 @@ import { connectorConfig, createPcConfigurationRef, CreatePcConfigurationVariabl
 
 // The `CreatePcConfiguration` mutation requires an argument of type `CreatePcConfigurationVariables`:
 const createPcConfigurationVars: CreatePcConfigurationVariables = {
-  userId: ..., 
-  name: ..., 
+  userId: ...,
+  name: ...,
   description: ..., // optional
   totalPrice: ..., // optional
   estimatedPerformance: ..., // optional
@@ -1423,10 +1423,10 @@ import { connectorConfig, addConfigurationComponent, AddConfigurationComponentVa
 
 // The `AddConfigurationComponent` mutation requires an argument of type `AddConfigurationComponentVariables`:
 const addConfigurationComponentVars: AddConfigurationComponentVariables = {
-  configurationId: ..., 
-  componentId: ..., 
+  configurationId: ...,
+  componentId: ...,
   quantity: ..., // optional
-  priceAtSelection: ..., 
+  priceAtSelection: ...,
   isSelected: ..., // optional
 };
 
@@ -1457,10 +1457,10 @@ import { connectorConfig, addConfigurationComponentRef, AddConfigurationComponen
 
 // The `AddConfigurationComponent` mutation requires an argument of type `AddConfigurationComponentVariables`:
 const addConfigurationComponentVars: AddConfigurationComponentVariables = {
-  configurationId: ..., 
-  componentId: ..., 
+  configurationId: ...,
+  componentId: ...,
   quantity: ..., // optional
-  priceAtSelection: ..., 
+  priceAtSelection: ...,
   isSelected: ..., // optional
 };
 
@@ -1485,4 +1485,3 @@ executeMutation(ref).then((response) => {
   console.log(data.configurationComponent_insert);
 });
 ```
-

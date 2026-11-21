@@ -38,10 +38,10 @@ const { data } = await ListComponents(dataConnect, listComponentsVars);
 // Operation GetComponentById:  For variables, look at type GetComponentByIdVars in ../index.d.ts
 const { data } = await GetComponentById(dataConnect, getComponentByIdVars);
 
-// Operation ListServiceTypes: 
+// Operation ListServiceTypes:
 const { data } = await ListServiceTypes(dataConnect);
 
-// Operation ListServiceTickets: 
+// Operation ListServiceTickets:
 const { data } = await ListServiceTickets(dataConnect);
 
 // Operation GetServiceTicketById:  For variables, look at type GetServiceTicketByIdVars in ../index.d.ts

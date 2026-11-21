@@ -15,6 +15,3 @@ Then, you can run the SDK as needed.
 ```ts
 import { ... } from '@pcmaker/dataconnect';
 ```
-
-
-
