@@ -121,6 +121,16 @@ const mapSpecifications = (value: unknown): Record<string, string> => {
   return specifications;
 };
 
+const nullablePrice = (value: unknown): number | null => {
+  if (value === null || value === undefined) return null;
+  const candidate = typeof value === "string" ? value.trim() : value;
+  const isNumericString = typeof candidate === "string" && /^[+]?(?:\d+\.?\d*|\.\d+)$/.test(candidate);
+  if (typeof candidate !== "number" && !isNumericString) throw new FirebaseCatalogUnavailableError();
+  const parsed = typeof candidate === "number" ? candidate : Number(candidate);
+  if (!Number.isFinite(parsed) || parsed < 0) throw new FirebaseCatalogUnavailableError();
+  return parsed;
+};
+
 const mapComponent = (value: unknown, capturedAt: string): CatalogComponent => {
   if (!isRecord(value)) throw new FirebaseCatalogUnavailableError();
   const id = normalizeComponentId(textField(value.id, true, 255));
@@ -140,9 +150,9 @@ const mapComponent = (value: unknown, capturedAt: string): CatalogComponent => {
     ...(/^https:\/\/github\.com\/buildcores\/buildcores-open-db\/blob\/[0-9a-f]{40}\/open-db\/(CPU|GPU|RAM|Storage)\/[0-9a-f-]{36}\.json$/.test(buildCoresSourceUrl ?? "")
       ? { buildCoresSourceUrl }
       : {}),
-    // Data Connect currently exposes no currency contract for this column.
-    // Keep the nullable values honest instead of treating the Float as PLN.
-    price: null,
+    // The catalog contract exposes a nullable Float and the UI labels persisted
+    // values as demo PLN amounts. Never coerce malformed values or negatives.
+    price: nullablePrice(value.price),
     performanceScore: null,
     currency: "PLN",
     source: {

@@ -92,6 +92,8 @@ Endpoint katalogu zwraca opis produktu, bez udawania aktualnej ceny sklepowej. P
 
 Odpowiedź zawiera `data` oraz `meta.total`, `meta.page`, `meta.limit`, `meta.source` i opcjonalnie `meta.provider`. Bez `CATALOG_DATA_FILE` `meta.source` ma wartość `sample`; po poprawnym załadowaniu snapshotu ma wartość `external`. `price` i `performanceScore` mogą być `null`, a `source.kind` informuje o pochodzeniu rekordu. Sortowanie po nazwie jest deterministyczne.
 
+W trybie Firebase (`meta.source: database`) `price` jest zapisaną kwotą demonstracyjną w PLN lub `null`, jeśli kwoty nie przypisano. Lista i szczegóły zwracają tę samą wartość. Oferty sklepów mają osobne API.
+
 Jeśli `CATALOG_DATA_FILE` jest ustawione i plik jest niepoprawny, lista, szczegół rekordu oraz lista kategorii zwracają `503`:
 
 ```json

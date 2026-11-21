@@ -8,7 +8,7 @@ PCMaker łączy konfigurator komputera z katalogiem podzespołów i przygotowani
 - Katalog może korzystać ze źródła `sample`, `file` albo `firebase`. Przy braku konfiguracji domyślnie używa małego zbioru przykładowego; ustawienie `CATALOG_DATA_FILE` bez `CATALOG_SOURCE` zachowuje tryb plikowy.
 - Katalog Firebase zawiera 1030 części z importu UserBenchmark, uzupełnionych o specyfikacje z BuildCores OpenDB. Szczegóły części pokazują źródło i licencję danych. Pierwotny import obejmował 4578 rekordów.
 - Odczyt Firebase Data Connect jest read-only. `ListCatalogPage` pobiera strony po 500 rekordów, a adapter buduje kompletny snapshot, cache’owany w procesie przez 60 sekund (maksymalnie 100 000 rekordów). Błąd strony zwraca `503`, bez fallbacku do próbek i bez cache częściowego.
-- Ceny katalogowe pozostają `null`. Oferty SerpAPI są kandydatami i nie są zapisywane do rekordu komponentu.
+- Każda z 1030 części w Firebase ma zapisaną stałą cenę demonstracyjną w PLN. Nowe części mogą mieć `price: null`. Oferty SerpAPI są wyświetlane oddzielnie.
 
 Szczegółowe granice źródeł i importu opisuje [docs/catalog.md](docs/catalog.md), a kontrakty REST — [docs/api-contract.md](docs/api-contract.md).
 

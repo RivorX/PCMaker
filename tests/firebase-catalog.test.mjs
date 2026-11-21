@@ -68,7 +68,7 @@ test("maps Firebase records and canonical category aliases without inventing dat
       assert.equal(snapshot.components[0].model, "");
       assert.equal(snapshot.components[0].description, "");
       assert.deepEqual(snapshot.components[0].specifications, {});
-      assert.equal(snapshot.components[0].price, null);
+      assert.equal(snapshot.components[0].price, 999);
       assert.equal(snapshot.components[0].performanceScore, null);
       assert.equal(snapshot.components[0].source.kind, "database");
       assert.equal(snapshot.components[0].source.provider, "firebase-sql-connect");
@@ -77,6 +77,31 @@ test("maps Firebase records and canonical category aliases without inventing dat
       assert.equal(request.init.method, "POST");
       assert.equal(request.init.headers["x-goog-api-key"], API_KEY);
       assert.deepEqual(JSON.parse(request.init.body), { operationName: "ListCatalogPage", variables: { offset: 0 } });
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
+  });
+});
+
+test("accepts numeric price serialization and rejects malformed persisted prices", async () => {
+  await withFirebaseEnv(async () => {
+    const previousFetch = globalThis.fetch;
+    try {
+      for (const price of ["123.45", -1, "", "not-a-number", "NaN", true, {}]) {
+        resetFirebaseCatalogCache();
+        globalThis.fetch = async () => jsonResponse({ data: { components: [{
+          id: "price-check",
+          name: "Price check",
+          componentType: "CPU",
+          price,
+        }] } });
+        if (price === "123.45") {
+          const snapshot = await getFirebaseCatalogSnapshot();
+          assert.equal(snapshot.components[0].price, 123.45);
+        } else {
+          await assert.rejects(() => getFirebaseCatalogSnapshot(), FirebaseCatalogUnavailableError);
+        }
+      }
     } finally {
       globalThis.fetch = previousFetch;
     }
