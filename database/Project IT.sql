@@ -105,6 +105,7 @@ CREATE TABLE `pc_configurations` (
   `total_price` DECIMAL(12,2) NOT NULL DEFAULT 0,
   `estimated_performance` DECIMAL(10,2),
   `is_public` BOOLEAN NOT NULL DEFAULT false,
+  `saved_snapshot` JSON,
   `created_at` DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP),
   `updated_at` DATETIME
 );

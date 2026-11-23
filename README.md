@@ -1,6 +1,6 @@
 # PCMaker
 
-PCMaker łączy konfigurator komputerów z katalogiem podzespołów i przygotowaniem zgłoszenia serwisowego. Konfigurator pozwala układać zestaw, sprawdza podstawową zgodność socketu i pamięci oraz zapisuje wersję roboczą lokalnie w przeglądarce. Formularz serwisowy także zapisuje draft i nie wysyła zgłoszenia na serwer.
+PCMaker łączy konfigurator komputerów z katalogiem podzespołów i przygotowaniem zgłoszenia serwisowego. Zalogowany użytkownik może zapisać prywatny zestaw w bibliotece Firebase. Bieżący zestaw gościa jest tymczasowo zachowywany w przeglądarce, aby można go było odzyskać po zalogowaniu. Formularz serwisowy nadal zapisuje wersję roboczą lokalnie. Wdrożenie nowego schematu i konektora opisano w [instrukcji Data Connect](docs/dataconnect-security-handoff.md#wdrożenie-prywatnych-zapisanych-zestawów).
 
 ## Uruchomienie lokalne
 

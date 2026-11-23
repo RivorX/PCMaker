@@ -10,7 +10,7 @@ export async function GET() {
   if (!session) {
     return Response.json(
       { authenticated: false },
-      { status: 401 }
+      { status: 401, headers: { "Cache-Control": "private, no-store" } }
     );
   }
 
@@ -19,6 +19,7 @@ export async function GET() {
     user: {
       username: session.username,
       role: session.role,
+      canSaveConfigurations: Boolean(session.userId),
     },
-  });
+  }, { headers: { "Cache-Control": "private, no-store" } });
 }

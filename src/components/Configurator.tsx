@@ -5,11 +5,13 @@ import PcPreview, { type PcPreviewPart } from "@/components/PcPreview";
 import PartCategoryIcon from "@/components/PartCategoryIcon";
 import { fetchCatalog, type ConfiguratorCatalogComponent } from "@/lib/catalog-client";
 import {
+  CONFIGURATION_STORAGE_KEY,
   componentCategoryLabels,
   createComponentId,
   displayDate,
   emptyConfigurationDraft,
-  readConfigurationDraft,
+  MAX_CONFIGURATION_DESCRIPTION_LENGTH,
+  parseConfigurationDraft,
   type ComponentCategory,
   type ConfigurationDraft,
   type ManualComponent,
@@ -17,16 +19,20 @@ import {
 import {
   configurationContentKey,
   configurationSnapshot,
-  deleteConfigurationFromLibrary,
-  loadSavedConfigurationLibrary,
   normalizeConfigurationName,
-  readWorkingConfiguration,
-  saveConfigurationToLibrary,
-  saveWorkingConfiguration,
+  parseSavedConfigurationLibrary,
+  parseWorkingConfiguration,
+  SAVED_CONFIGURATION_LIBRARY_KEY,
+  WORKING_CONFIGURATION_KEY,
   type ConfigurationSnapshot,
   type SavedConfiguration,
-  type WorkingConfigurationState,
 } from "@/lib/saved-configurations";
+import {
+  clearConfigurationHandoff,
+  CONFIGURATION_HANDOFF_KEY,
+  readConfigurationHandoff,
+  writeConfigurationHandoff,
+} from "@/lib/configuration-handoff";
 import { getCompatibilityChecks } from "@/lib/compatibility";
 import styles from "./Configurator.module.css";
 
@@ -91,16 +97,51 @@ const browserStorage = (): Storage | null => {
   }
 };
 
+type LibraryAccess = "loading" | "guest" | "ready" | "account-required" | "error";
+
+interface LegacyTransferItem {
+  configuration: SavedConfiguration;
+  requestId: string;
+  imported: boolean;
+}
+
+const parseConfiguration = (value: unknown): SavedConfiguration | null => {
+  const parsed = parseSavedConfigurationLibrary(JSON.stringify({
+    version: 1,
+    configurations: [value],
+  }));
+  return parsed.status === "valid" ? parsed.value.configurations[0] ?? null : null;
+};
+
+const stableTransferId = async (username: string, localId: string): Promise<string> => {
+  const source = new TextEncoder().encode(`pcmaker-configuration:${username.toLowerCase()}:${localId}`);
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", source)).slice(0, 16);
+  digest[6] = (digest[6] & 0x0f) | 0x50;
+  digest[8] = (digest[8] & 0x3f) | 0x80;
+  const hex = [...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+};
+
+const readConfigurationsResponse = (value: unknown): SavedConfiguration[] | null => {
+  if (!value || typeof value !== "object" || !Array.isArray((value as { configurations?: unknown }).configurations)) return null;
+  const configurations = (value as { configurations: unknown[] }).configurations.map(parseConfiguration);
+  return configurations.every((item): item is SavedConfiguration => item !== null) ? configurations : null;
+};
+
 export default function Configurator() {
   const [draft, setDraft] = useState<ConfigurationDraft>(emptyConfigurationDraft);
   const [savedConfigurations, setSavedConfigurations] = useState<SavedConfiguration[]>([]);
   const [activeSavedId, setActiveSavedId] = useState<string | null>(null);
   const [baseline, setBaseline] = useState<ConfigurationSnapshot>(() => configurationSnapshot(emptyConfigurationDraft()));
-  const [storageInitialized, setStorageInitialized] = useState(false);
-  const [libraryIssue, setLibraryIssue] = useState<"corrupt" | "unavailable" | null>(null);
-  const [legacyWarning, setLegacyWarning] = useState(false);
-  const [workingCacheIssue, setWorkingCacheIssue] = useState<"corrupt" | "unavailable" | null>(null);
+  const [libraryAccess, setLibraryAccess] = useState<LibraryAccess>("loading");
   const [libraryNotice, setLibraryNotice] = useState<string | null>(null);
+  const [restoredHandoff, setRestoredHandoff] = useState(false);
+  const [accountUsername, setAccountUsername] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [legacyTransferItems, setLegacyTransferItems] = useState<LegacyTransferItem[] | null>(null);
+  const [legacyTransferError, setLegacyTransferError] = useState<string | null>(null);
+  const [transferringLegacyId, setTransferringLegacyId] = useState<string | null>(null);
   const [pendingTransition, setPendingTransition] = useState<{ type: "new" } | { type: "load"; id: string } | null>(null);
   const [savedConfigurationDialog, setSavedConfigurationDialog] = useState<SavedConfigurationDialogState>(null);
   const [savedDialogError, setSavedDialogError] = useState<string | null>(null);
@@ -110,7 +151,10 @@ export default function Configurator() {
   const [activeCategory, setActiveCategory] = useState<ComponentCategory>("cpu");
   const [categoryThumbnails, setCategoryThumbnails] = useState<Partial<Record<ConfigurableCategory, string>>>({});
   const categoryThumbnailsRef = useRef<Partial<Record<ConfigurableCategory, string>>>({});
-  const storageInitializationRef = useRef(false);
+  const libraryRequestIdRef = useRef(0);
+  const createRequestRef = useRef<{ key: string; id: string } | null>(null);
+  const saveRequestInFlightRef = useRef(false);
+  const deleteRequestRef = useRef(false);
   const savedDialogRef = useRef<HTMLDialogElement>(null);
   const savedDialogTriggerRef = useRef<HTMLElement | null>(null);
   const savedDialogWasOpenRef = useRef(false);
@@ -162,86 +206,94 @@ export default function Configurator() {
     }
   }, []);
 
-  useEffect(() => {
-    if (storageInitializationRef.current) return;
-    storageInitializationRef.current = true;
-    const storage = browserStorage();
-    if (!storage) {
-      setLibraryIssue("unavailable");
-      setWorkingCacheIssue("unavailable");
-      setStorageInitialized(true);
-      void loadCatalog();
-      return;
-    }
-    const library = loadSavedConfigurationLibrary(storage);
-    setSavedConfigurations(library.configurations);
-    setLibraryIssue(library.issue);
-    setLegacyWarning(library.warning === "legacy-corrupt");
+  const loadSavedConfigurations = useCallback(async () => {
+    const requestId = ++libraryRequestIdRef.current;
+    setLibraryAccess("loading");
+    setAccountUsername(null);
+    setLegacyTransferItems(null);
+    try {
+      const response = await fetch("/api/v1/configurations", { cache: "no-store" });
+      if (requestId !== libraryRequestIdRef.current) return;
+      if (response.status === 401) {
+        setSavedConfigurations([]);
+        setActiveSavedId(null);
+        setBaseline(configurationSnapshot(emptyConfigurationDraft()));
+        setLegacyTransferItems(null);
+        setAccountUsername(null);
+        setLibraryAccess("guest");
+        return;
+      }
+      if (response.status === 403) {
+        setSavedConfigurations([]);
+        setActiveSavedId(null);
+        setBaseline(configurationSnapshot(emptyConfigurationDraft()));
+        setLegacyTransferItems(null);
+        setAccountUsername(null);
+        setLibraryAccess("account-required");
+        return;
+      }
+      if (!response.ok) throw new Error("Nie udało się pobrać zestawów z konta.");
 
-    const working = readWorkingConfiguration(storage);
-    if (working.status === "valid") {
-      const migratedRecord = library.migratedLegacyId
-        ? library.configurations.find((item) => item.id === library.migratedLegacyId)
-        : undefined;
-      const emptyBaseline = configurationSnapshot(emptyConfigurationDraft());
-      const recoverLegacyLink = !working.value.activeSavedId
-        && migratedRecord
-        && library.legacyDraft
-        && working.value.draft.updatedAt === library.legacyDraft.updatedAt
-        && configurationContentKey(configurationSnapshot(working.value.draft)) === configurationContentKey(configurationSnapshot(library.legacyDraft))
-        && configurationContentKey(working.value.baseline) === configurationContentKey(emptyBaseline);
-      const missingActiveLink = Boolean(working.value.activeSavedId)
-        && library.issue === null
-        && !library.configurations.some((item) => item.id === working.value.activeSavedId);
-      const recoveredDraft = recoverLegacyLink && migratedRecord
-        ? { ...working.value.draft, title: migratedRecord.title, components: migratedRecord.components, updatedAt: migratedRecord.updatedAt }
-        : working.value.draft;
-      setDraft(recoveredDraft);
-      setActiveSavedId(missingActiveLink ? null : recoverLegacyLink && migratedRecord ? migratedRecord.id : working.value.activeSavedId);
-      setBaseline(missingActiveLink
-        ? emptyBaseline
-        : recoverLegacyLink && migratedRecord
-          ? configurationSnapshot(recoveredDraft)
-          : working.value.baseline);
-    } else {
-      if (working.status === "corrupt" || working.status === "unavailable") {
-        setWorkingCacheIssue(working.status);
+      const body: unknown = await response.json();
+      if (requestId !== libraryRequestIdRef.current) return;
+      const configurations = readConfigurationsResponse(body);
+      if (!configurations) throw new Error("Serwer zwrócił nieprawidłową listę zestawów.");
+
+      let sessionResponse: Response | null = null;
+      try {
+        sessionResponse = await fetch("/api/v1/auth/session", { cache: "no-store" });
+      } catch {
+        // Loading the account library does not depend on profile details.
       }
-      const legacy = library.legacyDraft ?? (library.issue === "corrupt" ? readConfigurationDraft() : null);
-      if (legacy) {
-        const migratedRecord = library.migratedLegacyId
-          ? library.configurations.find((item) => item.id === library.migratedLegacyId)
-          : undefined;
-        const initialDraft = migratedRecord
-          ? { ...legacy, title: migratedRecord.title, components: migratedRecord.components, updatedAt: migratedRecord.updatedAt }
-          : legacy;
-        setDraft(initialDraft);
-        setActiveSavedId(migratedRecord?.id ?? null);
-        setBaseline(migratedRecord ? configurationSnapshot(initialDraft) : configurationSnapshot(emptyConfigurationDraft()));
+      if (requestId !== libraryRequestIdRef.current) return;
+      if (sessionResponse?.status === 401) {
+        setSavedConfigurations([]);
+        setActiveSavedId(null);
+        setBaseline(configurationSnapshot(emptyConfigurationDraft()));
+        setLegacyTransferItems(null);
+        setAccountUsername(null);
+        setLibraryAccess("guest");
+        return;
       }
+      if (sessionResponse?.ok) {
+        try {
+          const sessionBody = await sessionResponse.json() as { user?: { username?: unknown } };
+          if (requestId !== libraryRequestIdRef.current) return;
+          if (typeof sessionBody.user?.username === "string") setAccountUsername(sessionBody.user.username);
+        } catch {
+          // The account library remains available when profile details are unavailable.
+        }
+      }
+
+      setSavedConfigurations(configurations);
+      setLibraryAccess("ready");
+
+      try {
+        const storage = window.sessionStorage;
+        const handoff = readConfigurationHandoff(storage);
+        if (handoff) {
+          setDraft(handoff.draft);
+          setActiveSavedId(null);
+          setBaseline(configurationSnapshot(emptyConfigurationDraft()));
+          setRestoredHandoff(true);
+          clearConfigurationHandoff(storage);
+        } else if (storage.getItem(CONFIGURATION_HANDOFF_KEY) !== null) {
+          clearConfigurationHandoff(storage);
+        }
+      } catch {
+        // The cloud library remains available when browser storage is disabled.
+      }
+    } catch {
+      if (requestId !== libraryRequestIdRef.current) return;
+      setLibraryAccess("error");
+      setLibraryNotice("Nie udało się pobrać zestawów z Firebase. Bieżący konfigurator pozostaje otwarty.");
     }
-    setStorageInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    void loadSavedConfigurations();
     void loadCatalog();
-  }, [loadCatalog]);
-
-  const workingState = useMemo<WorkingConfigurationState>(() => ({
-    version: 1,
-    draft,
-    activeSavedId,
-    baseline,
-  }), [draft, activeSavedId, baseline]);
-
-  useEffect(() => {
-    if (!storageInitialized) return;
-    const storage = browserStorage();
-    if (!storage) {
-      setWorkingCacheIssue("unavailable");
-      return;
-    }
-    const saved = saveWorkingConfiguration(storage, workingState);
-    setWorkingCacheIssue(saved.ok ? null : saved.issue);
-  }, [storageInitialized, workingState]);
-
+  }, [loadCatalog, loadSavedConfigurations]);
   const selected = useMemo(() => new Map(draft.components.map((part) => [part.category, part])), [draft.components]);
   const currentContent = useMemo(() => configurationSnapshot(draft), [draft]);
   const isDirty = configurationContentKey(currentContent) !== configurationContentKey(baseline);
@@ -252,13 +304,19 @@ export default function Configurator() {
   const activeSavedConfiguration = savedConfigurations.find((item) => item.id === activeSavedId);
   const saveStatusText = isDirty
     ? "Niezapisane zmiany"
-    : libraryIssue
-      ? "Biblioteka niedostępna"
-      : activeSavedConfiguration
-        ? `Zapisano ${displayDate(activeSavedConfiguration.updatedAt)}`
-        : activeSavedId
-          ? "Zapis nie jest dostępny"
-          : "Niezapisany zestaw";
+    : libraryAccess === "loading"
+      ? "Ładowanie zapisów…"
+      : libraryAccess === "guest"
+        ? "Zaloguj się, aby zapisywać"
+        : libraryAccess === "account-required"
+          ? "Wymagane konto użytkownika"
+          : libraryAccess === "error"
+            ? "Biblioteka niedostępna"
+            : activeSavedConfiguration
+              ? `Zapisano ${displayDate(activeSavedConfiguration.updatedAt)}`
+              : activeSavedId
+                ? "Zapis nie jest dostępny"
+                : "Niezapisany zestaw";
   const activePart = selected.get(activeCategory);
   const activeVisualCategory: ConfigurableCategory = activeCategory === "other" ? "cpu" : activeCategory;
   const listedParts = useMemo(() => {
@@ -321,32 +379,260 @@ export default function Configurator() {
     ]);
   };
 
-  const saveDraft = (mode: "update" | "copy" = "update") => {
-    const storage = browserStorage();
-    if (!storage) {
-      setLibraryIssue("unavailable");
-      setLibraryNotice("Nie udało się zapisać zestawu. Przeglądarka blokuje pamięć lokalną.");
+  const requestSignIn = () => {
+    const next = {
+      ...draft,
+      title: normalizeConfigurationName(draft.title),
+      description: (draft.description ?? "").trim().slice(0, MAX_CONFIGURATION_DESCRIPTION_LENGTH),
+      updatedAt: new Date().toISOString(),
+    };
+    try {
+      if (!writeConfigurationHandoff(window.sessionStorage, next)) {
+        setLibraryNotice("Nie udało się tymczasowo zachować zestawu. Pozostaniesz w konfiguratorze.");
+        return;
+      }
+    } catch {
+      setLibraryNotice("Przeglądarka zablokowała tymczasowy zapis. Zestaw nadal jest widoczny w konfiguratorze.");
       return;
     }
-    const next = { ...draft, title: normalizeConfigurationName(draft.title), updatedAt: new Date().toISOString() };
-    const result = saveConfigurationToLibrary(storage, next, mode, activeSavedId);
-    if (!result.ok) {
-      if (result.issue === "corrupt" || result.issue === "unavailable") setLibraryIssue(result.issue);
-      setLibraryNotice(result.issue === "corrupt"
-        ? "Nie udało się odczytać zapisanych zestawów. Istniejące zapisy pozostały bez zmian."
-        : result.issue === "missing"
-          ? "Wybrany zapis nie jest już dostępny. Użyj „Zapisz jako nowy”."
-          : "Nie udało się zapisać zestawu. Sprawdź wolne miejsce i ustawienia przeglądarki.");
-      return;
-    }
-    setDraft({ ...next, updatedAt: result.saved.updatedAt });
-    setSavedConfigurations(result.configurations);
-    setActiveSavedId(result.saved.id);
-    setBaseline(configurationSnapshot(next));
-    setLibraryIssue(null);
-    setLibraryNotice(mode === "copy" ? "Zapisano jako nowy zestaw." : "Zapisano zmiany w zestawie.");
+    window.location.assign("/?returnTo=%2Fkonfigurator");
   };
 
+  const saveDraft = async (mode: "update" | "copy" = "update") => {
+    if (saveRequestInFlightRef.current || deleteRequestRef.current || saving || libraryAccess === "loading") return;
+    if (libraryAccess === "guest") {
+      setLibraryNotice("Aby zapisać zestaw na koncie, zaloguj się lub utwórz konto.");
+      return;
+    }
+    if (libraryAccess === "account-required") {
+      setLibraryNotice("Ta sesja nie jest powiązana z kontem klienta. Wyloguj się i zaloguj na konto użytkownika.");
+      return;
+    }
+    if (libraryAccess !== "ready" || !navigator.onLine) {
+      setLibraryNotice("Nie udało się połączyć z Firebase. Spróbuj ponownie, gdy połączenie będzie dostępne.");
+      return;
+    }
+
+    const next = { ...draft, title: normalizeConfigurationName(draft.title), updatedAt: new Date().toISOString() };
+    const snapshotKey = configurationContentKey(configurationSnapshot(next));
+    const requestGeneration = libraryRequestIdRef.current;
+    const isUpdate = mode === "update" && activeSavedId !== null;
+    let url = "/api/v1/configurations";
+    let method = "POST";
+    const body: Record<string, unknown> = { title: next.title, description: next.description, components: next.components };
+
+    if (isUpdate) {
+      url += "/" + encodeURIComponent(activeSavedId as string);
+      method = "PUT";
+    } else {
+      const key = mode + ":" + configurationContentKey(configurationSnapshot(next));
+      if (!createRequestRef.current || createRequestRef.current.key !== key) {
+        createRequestRef.current = { key, id: crypto.randomUUID() };
+      }
+      body.requestId = createRequestRef.current.id;
+    }
+
+    saveRequestInFlightRef.current = true;
+    setSaving(true);
+    try {
+      const response = await fetch(url, {
+        method,
+        cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (requestGeneration !== libraryRequestIdRef.current) return;
+      const payload: unknown = await response.json().catch(() => null);
+      if (requestGeneration !== libraryRequestIdRef.current) return;
+      if (response.status === 401) {
+        setSavedConfigurations([]);
+        setActiveSavedId(null);
+        setBaseline(configurationSnapshot(emptyConfigurationDraft()));
+        setLegacyTransferItems(null);
+        setAccountUsername(null);
+        setLibraryAccess("guest");
+        setLibraryNotice("Sesja wygasła. Zaloguj się ponownie, aby zapisać zestaw.");
+        return;
+      }
+      if (response.status === 403) {
+        setSavedConfigurations([]);
+        setActiveSavedId(null);
+        setBaseline(configurationSnapshot(emptyConfigurationDraft()));
+        setLegacyTransferItems(null);
+        setAccountUsername(null);
+        setLibraryAccess("account-required");
+        setLibraryNotice("Ta sesja nie jest powiązana z kontem klienta. Zaloguj się na konto użytkownika.");
+        return;
+      }
+      if (response.status === 404 && isUpdate) {
+        setSavedConfigurations((current) => current.filter((item) => item.id !== activeSavedId));
+        setActiveSavedId(null);
+        setLibraryNotice("Tego zapisu nie ma już na koncie. Możesz zapisać zestaw jako nowy.");
+        return;
+      }
+      if (!response.ok) {
+        const error = payload && typeof payload === "object" && typeof (payload as { error?: unknown }).error === "string"
+          ? (payload as { error: string }).error
+          : "Nie udało się zapisać zestawu w Firebase. Spróbuj ponownie.";
+        setLibraryNotice(error);
+        return;
+      }
+
+      const saved = parseConfiguration(payload && typeof payload === "object" ? (payload as { configuration?: unknown }).configuration : null);
+      if (!saved) {
+        setLibraryNotice("Firebase odpowiedział bez prawidłowego zapisu. Odśwież bibliotekę przed kolejną próbą.");
+        return;
+      }
+
+      setSavedConfigurations((current) => {
+        const exists = current.some((item) => item.id === saved.id);
+        return exists ? current.map((item) => item.id === saved.id ? saved : item) : [...current, saved];
+      });
+      const savedDraft: ConfigurationDraft = {
+        version: 1,
+        title: saved.title,
+        description: saved.description ?? "",
+        components: saved.components,
+        updatedAt: saved.updatedAt,
+      };
+      setDraft((current) => configurationContentKey(configurationSnapshot(current)) === snapshotKey ? savedDraft : current);
+      setActiveSavedId(saved.id);
+      setBaseline(configurationSnapshot(savedDraft));
+      setLibraryAccess("ready");
+      setRestoredHandoff(false);
+      setLibraryNotice(mode === "copy" ? "Zapisano jako nowy zestaw na koncie." : "Zapisano zmiany na koncie.");
+      if (!isUpdate) createRequestRef.current = null;
+    } catch {
+      if (requestGeneration === libraryRequestIdRef.current) {
+        setLibraryNotice("Nie udało się połączyć z Firebase. Zestaw pozostał w edytorze, spróbuj ponownie.");
+      }
+    } finally {
+      saveRequestInFlightRef.current = false;
+      setSaving(false);
+    }
+  };
+
+  const showLocalConfigurations = async () => {
+    const storage = browserStorage();
+    if (!storage) {
+      setLegacyTransferError("Nie udało się odczytać starszych zestawów z tej przeglądarki.");
+      return;
+    }
+
+    const requestGeneration = libraryRequestIdRef.current;
+    try {
+      const parsed = parseSavedConfigurationLibrary(storage.getItem(SAVED_CONFIGURATION_LIBRARY_KEY));
+      if (parsed.status === "corrupt") {
+        setLegacyTransferError("Starsza biblioteka jest uszkodzona. Pozostała bez zmian.");
+        return;
+      }
+      if (!accountUsername) {
+        setLegacyTransferError("Nie udało się potwierdzić konta. Odśwież bibliotekę i spróbuj ponownie.");
+        return;
+      }
+
+      const configurations = parsed.status === "valid" ? [...parsed.value.configurations] : [];
+      const legacyDrafts = [
+        parseConfigurationDraft(storage.getItem(CONFIGURATION_STORAGE_KEY)),
+        (() => {
+          const working = parseWorkingConfiguration(storage.getItem(WORKING_CONFIGURATION_KEY));
+          return working.status === "valid" ? working.value.draft : null;
+        })(),
+      ].filter((item): item is ConfigurationDraft => item !== null);
+      const knownSnapshots = new Set(configurations.map((configuration) => configurationContentKey(configurationSnapshot(configuration))));
+      for (const legacyDraft of legacyDrafts) {
+        const snapshotKey = configurationContentKey(configurationSnapshot(legacyDraft));
+        if (knownSnapshots.has(snapshotKey)) continue;
+        configurations.push({
+          id: "legacy-draft:" + legacyDraft.updatedAt + ":" + snapshotKey,
+          version: 1,
+          title: legacyDraft.title,
+          description: legacyDraft.description ?? "",
+          components: legacyDraft.components,
+          createdAt: legacyDraft.updatedAt,
+          updatedAt: legacyDraft.updatedAt,
+        });
+        knownSnapshots.add(snapshotKey);
+      }
+      const items = await Promise.all(configurations.map(async (configuration) => {
+        const requestId = await stableTransferId(accountUsername, configuration.id);
+        return {
+          configuration,
+          requestId,
+          imported: savedConfigurations.some((saved) => saved.id === requestId),
+        };
+      }));
+      if (requestGeneration !== libraryRequestIdRef.current) return;
+      setLegacyTransferItems(items);
+      setLegacyTransferError(null);
+    } catch {
+      if (requestGeneration === libraryRequestIdRef.current) {
+        setLegacyTransferError("Nie udało się przygotować starszych zestawów do przeniesienia.");
+      }
+    }
+  };
+
+  const transferLegacyConfiguration = async (item: LegacyTransferItem) => {
+    if (transferringLegacyId) return;
+    const requestGeneration = libraryRequestIdRef.current;
+    setTransferringLegacyId(item.configuration.id);
+    setLegacyTransferError(null);
+    try {
+      const response = await fetch("/api/v1/configurations", {
+        method: "POST",
+        cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId: item.requestId,
+          title: item.configuration.title,
+          description: (item.configuration.description ?? "").trim().slice(0, MAX_CONFIGURATION_DESCRIPTION_LENGTH),
+          components: item.configuration.components,
+        }),
+      });
+      if (requestGeneration !== libraryRequestIdRef.current) return;
+      const payload: unknown = await response.json().catch(() => null);
+      if (requestGeneration !== libraryRequestIdRef.current) return;
+      if (response.status === 401) {
+        setLibraryAccess("guest");
+        setSavedConfigurations([]);
+        setLegacyTransferItems(null);
+        setAccountUsername(null);
+        setLegacyTransferError("Sesja wygasła. Zaloguj się ponownie i spróbuj przenieść zestaw.");
+        return;
+      }
+      if (response.status === 403) {
+        setLibraryAccess("account-required");
+        setSavedConfigurations([]);
+        setLegacyTransferItems(null);
+        setAccountUsername(null);
+        setLegacyTransferError("Ta sesja nie jest powiązana z kontem klienta.");
+        return;
+      }
+      if (!response.ok) {
+        const error = payload && typeof payload === "object" && typeof (payload as { error?: unknown }).error === "string"
+          ? (payload as { error: string }).error
+          : "Nie udało się przenieść zestawu. Starszy zapis pozostał bez zmian.";
+        setLegacyTransferError(error);
+        return;
+      }
+      const imported = parseConfiguration(payload && typeof payload === "object" ? (payload as { configuration?: unknown }).configuration : null);
+      if (!imported) {
+        setLegacyTransferError("Nie udało się potwierdzić przeniesienia. Starszy zapis pozostał bez zmian.");
+        return;
+      }
+      setSavedConfigurations((current) => current.some((saved) => saved.id === imported.id)
+        ? current.map((saved) => saved.id === imported.id ? imported : saved)
+        : [...current, imported]);
+      setLegacyTransferItems((current) => current?.map((entry) => entry.requestId === imported.id ? { ...entry, imported: true } : entry) ?? null);
+      setLibraryNotice("Zestaw przeniesiono na konto. Starszy zapis pozostał w tej przeglądarce.");
+    } catch {
+      if (requestGeneration === libraryRequestIdRef.current) {
+        setLegacyTransferError("Nie udało się połączyć z Firebase. Starszy zapis pozostał bez zmian. Możesz ponowić próbę.");
+      }
+    } finally {
+      setTransferringLegacyId(null);
+    }
+  };
   const refreshPartsFromCatalog = (components: ManualComponent[]) => components.map((saved) => {
     if (saved.source === "own") return saved;
     const fresh = findCatalogComponent(catalog, saved.id);
@@ -359,6 +645,7 @@ export default function Configurator() {
     const savedDraft: ConfigurationDraft = {
       version: 1,
       title: saved.title,
+      description: saved.description ?? "",
       components: saved.components,
       updatedAt: saved.updatedAt,
     };
@@ -366,6 +653,7 @@ export default function Configurator() {
     setActiveSavedId(saved.id);
     setBaseline(configurationSnapshot(savedDraft));
     setPendingTransition(null);
+    setRestoredHandoff(false);
     setLibraryNotice(null);
   };
 
@@ -375,15 +663,18 @@ export default function Configurator() {
     setActiveSavedId(null);
     setBaseline(configurationSnapshot(next));
     setPendingTransition(null);
+    setRestoredHandoff(false);
     setLibraryNotice(null);
   };
 
   const requestLoadSavedConfiguration = (id: string) => {
+    if (saving || saveRequestInFlightRef.current) return;
     if (isDirty) setPendingTransition({ type: "load", id });
     else loadSavedConfiguration(id);
   };
 
   const openSavedConfigurationDialog = (type: "details" | "delete", saved: SavedConfiguration, trigger: HTMLElement) => {
+    if (saving || saveRequestInFlightRef.current || deleteRequestRef.current) return;
     savedDialogTriggerRef.current = trigger;
     setSavedDialogError(null);
     setSavedConfigurationDialog({ type, saved });
@@ -394,50 +685,87 @@ export default function Configurator() {
     setSavedConfigurationDialog(null);
   };
 
-  const confirmDeleteSavedConfiguration = (id: string): boolean => {
-    const storage = browserStorage();
-    if (!storage) {
-      setLibraryIssue("unavailable");
-      const message = "Nie udało się usunąć zestawu. Przeglądarka blokuje pamięć lokalną.";
-      setLibraryNotice(message);
-      setSavedDialogError(message);
-      return false;
-    }
-    const result = deleteConfigurationFromLibrary(storage, id);
-    if (result.ok) {
-      setSavedConfigurations(result.configurations);
+  const confirmDeleteSavedConfiguration = async (id: string): Promise<boolean> => {
+    if (deleteRequestRef.current || saveRequestInFlightRef.current) return false;
+    deleteRequestRef.current = true;
+    setDeleting(true);
+    const requestGeneration = libraryRequestIdRef.current;
+    setSavedDialogError(null);
+    try {
+      const response = await fetch("/api/v1/configurations/" + encodeURIComponent(id), {
+        method: "DELETE",
+        cache: "no-store",
+      });
+      if (requestGeneration !== libraryRequestIdRef.current) return false;
+      if (response.status === 401) {
+        setSavedConfigurations([]);
+        setActiveSavedId(null);
+        setBaseline(configurationSnapshot(emptyConfigurationDraft()));
+        setLegacyTransferItems(null);
+        setAccountUsername(null);
+        setLibraryAccess("guest");
+        const message = "Sesja wygasła. Zaloguj się ponownie, aby zarządzać zapisanymi zestawami.";
+        setSavedDialogError(message);
+        return false;
+      }
+      if (response.status === 403) {
+        setSavedConfigurations([]);
+        setActiveSavedId(null);
+        setBaseline(configurationSnapshot(emptyConfigurationDraft()));
+        setLegacyTransferItems(null);
+        setAccountUsername(null);
+        setLibraryAccess("account-required");
+        const message = "Ta sesja nie jest powiązana z kontem klienta.";
+        setSavedDialogError(message);
+        return false;
+      }
+      if (response.status === 404) {
+        setSavedConfigurations((current) => current.filter((item) => item.id !== id));
+        if (activeSavedId === id) {
+          setActiveSavedId(null);
+          setBaseline(configurationSnapshot(emptyConfigurationDraft()));
+        }
+        setLibraryNotice("Ten zestaw nie istnieje już w bibliotece.");
+        return true;
+      }
+      if (!response.ok) {
+        const payload: unknown = await response.json().catch(() => null);
+        if (requestGeneration !== libraryRequestIdRef.current) return false;
+        const message = payload && typeof payload === "object" && typeof (payload as { error?: unknown }).error === "string"
+          ? (payload as { error: string }).error
+          : "Nie udało się usunąć zestawu z Firebase. Spróbuj ponownie.";
+        setSavedDialogError(message);
+        setLibraryNotice(message);
+        return false;
+      }
+
+      setSavedConfigurations((current) => current.filter((item) => item.id !== id));
       if (activeSavedId === id) {
         setActiveSavedId(null);
         setBaseline(configurationSnapshot(emptyConfigurationDraft()));
       }
-      setLibraryIssue(null);
-      setLibraryNotice("Usunięto zapisany zestaw.");
+      setLibraryNotice("Usunięto zestaw z konta.");
       return true;
-    }
-    if (result.issue === "missing") {
-      setSavedConfigurations(result.configurations);
-      if (activeSavedId === id && !result.configurations.some((item) => item.id === id)) {
-        setActiveSavedId(null);
-        setBaseline(configurationSnapshot(emptyConfigurationDraft()));
+    } catch {
+      if (requestGeneration === libraryRequestIdRef.current) {
+        const message = "Nie udało się potwierdzić usunięcia. Spróbuj ponownie.";
+        setSavedDialogError(message);
+        setLibraryNotice(message);
       }
-      setLibraryNotice("Ten zestaw nie istnieje już w bibliotece. Lista została odświeżona.");
-      return true;
+      return false;
+    } finally {
+      deleteRequestRef.current = false;
+      setDeleting(false);
     }
-    setLibraryIssue(result.issue);
-    const message = result.issue === "corrupt"
-      ? "Nie udało się odczytać zapisanych zestawów. Istniejące zapisy pozostały bez zmian."
-      : "Nie udało się usunąć zestawu. Sprawdź ustawienia pamięci przeglądarki.";
-    setLibraryNotice(message);
-    setSavedDialogError(message);
-    return false;
   };
-
   const requestNewConfiguration = () => {
+    if (saving || saveRequestInFlightRef.current) return;
     if (isDirty) setPendingTransition({ type: "new" });
     else startNewConfiguration();
   };
 
   const continuePendingTransition = () => {
+    if (saving || saveRequestInFlightRef.current) return;
     if (pendingTransition?.type === "new") startNewConfiguration();
     else if (pendingTransition?.type === "load") loadSavedConfiguration(pendingTransition.id);
   };
@@ -459,32 +787,47 @@ export default function Configurator() {
     <div className={styles.page}>
       <header className={styles.heading}>
         <div><p className={styles.eyebrow}>PCMAKER <span>/</span> BUDOWANIE ZESTAWU</p><h1>Konfigurator komputera</h1><p className={styles.lede}>Wybierz części z katalogu i kliknij element komputera, żeby zobaczyć jego status.</p></div>
-        <div className={styles.saveBox}><span><i className={styles.liveDot} />{saveStatusText}</span><button type="button" onClick={() => saveDraft()}>Zapisz zestaw <b>↗</b></button></div>
+        <div className={styles.saveBox}><span><i className={styles.liveDot} />{saveStatusText}</span><button type="button" disabled={saving || libraryAccess === "loading"} onClick={() => { void saveDraft(); }}>{saving ? "Zapisywanie…" : "Zapisz zestaw"} <b>↗</b></button></div>
       </header>
       <section className={styles.savedLibrary} aria-labelledby="saved-configurations-title">
         <div className={styles.libraryTopline}>
           <div className={styles.libraryHeading}>
             <span className={styles.libraryIcon} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5v-15Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M5 6h11M8.5 9.5h7M8.5 12.5h7M5 20.5A2.5 2.5 0 0 1 7.5 18H19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
             <div><p className={styles.eyebrow}>TWOJA KOLEKCJA</p><h2 id="saved-configurations-title" tabIndex={-1}>Zapisane zestawy</h2></div>
-            <span className={styles.libraryCount}>{savedConfigurationCountLabel(savedConfigurations.length)}</span>
+            <span className={styles.libraryCount}>{libraryAccess === "ready" ? savedConfigurationCountLabel(savedConfigurations.length) : "—"}</span>
           </div>
-          <span className={styles.localStorageNote}><i className={styles.liveDot} />Zapisane w tej przeglądarce</span>
+          <span className={styles.localStorageNote}><i className={styles.liveDot} />{libraryAccess === "ready" ? "Zapisane na koncie" : libraryAccess === "guest" ? "Wymagane logowanie" : libraryAccess === "account-required" ? "Konto użytkownika" : libraryAccess === "error" ? "Firebase niedostępne" : "Ładowanie zapisów…"}</span>
         </div>
         <div className={styles.libraryEditor}>
           <label className={styles.configurationName}><span>Nazwa aktualnego zestawu</span><input value={draft.title} maxLength={80} onChange={(event) => { setDraft((current) => ({ ...current, title: event.target.value, updatedAt: new Date().toISOString() })); setLibraryNotice(null); }} placeholder="Mój zestaw" /></label>
           <div className={styles.libraryButtons}>
-            <button type="button" className={styles.libraryPrimary} onClick={() => saveDraft()}>{activeSavedId ? "Zapisz zmiany" : "Zapisz zestaw"}</button>
-            <button type="button" onClick={() => saveDraft("copy")}>Zapisz jako nowy</button>
+            <button type="button" className={styles.libraryPrimary} disabled={saving || libraryAccess === "loading"} onClick={() => { void saveDraft(); }}>{saving ? "Zapisywanie…" : activeSavedId ? "Zapisz zmiany" : "Zapisz zestaw"}</button>
+            <button type="button" disabled={saving || libraryAccess === "loading"} onClick={() => { void saveDraft("copy"); }}>Zapisz jako nowy</button>
             <button type="button" onClick={requestNewConfiguration}>Nowy zestaw</button>
           </div>
+          <label className={styles.configurationDescription}><span>Krótki opis zestawu</span><textarea value={draft.description ?? ""} maxLength={MAX_CONFIGURATION_DESCRIPTION_LENGTH} rows={2} onChange={(event) => { setDraft((current) => ({ ...current, description: event.target.value, updatedAt: new Date().toISOString() })); setLibraryNotice(null); }} placeholder="Na przykład: komputer do pracy i gier" /></label>
         </div>
-        {libraryNotice && <p className={`${styles.libraryMessage} ${libraryNotice.startsWith("Nie udało") || libraryNotice.startsWith("Wybrany") || libraryNotice.startsWith("Ten zestaw nie istnieje") ? styles.libraryError : styles.librarySuccess}`} role="status">{libraryNotice}</p>}
-        {libraryIssue === "corrupt" && <p className={styles.libraryError} role="alert">Nie udało się odczytać zapisanych zestawów. Istniejące zapisy pozostały bez zmian.</p>}
-        {libraryIssue === "unavailable" && <p className={styles.libraryError} role="alert">Przeglądarka nie pozwoliła odczytać lub zapisać biblioteki. Bieżące zmiany pozostają w edytorze.</p>}
-        {legacyWarning && <p className={styles.libraryWarning} role="status">Poprzedni zapis nie dał się odczytać. Zostawiłem go bez zmian.</p>}
-        {workingCacheIssue && <p className={styles.libraryWarning} role="status">Nie udało się zachować roboczego szkicu. Zapis biblioteki działa niezależnie.</p>}
+        {libraryNotice && <p className={styles.libraryMessage + " " + (libraryNotice.startsWith("Nie") || libraryNotice.startsWith("Wybrany") || libraryNotice.startsWith("Ten zestaw") || libraryNotice.startsWith("Ta sesja") || libraryNotice.startsWith("Sesja wygasła") ? styles.libraryError : styles.librarySuccess)} role="status">{libraryNotice}</p>}
+        {libraryAccess === "guest" && <div className={styles.accountPrompt}>
+          <div><strong>Zaloguj się, aby zapisać zestaw na koncie</strong><span>Bieżący zestaw wróci z Tobą po zalogowaniu. Zostanie zapisany dopiero po Twoim potwierdzeniu.</span></div>
+          <button type="button" onClick={requestSignIn}>Zaloguj się lub utwórz konto</button>
+        </div>}
+        {libraryAccess === "account-required" && <p className={styles.libraryWarning} role="status">Ta sesja nie jest powiązana z kontem klienta. Wyloguj się i zaloguj na konto użytkownika, aby zapisywać zestawy.</p>}
+        {libraryAccess === "error" && <p className={styles.libraryError} role="alert">Nie udało się pobrać zestawów z Firebase. <button type="button" onClick={() => { void loadSavedConfigurations(); }}>Spróbuj ponownie</button></p>}
+        {restoredHandoff && <div className={styles.discardConfirm} role="status"><span>Przywróciłem zestaw, który przygotowałeś przed logowaniem. Zapisz go na koncie, gdy będziesz gotowy.</span><div><button type="button" className={styles.discardAction} disabled={saving} onClick={() => { void saveDraft(); }}>Zapisz zestaw na koncie</button><button type="button" onClick={() => setRestoredHandoff(false)}>Kontynuuj bez zapisu</button></div></div>}
+        {libraryAccess === "ready" && <div className={styles.legacyRecovery}>
+          <span>Masz zestawy z poprzedniej wersji zapisane w tej przeglądarce?</span>
+          <button type="button" onClick={() => { void showLocalConfigurations(); }}>Pokaż zestawy do przeniesienia</button>
+        </div>}
+        {legacyTransferError && <p className={styles.libraryError} role="alert">{legacyTransferError}</p>}
+        {legacyTransferItems && <div className={styles.legacyTransferList} aria-label="Starsze zestawy do przeniesienia">
+          {legacyTransferItems.length === 0 ? <p className={styles.libraryWarning}>Nie znaleziono zestawów do przeniesienia.</p> : legacyTransferItems.map((item) => <article className={styles.legacyTransferItem} key={item.configuration.id}>
+            <div><strong>{item.configuration.title}</strong><span>{displayDate(item.configuration.updatedAt)} · {item.configuration.components.length} części</span></div>
+            <button type="button" disabled={item.imported || transferringLegacyId !== null} onClick={() => { void transferLegacyConfiguration(item); }}>{item.imported ? "Na koncie" : transferringLegacyId === item.configuration.id ? "Przenoszenie…" : "Przenieś na konto"}</button>
+          </article>)}
+        </div>}
         {pendingTransition && <div className={styles.discardConfirm} role="alert"><span>Masz niezapisane zmiany. {pendingTransition.type === "new" ? "Rozpoczęcie nowego zestawu" : "Wczytanie innego zestawu"} je odrzuci.</span><div><button type="button" className={styles.discardAction} onClick={continuePendingTransition}>Odrzuć i kontynuuj</button><button type="button" onClick={() => setPendingTransition(null)}>Zostań przy tym zestawie</button></div></div>}
-        <div className={styles.savedConfigurationList} aria-label="Lista zapisanych konfiguracji">
+        {libraryAccess === "ready" && <div className={styles.savedConfigurationList} aria-label="Lista zapisanych konfiguracji">
           {sortedSavedConfigurations.length === 0 ? <div className={styles.emptySavedList}><span className={styles.emptySavedIcon} aria-hidden="true">＋</span><strong>Twoja kolekcja czeka na pierwszy zestaw</strong><span>Zapisz bieżący komputer, aby wrócić do niego później.</span></div> : sortedSavedConfigurations.map((saved) => <article className={`${styles.savedConfiguration} ${saved.id === activeSavedId ? styles.savedConfigurationActive : ""}`} key={saved.id}>
             <div className={styles.savedCardHeader}>
               <span className={styles.savedPcIcon} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4" width="12" height="16" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M7 8h5M7 11h5M7 14h5M7 17h1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M18 8h2.5v8H18a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.6"/><circle cx="18.8" cy="12" r=".7" fill="currentColor"/></svg></span>
@@ -497,7 +840,7 @@ export default function Configurator() {
               <button type="button" className={styles.savedDeleteButton} aria-label={`Usuń zestaw ${saved.title}`} title={`Usuń zestaw ${saved.title}`} onClick={(event) => openSavedConfigurationDialog("delete", saved, event.currentTarget)}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4.5 7h15M9 7V4.5h6V7m-8.5 0 .8 12h9.4l.8-12M10 10.5v5.5m4-5.5v5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
             </div>
           </article>)}
-        </div>
+        </div>}
       </section>
 
       <dialog
@@ -530,6 +873,7 @@ export default function Configurator() {
           </header>
           {savedConfigurationDialog.type === "details" ? <>
             <div className={styles.savedDialogBody}>
+              {savedConfigurationDialog.saved.description?.trim() && <p className={styles.savedDescription}>{savedConfigurationDialog.saved.description}</p>}
               <ul className={styles.savedPartsList}>{categories.map((category) => {
                 const part = savedConfigurationDialog.saved.components.find((item) => item.category === category);
                 return <li key={category} className={part ? styles.savedDialogPart : styles.savedDialogMissing}>
@@ -547,7 +891,7 @@ export default function Configurator() {
             </div>
             <footer className={styles.savedDialogFooter}>
               <button type="button" className={styles.savedDialogNeutral} onClick={closeSavedConfigurationDialog}>Anuluj</button>
-              <button type="button" className={styles.savedDialogDeleteAction} onClick={() => { if (confirmDeleteSavedConfiguration(savedConfigurationDialog.saved.id)) closeSavedConfigurationDialog(); }}>Usuń zestaw</button>
+              <button type="button" className={styles.savedDialogDeleteAction} disabled={deleting || saving} onClick={() => { void confirmDeleteSavedConfiguration(savedConfigurationDialog.saved.id).then((deleted) => { if (deleted) closeSavedConfigurationDialog(); }); }}>{deleting ? "Usuwanie…" : "Usuń zestaw"}</button>
             </footer>
           </>}
         </>}
@@ -610,7 +954,7 @@ export default function Configurator() {
           {(ownCount > 0 || missingPrices > 0) && <p className={styles.priceNote}>{[ownCount > 0 ? `Niewliczone: ${ownCount === 1 ? "część własna" : "części własne"}.` : "", missingPrices > 0 ? catalogError ? "Ceny zapisanych części są nieaktualne i nie są teraz wliczane." : `${missingPrices} ${missingPrices === 1 ? "część bez aktualnej ceny" : "części bez aktualnej ceny"} nie jest wliczana.` : ""].filter(Boolean).join(" ")}</p>}
           <div className={styles.progressBlock}><div><span>Kompletność</span><strong>{Math.round(representedCategories / categories.length * 100)}%</strong></div><div className={styles.progressTrack}><i style={{ width: `${representedCategories / categories.length * 100}%` }} /></div><div className={styles.progressCaption}>{representedCategories === 8 ? "Wszystkie główne części dodane" : `Dodaj jeszcze ${8 - representedCategories} ${representedCategories === 7 ? "część" : "części"}`}</div></div>
           <div className={styles.checks}><div className={styles.checkHead}><span>Wstępna kontrola</span><span className={styles.beta}>BETA</span></div>{checks.map((check) => <div key={check.title} className={styles.checkRow}><i className={`${styles.checkDot} ${check.state === "compatible" ? styles.checkGood : check.state === "warning" ? styles.checkWarn : ""}`} /><div><strong>{check.title}</strong><span>{check.detail}</span></div></div>)}<p className={styles.checkDisclaimer}>Kontrola obejmuje socket procesora i typ pamięci. Pozostałe parametry sprawdź przed zakupem.</p></div>
-          <button type="button" className={styles.saveWide} onClick={() => saveDraft()}>Zapisz zestaw <span>↗</span></button>
+          <button type="button" className={styles.saveWide} disabled={saving || libraryAccess === "loading"} onClick={() => { void saveDraft(); }}>{saving ? "Zapisywanie…" : "Zapisz zestaw"} <span>↗</span></button>
         </aside>
       </section>
       <p className={styles.footnote}>Ceny i dostępność pochodzą z katalogu bazy danych. Model komputera jest wizualizacją poglądową.</p>

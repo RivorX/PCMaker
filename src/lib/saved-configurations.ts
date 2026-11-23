@@ -1,10 +1,11 @@
 import {
   CONFIGURATION_DRAFT_VERSION,
   CONFIGURATION_STORAGE_KEY,
+  MAX_CONFIGURATION_DESCRIPTION_LENGTH,
   parseConfigurationDraft,
   type ConfigurationDraft,
   type ManualComponent,
-} from "@/lib/drafts";
+} from "./drafts.ts";
 
 export const SAVED_CONFIGURATION_LIBRARY_VERSION = 1;
 export const SAVED_CONFIGURATION_LIBRARY_KEY = "pcmaker:saved-configurations:v1";
@@ -15,6 +16,7 @@ export interface SavedConfiguration {
   id: string;
   version: typeof SAVED_CONFIGURATION_LIBRARY_VERSION;
   title: string;
+  description?: string;
   components: ManualComponent[];
   createdAt: string;
   updatedAt: string;
@@ -28,6 +30,7 @@ export interface SavedConfigurationLibrary {
 
 export interface ConfigurationSnapshot {
   title: string;
+  description?: string;
   components: ManualComponent[];
 }
 
@@ -66,11 +69,13 @@ const isString = (value: unknown): value is string => typeof value === "string";
 const isValidDate = (value: unknown): value is string =>
   isString(value) && !Number.isNaN(new Date(value).getTime());
 
-const parseDraftPayload = (title: unknown, components: unknown, updatedAt: unknown): ConfigurationDraft | null => {
+const parseDraftPayload = (title: unknown, components: unknown, updatedAt: unknown, description?: unknown): ConfigurationDraft | null => {
   if (!isString(title) || !Array.isArray(components)) return null;
+  if (description !== undefined && (!isString(description) || description.length > MAX_CONFIGURATION_DESCRIPTION_LENGTH)) return null;
   return parseConfigurationDraft(JSON.stringify({
     version: CONFIGURATION_DRAFT_VERSION,
     title,
+    description: description ?? "",
     components,
     updatedAt: isValidDate(updatedAt) ? updatedAt : new Date().toISOString(),
   }));
@@ -95,13 +100,14 @@ export function parseSavedConfigurationLibrary(raw: string | null):
     for (const item of parsed.configurations) {
       if (!isRecord(item) || item.version !== SAVED_CONFIGURATION_LIBRARY_VERSION || !isString(item.id) || !item.id.trim()
         || !isValidDate(item.createdAt) || !isValidDate(item.updatedAt)) return { status: "corrupt" };
-      const draft = parseDraftPayload(item.title, item.components, item.updatedAt);
+      const draft = parseDraftPayload(item.title, item.components, item.updatedAt, item.description);
       if (!draft || ids.has(item.id)) return { status: "corrupt" };
       ids.add(item.id);
       configurations.push({
         id: item.id,
         version: SAVED_CONFIGURATION_LIBRARY_VERSION,
         title: normalizeConfigurationName(draft.title),
+        description: draft.description ?? "",
         components: draft.components,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
@@ -129,12 +135,12 @@ export function parseWorkingConfiguration(raw: string | null):
     const parsed: unknown = JSON.parse(raw);
     if (!isRecord(parsed) || parsed.version !== SAVED_CONFIGURATION_LIBRARY_VERSION) return { status: "corrupt" };
     const draft = isRecord(parsed.draft)
-      ? parseDraftPayload(parsed.draft.title, parsed.draft.components, parsed.draft.updatedAt)
+      ? parseDraftPayload(parsed.draft.title, parsed.draft.components, parsed.draft.updatedAt, parsed.draft.description)
       : null;
     if (!draft || !(parsed.activeSavedId === null || isString(parsed.activeSavedId)) || !isRecord(parsed.baseline)) {
       return { status: "corrupt" };
     }
-    const baselineDraft = parseDraftPayload(parsed.baseline.title, parsed.baseline.components, draft.updatedAt);
+    const baselineDraft = parseDraftPayload(parsed.baseline.title, parsed.baseline.components, draft.updatedAt, parsed.baseline.description);
     if (!baselineDraft) return { status: "corrupt" };
     return {
       status: "valid",
@@ -142,7 +148,7 @@ export function parseWorkingConfiguration(raw: string | null):
         version: SAVED_CONFIGURATION_LIBRARY_VERSION,
         draft,
         activeSavedId: parsed.activeSavedId,
-        baseline: { title: baselineDraft.title, components: baselineDraft.components },
+        baseline: { title: baselineDraft.title, description: baselineDraft.description ?? "", components: baselineDraft.components },
       },
     };
   } catch {
@@ -151,7 +157,7 @@ export function parseWorkingConfiguration(raw: string | null):
 }
 
 function legacyId(draft: ConfigurationDraft): string {
-  const value = JSON.stringify({ title: draft.title, components: draft.components, updatedAt: draft.updatedAt });
+  const value = JSON.stringify({ title: draft.title, description: draft.description ?? "", components: draft.components, updatedAt: draft.updatedAt });
   let hash = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
     hash ^= value.charCodeAt(index);
@@ -166,6 +172,7 @@ function legacyRecord(draft: ConfigurationDraft): SavedConfiguration {
     id: legacyId(draft),
     version: SAVED_CONFIGURATION_LIBRARY_VERSION,
     title: normalizeConfigurationName(draft.title),
+    description: draft.description ?? "",
     components: draft.components,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -281,6 +288,7 @@ export function saveConfigurationToLibrary(
       id,
       version: SAVED_CONFIGURATION_LIBRARY_VERSION,
       title,
+      description: (draft.description ?? "").trim().slice(0, MAX_CONFIGURATION_DESCRIPTION_LENGTH),
       components: draft.components,
       createdAt: previous?.createdAt ?? now,
       updatedAt: now,
@@ -325,6 +333,7 @@ export function deleteConfigurationFromLibrary(storage: StorageLike, id: string)
 export function configurationSnapshot(draft: ConfigurationDraft): ConfigurationSnapshot {
   return {
     title: normalizeConfigurationName(draft.title),
+    description: (draft.description ?? "").trim().slice(0, MAX_CONFIGURATION_DESCRIPTION_LENGTH),
     components: [...draft.components]
       .map((part) => ({ ...part, source: part.source ?? "catalog" }))
       .sort((first, second) => first.category.localeCompare(second.category)),
@@ -335,5 +344,9 @@ export function configurationContentKey(value: ConfigurationSnapshot): string {
   const components = value.components.map((part) => part.source === "own"
     ? { id: part.id, category: part.category, source: "own", name: part.name }
     : { id: part.id, category: part.category, source: "catalog" });
-  return JSON.stringify({ title: normalizeConfigurationName(value.title), components });
+  return JSON.stringify({
+    title: normalizeConfigurationName(value.title),
+    description: (value.description ?? "").trim().slice(0, MAX_CONFIGURATION_DESCRIPTION_LENGTH),
+    components,
+  });
 }

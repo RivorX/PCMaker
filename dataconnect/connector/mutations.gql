@@ -95,6 +95,69 @@ mutation CreatePcConfiguration(
   )
 }
 
+# Zapis kompletnych danych zestawu do prywatnej biblioteki. Identyfikator
+# dostarcza serwer, aby powtórzenie żądania mogło odczytać ten sam zapis.
+mutation CreateSavedPcConfiguration(
+  $id: UUID!
+  $userId: UUID!
+  $name: String!
+  $description: String
+  $totalPrice: Float!
+  $savedSnapshot: Any!
+) @auth(level: NO_ACCESS) {
+  pcConfiguration_insert(
+    data: {
+      id: $id
+      userId: $userId
+      name: $name
+      description: $description
+      totalPrice: $totalPrice
+      isPublic: false
+      savedSnapshot: $savedSnapshot
+    }
+  )
+}
+
+# Warunek właściciela jest częścią tego samego UPDATE, więc brak dostępu nie
+# może zmienić żadnego rekordu. Wynik to liczba zmienionych wierszy.
+mutation UpdateSavedPcConfiguration(
+  $id: UUID!
+  $userId: UUID!
+  $name: String!
+  $description: String
+  $totalPrice: Float!
+  $savedSnapshot: Any!
+) @auth(level: NO_ACCESS) {
+  pcConfiguration_updateMany(
+    where: {
+      id: { eq: $id }
+      userId: { eq: $userId }
+      savedSnapshot: { isNull: false }
+    }
+    data: {
+      name: $name
+      description: $description
+      totalPrice: $totalPrice
+      savedSnapshot: $savedSnapshot
+      updatedAt_expr: "request.time"
+      isPublic: false
+    }
+  )
+}
+
+# Usuwanie jest dozwolone tylko dla prywatnego szkicu należącego do konta.
+# Wynik 0 oznacza brak wpisu właściciela.
+mutation DeleteSavedPcConfiguration($id: UUID!, $userId: UUID!)
+  @auth(level: NO_ACCESS) {
+  pcConfiguration_deleteMany(
+    where: {
+      id: { eq: $id }
+      userId: { eq: $userId }
+      savedSnapshot: { isNull: false }
+    }
+  )
+  }
+
 # Dodanie wybranego komponentu do zestawu PC. Operacja musi najpierw
 # sprawdzać, czy konfiguracja należy do zalogowanego użytkownika.
 mutation AddConfigurationComponent(

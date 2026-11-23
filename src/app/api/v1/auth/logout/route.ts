@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
   const response = NextResponse.redirect(
     `${protocol}://${host}/`,
-    303
+    { status: 303, headers: { "Cache-Control": "private, no-store" } },
   );
 
   response.cookies.set(SESSION_COOKIE, "", {

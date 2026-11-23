@@ -1,6 +1,7 @@
 export const CONFIGURATION_DRAFT_VERSION = 1;
 export const SERVICE_DRAFT_VERSION = 1;
 export const CONFIGURATION_STORAGE_KEY = "pcmaker:configuration-draft:v1";
+export const MAX_CONFIGURATION_DESCRIPTION_LENGTH = 300;
 const SERVICE_STORAGE_KEY = "pcmaker:service-draft:v1";
 
 export type ComponentCategory =
@@ -43,6 +44,7 @@ export interface ManualComponent {
 export interface ConfigurationDraft {
   version: typeof CONFIGURATION_DRAFT_VERSION;
   title: string;
+  description?: string;
   components: ManualComponent[];
   updatedAt: string;
 }
@@ -59,6 +61,7 @@ export interface ServiceDraft {
 export const emptyConfigurationDraft = (): ConfigurationDraft => ({
   version: CONFIGURATION_DRAFT_VERSION,
   title: "Mój zestaw",
+  description: "",
   components: [],
   updatedAt: new Date().toISOString(),
 });
@@ -103,9 +106,11 @@ export const parseConfigurationDraft = (raw: string | null): ConfigurationDraft 
     if (!isRecord(parsed) || parsed.version !== CONFIGURATION_DRAFT_VERSION) return null;
     if (!isString(parsed.title) || !Array.isArray(parsed.components)) return null;
     if (!parsed.components.every(isManualComponent)) return null;
+    if (parsed.description !== undefined && (!isString(parsed.description) || parsed.description.length > MAX_CONFIGURATION_DESCRIPTION_LENGTH)) return null;
     return {
       version: CONFIGURATION_DRAFT_VERSION,
       title: parsed.title.slice(0, 80),
+      description: typeof parsed.description === "string" ? parsed.description : "",
       components: parsed.components.slice(0, 30),
       updatedAt: isString(parsed.updatedAt) ? parsed.updatedAt : new Date().toISOString(),
     };

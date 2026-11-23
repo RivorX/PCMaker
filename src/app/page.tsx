@@ -87,7 +87,13 @@ export default function LoginPage() {
         return;
       }
 
-      router.replace(result.role === "ADMIN" ? "/admin" : "/home");
+      const returnTo = new URLSearchParams(window.location.search).get("returnTo");
+      const destination = returnTo === "/konfigurator" && result.accountBacked === true
+        ? returnTo
+        : result.role === "ADMIN"
+          ? "/admin"
+          : "/home";
+      router.replace(destination);
       router.refresh();
     } catch {
       setMessage("Nie udało się połączyć z serwerem. Spróbuj ponownie.");
