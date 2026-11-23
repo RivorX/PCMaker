@@ -159,15 +159,15 @@ input Component_Data {
   """
   performanceScore_update: [Float_Update!] @fdc_forbiddenInVariables
   """
-  ✨ Generated from Field `Component`.`price` of type `Float!`
+  ✨ Generated from Field `Component`.`price` of type `Float`
   """
   price: Float
   """
-  ✨ `_expr` server value variant of `price` (✨ Generated from Field `Component`.`price` of type `Float!`)
+  ✨ `_expr` server value variant of `price` (✨ Generated from Field `Component`.`price` of type `Float`)
   """
   price_expr: Float_Expr @fdc_forbiddenInVariables
   """
-  ✨ `_update` server value variant of `price` (✨ Generated from Field `Component`.`price` of type `Float!`)
+  ✨ `_update` server value variant of `price` (✨ Generated from Field `Component`.`price` of type `Float`)
   """
   price_update: [Float_Update!] @fdc_forbiddenInVariables
   """
@@ -248,7 +248,7 @@ input Component_Filter {
   """
   performanceScore: Float_Filter
   """
-  ✨ Generated from Field `Component`.`price` of type `Float!`
+  ✨ Generated from Field `Component`.`price` of type `Float`
   """
   price: Float_Filter
   """
@@ -445,7 +445,7 @@ input Component_Order {
   """
   performanceScore: OrderDirection
   """
-  ✨ Generated from Field `Component`.`price` of type `Float!`
+  ✨ Generated from Field `Component`.`price` of type `Float`
   """
   price: OrderDirection
   """

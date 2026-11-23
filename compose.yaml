@@ -10,9 +10,16 @@ services:
         - firebase_build_env
     env_file:
       - .env.local
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase-admin.json
     ports:
       - "3000:3000"
+    secrets:
+      - source: firebase_admin
+        target: firebase-admin.json
 
 secrets:
   firebase_build_env:
     file: .env.local
+  firebase_admin:
+    file: ./secrets/firebase-admin.json

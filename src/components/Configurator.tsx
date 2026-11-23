@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PcPreview, { type PcPreviewPart } from "@/components/PcPreview";
 import PartCategoryIcon from "@/components/PartCategoryIcon";
-import { fetchCatalog, type CatalogComponent } from "@/lib/catalog";
+import { fetchCatalog, type ConfiguratorCatalogComponent } from "@/lib/catalog-client";
 import {
   componentCategoryLabels,
   createComponentId,
@@ -47,18 +47,29 @@ const categoryDescriptions: Record<ConfigurableCategory, string> = {
   cooling: "Odprowadza ciepło z procesora, aby utrzymać jego stabilną temperaturę podczas pracy.",
 };
 
-const asDraftComponent = (part: CatalogComponent): ManualComponent => ({
+const asDraftComponent = (part: ConfiguratorCatalogComponent): ManualComponent => ({
   id: part.id,
   category: part.category,
   source: "catalog",
   name: part.name,
   manufacturer: part.manufacturer || "",
   description: part.description || "",
-  price: Number.isFinite(part.price) ? part.price : null,
+  price: typeof part.price === "number" && Number.isFinite(part.price) ? part.price : null,
   socket: part.socket || "",
   memoryType: part.memoryType || "",
   note: "",
 });
+
+const comparableCatalogId = (id: string): string => {
+  if (/^[0-9a-f]{32}$/i.test(id)) return id.toLowerCase();
+  if (/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id)) return id.replace(/-/g, "").toLowerCase();
+  return id;
+};
+
+const findCatalogComponent = (items: ConfiguratorCatalogComponent[], id: string): ConfiguratorCatalogComponent | undefined => {
+  const targetId = comparableCatalogId(id);
+  return items.find((item) => comparableCatalogId(item.id) === targetId);
+};
 
 const money = (value: number) => new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 }).format(value);
 const savedConfigurationCountLabel = (count: number) => {
@@ -93,7 +104,7 @@ export default function Configurator() {
   const [pendingTransition, setPendingTransition] = useState<{ type: "new" } | { type: "load"; id: string } | null>(null);
   const [savedConfigurationDialog, setSavedConfigurationDialog] = useState<SavedConfigurationDialogState>(null);
   const [savedDialogError, setSavedDialogError] = useState<string | null>(null);
-  const [catalog, setCatalog] = useState<CatalogComponent[]>([]);
+  const [catalog, setCatalog] = useState<ConfiguratorCatalogComponent[]>([]);
   const [loading, setLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<ComponentCategory>("cpu");
@@ -140,7 +151,7 @@ export default function Configurator() {
         ...current,
         components: current.components.map((saved) => {
           if (saved.source === "own") return saved;
-          const fresh = items.find((item) => item.id === saved.id);
+          const fresh = findCatalogComponent(items, saved.id);
           return fresh ? { ...saved, ...asDraftComponent(fresh), source: saved.source ?? "catalog" } : saved;
         }),
       }));
@@ -280,7 +291,7 @@ export default function Configurator() {
     setLibraryNotice(null);
   };
 
-  const choosePart = (part: CatalogComponent) => {
+  const choosePart = (part: ConfiguratorCatalogComponent) => {
     const chosen = asDraftComponent(part);
     updateParts([...draft.components.filter((item) => item.category !== part.category), chosen]);
   };
@@ -338,7 +349,7 @@ export default function Configurator() {
 
   const refreshPartsFromCatalog = (components: ManualComponent[]) => components.map((saved) => {
     if (saved.source === "own") return saved;
-    const fresh = catalog.find((item) => item.id === saved.id);
+    const fresh = findCatalogComponent(catalog, saved.id);
     return fresh ? { ...saved, ...asDraftComponent(fresh), source: saved.source ?? "catalog" as const } : saved;
   });
 
@@ -584,7 +595,7 @@ export default function Configurator() {
             {loading ? <div className={styles.state}><span className={styles.spinner} /><strong>Pobieramy części z bazy</strong><span>Za chwilę pokażemy dostępne modele.</span></div> : catalogError ? <div className={styles.state}><span className={styles.stateIcon}>!</span><strong>Katalog jest chwilowo niedostępny</strong><span>{catalogError}</span><button type="button" className={styles.retry} onClick={() => void loadCatalog()}>Spróbuj ponownie ↗</button></div> : listedParts.length === 0 ? <div className={styles.state}><span className={styles.stateIcon}>⌕</span><strong>{catalog.length ? "Brak pasujących części" : "Baza nie zawiera jeszcze części"}</strong><span>{catalog.length ? "Zmień wyszukiwaną frazę albo wybierz inną kategorię." : "Gdy dodasz produkty do bazy, pojawią się tutaj."}</span></div> : <div className={styles.productList}>
               {listedParts.map((part) => {
                 const isSelected = activePart?.id === part.id;
-                return <article key={part.id} className={`${styles.product} ${isSelected ? styles.productSelected : ""}`}><span className={styles.productIcon}>{categoryIcons[part.category]}</span><div className={styles.productInfo}><span className={styles.maker}>{part.manufacturer || componentCategoryLabels[part.category]}</span><strong>{part.name}</strong><p>{part.description || [part.socket && `Socket ${part.socket}`, part.memoryType].filter(Boolean).join(" · ") || "Szczegóły produktu nie są dostępne"}</p></div><div className={styles.productBuy}>{Number.isFinite(part.price) ? <strong>{money(part.price)}</strong> : <strong className={styles.unknownPrice}>Brak ceny</strong>}<button type="button" onClick={() => choosePart(part)}>{isSelected ? "Wybrano ✓" : activePart ? "Zamień" : "Wybierz"}</button></div></article>;
+                return <article key={part.id} className={`${styles.product} ${isSelected ? styles.productSelected : ""}`}><span className={styles.productIcon}>{categoryIcons[part.category]}</span><div className={styles.productInfo}><span className={styles.maker}>{part.manufacturer || componentCategoryLabels[part.category]}</span><strong>{part.name}</strong><p>{part.description || [part.socket && `Socket ${part.socket}`, part.memoryType].filter(Boolean).join(" · ") || "Szczegóły produktu nie są dostępne"}</p></div><div className={styles.productBuy}>{typeof part.price === "number" && Number.isFinite(part.price) ? <strong>{money(part.price)}</strong> : <strong className={styles.unknownPrice}>Brak ceny</strong>}<button type="button" onClick={() => choosePart(part)}>{isSelected ? "Wybrano ✓" : activePart ? "Zamień" : "Wybierz"}</button></div></article>;
               })}
             </div>}
           </div>

@@ -3,6 +3,7 @@
 FROM node:24-alpine AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
+COPY src/lib/dataconnect-generated ./src/lib/dataconnect-generated
 RUN npm ci
 
 FROM node:24-alpine AS builder

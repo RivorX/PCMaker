@@ -3,7 +3,11 @@
 # ==============================================================================
 
 # Pobranie listy komponentów (opcjonalnie filtrowane po typie)
-query ListComponents @auth(level: PUBLIC, insecureReason: "Publicly accessible components directory.") {
+query ListComponents($type: String) @auth(level: PUBLIC, insecureReason: "Publicly accessible components directory.") {
+  components(
+    where: { componentType: { eq: $type } }
+    orderBy: [{ name: ASC }]
+  ) {
     id
     name
     manufacturer
@@ -13,6 +17,36 @@ query ListComponents @auth(level: PUBLIC, insecureReason: "Publicly accessible c
     price
     performanceScore
     productUrl
+    specifications: componentSpecifications_on_component {
+      id
+      specificationName
+      specificationValue
+    }
+  }
+}
+
+# Paginowana lista katalogu publicznego. Stały limit 500 jest częścią kontraktu
+# adaptera serwerowego; offset służy wyłącznie do dokończenia pełnego snapshotu.
+query ListCatalogPage($offset: Int!) @auth(level: PUBLIC, insecureReason: "Publicly accessible components directory.") {
+  components(
+    limit: 500
+    offset: $offset
+    orderBy: [{ id: ASC }]
+  ) {
+    id
+    name
+    manufacturer
+    model
+    componentType
+    description
+    price
+    performanceScore
+    productUrl
+    specifications: componentSpecifications_on_component {
+      id
+      specificationName
+      specificationValue
+    }
   }
 }
 
@@ -28,6 +62,11 @@ query GetComponentById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Publicl
     price
     performanceScore
     productUrl
+    specifications: componentSpecifications_on_component {
+      id
+      specificationName
+      specificationValue
+    }
   }
 }
 
@@ -42,8 +81,12 @@ query ListServiceTypes @auth(level: PUBLIC, insecureReason: "Publicly accessible
   }
 }
 
-# Pobranie zgłoszeń serwisowych
-query ListServiceTickets @auth(level: PUBLIC, insecureReason: "Publicly accessible tickets for demo.") {
+# Pobranie zgłoszeń serwisowych.
+#
+# Ta operacja pozostaje w kontrakcie, lecz nie może być wywoływana przez SDK
+# klienta. Zawiera opisy usterek, numery seryjne oraz koszty wszystkich osób.
+# Udostępnij ją dopiero po dodaniu kontroli właściciela opartej o auth.uid.
+query ListServiceTickets @auth(level: NO_ACCESS) {
   serviceTickets(orderBy: [{ createdAt: DESC }]) {
     id
     ticketNumber
@@ -59,8 +102,9 @@ query ListServiceTickets @auth(level: PUBLIC, insecureReason: "Publicly accessib
   }
 }
 
-# Pobranie szczegółów pojedynczego zgłoszenia z komentarzami i historią
-query GetServiceTicketById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Publicly accessible ticket details for demo.") {
+# Pobranie szczegółów pojedynczego zgłoszenia z komentarzami i historią.
+# Wymaga kontroli właściciela/roli przed udostępnieniem klientowi.
+query GetServiceTicketById($id: UUID!) @auth(level: NO_ACCESS) {
   serviceTicket(id: $id) {
     id
     ticketNumber
@@ -87,5 +131,20 @@ query ListPublicConfigurations @auth(level: PUBLIC, insecureReason: "Publicly ac
     totalPrice
     estimatedPerformance
     createdAt
+  }
+}
+
+# Wyszukanie użytkownika po e-mailu.
+# Nie wolno wystawiać tej operacji klientowi: zwraca hash hasła i umożliwia
+# enumerację adresów e-mail. Logowanie realizuje endpoint aplikacji.
+query GetUserByEmail($email: String!) @auth(level: NO_ACCESS) {
+  users(where: { email: { eq: $email } }, limit: 1) {
+    id
+    firstName
+    lastName
+    email
+    password
+    role
+    isActive
   }
 }

@@ -1,0 +1,253 @@
+"use client";
+
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import type { CatalogComponent, CatalogListResponse, ComponentCategory } from "@/types/catalog";
+import type { ComponentOffersResponse, OffersErrorResponse, SerpApiSearchResponse, SerpApiShoppingResult } from "@/types/offers";
+
+const categoryLabels: Record<ComponentCategory, string> = {
+  cpu: "Procesory",
+  gpu: "Karty graficzne",
+  motherboard: "Płyty główne",
+  memory: "Pamięci RAM",
+  storage: "Dyski",
+  psu: "Zasilacze",
+  case: "Obudowy",
+  cooling: "Chłodzenia",
+};
+
+const categories = Object.keys(categoryLabels) as ComponentCategory[];
+
+const moneyLabel = (item: SerpApiShoppingResult): string => {
+  const amount = item.price.estimatedPLN;
+  return amount ? new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(amount.amountCents / 100) : "Cena niedostępna";
+};
+
+const isDemoCatalogPrice = (item: CatalogComponent): boolean => item.source.kind === "database" && item.price !== null;
+
+const specificationLabels: Record<string, string> = {
+  socket: "Socket",
+  memoryType: "Typ pamięci",
+  cores: "Rdzenie",
+  threads: "Wątki",
+  tdp: "TDP",
+  memoryGB: "Pamięć karty",
+  lengthMM: "Długość",
+  slotWidth: "Liczba zajmowanych slotów",
+  interface: "Interfejs",
+  powerConnectors: "Złącza zasilania",
+  capacityGB: "Pojemność",
+  modules: "Liczba modułów",
+  speed: "Szybkość",
+  formFactor: "Format",
+  storageType: "Rodzaj dysku",
+};
+
+const specificationLabel = (key: string) => Object.hasOwn(specificationLabels, key) ? specificationLabels[key] : key;
+
+const specificationRows = (component: CatalogComponent) => Object.entries(component.specifications).map(([key, value]) => {
+  const provenance = component.specificationProvenance?.[key];
+  return (
+    <div key={key}>
+      <dt>{specificationLabel(key)}</dt>
+      <dd>
+        {value}
+        {provenance && (
+          <small className="catalog-spec-source">
+            Źródło: <a href={provenance.sourceUrl} target="_blank" rel="noreferrer">{provenance.sourceLabel}</a>
+          </small>
+        )}
+      </dd>
+    </div>
+  );
+});
+
+const buildCoresAttribution = (sourceUrl?: string) => {
+  if (typeof sourceUrl !== "string" || !sourceUrl.startsWith("https://github.com/buildcores/buildcores-open-db/blob/")) return null;
+  return (
+    <p className="catalog-detail-description">
+      Specyfikacje uzupełniono na podstawie danych{" "}
+      <a href={sourceUrl} target="_blank" rel="noreferrer">BuildCores OpenDB</a>.
+      Wybrane pola przetłumaczono i ujednolicono.{" "}
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noreferrer">CC BY-NC-SA 4.0</a>.
+    </p>
+  );
+};
+
+export default function Catalog() {
+  const [items, setItems] = useState<CatalogComponent[]>([]);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<ComponentCategory | "">("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [selected, setSelected] = useState<CatalogComponent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [source, setSource] = useState<CatalogListResponse["meta"]["source"]>("sample");
+  const [provider, setProvider] = useState<string | undefined>();
+  const [offerKeyword, setOfferKeyword] = useState("");
+  const [offerCategory, setOfferCategory] = useState<ComponentCategory | "">("");
+  const [offerCandidates, setOfferCandidates] = useState<SerpApiShoppingResult[]>([]);
+  const [offerLoading, setOfferLoading] = useState(false);
+  const [offerError, setOfferError] = useState<string | null>(null);
+  const [offerMeta, setOfferMeta] = useState<SerpApiSearchResponse["meta"] | null>(null);
+  const [autoOfferCandidates, setAutoOfferCandidates] = useState<SerpApiShoppingResult[]>([]);
+  const [autoOfferStatus, setAutoOfferStatus] = useState<ComponentOffersResponse["meta"]["matchStatus"] | "idle" | "loading" | "error">("idle");
+  const [autoOfferError, setAutoOfferError] = useState<string | null>(null);
+  const [autoOfferComponentId, setAutoOfferComponentId] = useState<string | null>(null);
+  const autoOfferSequence = useRef(0);
+  const limit = 6;
+
+  const loadOffers = async (keyword: string, expectedCategory: string, resultPage = 1) => {
+    const normalizedKeyword = keyword.trim();
+    if (!normalizedKeyword || normalizedKeyword.length > 120) {
+      setOfferError("Podaj nazwę produktu od 1 do 120 znaków.");
+      return;
+    }
+    setOfferLoading(true);
+    setOfferError(null);
+    try {
+      const params = new URLSearchParams({ action: "search", keyword: normalizedKeyword, page: String(resultPage), limit: "12" });
+      if (expectedCategory) params.set("category", expectedCategory);
+      const response = await fetch(`/api/v1/offers?${params.toString()}`);
+      const body = await response.json() as SerpApiSearchResponse | OffersErrorResponse;
+      if (!response.ok || !("data" in body) || !Array.isArray(body.data)) {
+        throw new Error("message" in body ? body.message : "Nie udało się wyszukać ofert.");
+      }
+      setOfferCandidates(body.data);
+      setOfferMeta(body.meta);
+    } catch (reason: unknown) {
+      setOfferCandidates([]);
+      setOfferMeta(null);
+      setOfferError(reason instanceof Error ? reason.message : "Nie udało się wyszukać ofert.");
+    } finally {
+      setOfferLoading(false);
+    }
+  };
+
+  const searchOffers = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void loadOffers(offerKeyword, offerCategory);
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (query.trim()) params.set("q", query.trim());
+    if (category) params.set("category", category);
+    setLoading(true);
+    fetch(`/api/v1/components?${params.toString()}`, { signal: controller.signal })
+      .then(async (response) => {
+        const body = await response.json() as CatalogListResponse & { message?: string };
+        if (!response.ok) throw new Error(body.message ?? "Nie udało się pobrać katalogu.");
+        return body;
+      })
+      .then((body) => {
+        if (controller.signal.aborted) return;
+        setItems(body.data);
+        setTotal(body.meta.total);
+        setSource(body.meta.source);
+        setProvider(body.meta.provider);
+        setSelected(null);
+        setError(null);
+      })
+      .catch((reason: unknown) => {
+        if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Nie udało się pobrać katalogu.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [category, page, query]);
+
+  useEffect(() => {
+    const sequence = autoOfferSequence.current + 1;
+    autoOfferSequence.current = sequence;
+    setAutoOfferComponentId(selected?.id ?? null);
+    setAutoOfferCandidates([]);
+    setAutoOfferError(null);
+    if (!selected || selected.category !== "cpu") {
+      setAutoOfferStatus("idle");
+      return;
+    }
+    setAutoOfferStatus("loading");
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      void fetch(`/api/v1/components/${encodeURIComponent(selected.id)}/offers`, { signal: controller.signal })
+        .then(async (response) => {
+          const body = await response.json() as ComponentOffersResponse & { message?: string };
+          if (!response.ok || !Array.isArray(body.data)) throw new Error(body.message ?? "Nie udało się pobrać dopasowanych ofert.");
+          return body;
+        })
+        .then((body) => {
+          if (controller.signal.aborted || autoOfferSequence.current !== sequence) return;
+          setAutoOfferCandidates(body.data);
+          setAutoOfferStatus(body.meta.matchStatus);
+        })
+        .catch((reason: unknown) => {
+          if (controller.signal.aborted || autoOfferSequence.current !== sequence) return;
+          setAutoOfferCandidates([]);
+          setAutoOfferStatus("error");
+          setAutoOfferError(reason instanceof Error ? reason.message : "Nie udało się pobrać dopasowanych ofert.");
+        });
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [selected]);
+
+  const pages = Math.max(1, Math.ceil(total / limit));
+  const selectedAutoOfferStatus = autoOfferComponentId === selected?.id
+    ? autoOfferStatus
+    : selected?.category === "cpu" ? "loading" : "idle";
+  const sourceLabel = useMemo(() => {
+    if (source === "external") return provider ? `snapshot · ${provider}` : "snapshot zewnętrzny";
+    if (source === "database") return "baza danych";
+    return "zbiór demonstracyjny";
+  }, [provider, source]);
+
+  return (
+    <div className="page-stack">
+      <section className="page-heading split-heading">
+        <div>
+          <p className="eyebrow">KATALOG / ETAP 02</p>
+          <h1>Znajdź podzespół</h1>
+          <p className="lede">Przeglądaj modele, sprawdzaj podstawową kompatybilność i porównuj jawnie wybrane oferty Google Shopping.</p>
+        </div>
+        <span className="catalog-source-badge"><span className="status-dot" /> {sourceLabel}</span>
+      </section>
+      <section className="catalog-toolbar card">
+        <label className="catalog-search">Szukaj<input value={query} placeholder="np. Ryzen, DDR5, RTX..." onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></label>
+        <label>Kategoria<select value={category} onChange={(event) => { setCategory(event.target.value as ComponentCategory | ""); setPage(1); }}><option value="">Wszystkie kategorie</option>{categories.map((value) => <option key={value} value={value}>{categoryLabels[value]}</option>)}</select></label>
+        <div className="catalog-count"><strong>{total}</strong><span>rekordów</span></div>
+      </section>
+      <div className="catalog-layout">
+        <section className="catalog-results">
+          {loading && <div className="card catalog-message">Ładowanie katalogu…</div>}
+          {error && <div className="card catalog-message error" role="alert">{error}</div>}
+          {!loading && !error && items.length === 0 && <div className="card catalog-message">{source === "database" && total === 0 ? "Zapytanie do bazy nie zwróciło podzespołów" : "Nie znaleziono podzespołów dla tych filtrów."}</div>}
+          {!loading && !error && items.map((item) => <button className={`catalog-item card ${selected?.id === item.id ? "selected" : ""}`} key={item.id} type="button" onClick={() => setSelected(item)}><span className="catalog-type-icon">{item.category.slice(0, 3).toUpperCase()}</span><span className="catalog-item-copy"><strong>{item.name}</strong><small>{categoryLabels[item.category]} · {item.manufacturer}</small><span className="catalog-specs">{Object.entries(item.specifications).length > 0 ? Object.entries(item.specifications).slice(0, 3).map(([key, value]) => <em key={key}>{specificationLabel(key)}: {value}</em>) : <em>specyfikacje niedostępne</em>}</span></span><span className="catalog-price">{item.price === null ? "brak ceny" : `${item.price.toFixed(2)} ${item.currency}`}<small>{isDemoCatalogPrice(item) ? "cena demonstracyjna" : `źródło: ${item.source.kind}`}</small></span></button>)}
+          <div className="catalog-pagination"><button className="text-button" disabled={page <= 1} type="button" onClick={() => setPage((value) => value - 1)}>← Poprzednia</button><span>Strona {page} z {pages}</span><button className="text-button" disabled={page >= pages} type="button" onClick={() => setPage((value) => value + 1)}>Następna →</button></div>
+        </section>
+        <aside className="catalog-detail card">{selected ? <><span className="section-kicker">SZCZEGÓŁY REKORDU</span><h2>{selected.name}</h2><p className="catalog-detail-description">{selected.description}</p>{Object.entries(selected.specifications).length > 0 ? <><dl>{specificationRows(selected)}</dl>{buildCoresAttribution(selected.buildCoresSourceUrl)}</> : <div className="catalog-detail-empty">Specyfikacje są niedostępne w tym źródle.</div>}{selected.price !== null && selected.source.kind === "database" ? <div className="catalog-detail-note"><strong>Cena demonstracyjna</strong><span>Kwota odczytana z pola Firebase Component.price; nie jest aktualną ofertą sklepową ani wynikiem SerpAPI.</span></div> : <div className="catalog-detail-note"><strong>Cena katalogowa niedostępna</strong><span>To opis modelu bez automatycznego przypisywania ceny z podobnej oferty.</span></div>}{selected.category === "cpu" && <div className="catalog-auto-offers"><span className="section-kicker">AUTOMATYCZNE DOPASOWANIE</span><h3>Oferty tego modelu</h3><p className="catalog-detail-description">Oferty dopasowane po nazwie. Sprawdź model i wariant przed zakupem.</p>{selectedAutoOfferStatus === "loading" && <div className="catalog-detail-empty">Sprawdzam oferty…</div>}{selectedAutoOfferStatus === "error" && <div className="catalog-message error" role="alert">{autoOfferError}</div>}{selectedAutoOfferStatus === "unsupported" && <div className="catalog-detail-empty">Ten model nie jest jeszcze obsługiwany przez automatyczne dopasowanie.</div>}{selectedAutoOfferStatus === "no_matches" && <div className="catalog-detail-empty">Nie znaleziono ofert z pasującą nazwą modelu.</div>}{autoOfferComponentId === selected.id && autoOfferCandidates.length > 0 && <div className="offer-candidates">{autoOfferCandidates.map((candidate) => <article className="offer-candidate" key={JSON.stringify([candidate.providerProductId ?? candidate.title, candidate.source, candidate.price.original])}><div><strong>{candidate.title}</strong><small>{candidate.source ?? "Sklep nieznany"}{candidate.sponsored ? " · sponsorowane" : ""}</small></div><div className="offer-candidate-actions"><span className="offer-result-price">{moneyLabel(candidate)}<small>Cena orientacyjna, może się różnić</small></span>{candidate.link && <a className="text-button" href={candidate.link} target="_blank" rel="noreferrer">Zobacz ofertę ↗</a>}</div></article>)}</div>}</div>}</> : <><span className="section-kicker">SZCZEGÓŁY REKORDU</span><h2>Wybierz element</h2><p className="catalog-detail-description">Kliknij rekord, aby zobaczyć znane specyfikacje i pochodzenie danych.</p><div className="catalog-detail-empty">Wybierz procesor, aby automatycznie wyszukać jego oferty.</div></>}</aside>
+      </div>
+      <section className="offer-lookup card">
+        <div>
+          <span className="section-kicker">OFERTA / GOOGLE SHOPPING</span>
+          <h2>Porównaj oferty</h2>
+          <p className="catalog-detail-description">Wyszukaj produkt, wybierz konkretną ofertę i przejdź do źródła. Cena nie jest automatycznie przypisywana do modelu katalogowego.</p>
+        </div>
+        <form className="offer-lookup-form" onSubmit={searchOffers}>
+          <label>Szukaj oferty<input maxLength={120} value={offerKeyword} placeholder="np. RTX 4070, SSD 512 GB" onChange={(event) => setOfferKeyword(event.target.value)} /></label>
+          <label>Rodzaj podzespołu<select value={offerCategory} onChange={(event) => setOfferCategory(event.target.value as ComponentCategory | "")}><option value="">Dowolny</option>{categories.map((value) => <option key={value} value={value}>{categoryLabels[value]}</option>)}</select></label>
+          <button className="button primary" type="submit" disabled={offerLoading}>{offerLoading ? "Szukam…" : "Szukaj ofert"}</button>
+          {selected && <button className="button secondary" type="button" onClick={() => { setOfferKeyword(selected.name); setOfferCategory(selected.category); }}>Użyj nazwy modelu</button>}
+        </form>
+        {offerError && <div className="catalog-message error" role="alert">{offerError}</div>}
+        {offerMeta && <div className="offer-search-meta">Znaleziono {offerMeta.total} ofert · źródło: Google Shopping</div>}
+        {offerCandidates.length > 0 && <div className="offer-candidates">{offerCandidates.map((candidate) => <article className="offer-candidate" key={JSON.stringify([candidate.providerProductId ?? candidate.title, candidate.source, candidate.price.original])}><div><strong>{candidate.title}</strong><small>{candidate.source ?? "Sklep nieznany"}{candidate.sponsored ? " · sponsorowane" : ""}</small></div><div className="offer-candidate-actions"><span className="offer-result-price">{moneyLabel(candidate)}<small>Cena orientacyjna, może się różnić</small></span>{candidate.link && <a className="text-button" href={candidate.link} target="_blank" rel="noreferrer">Zobacz ofertę ↗</a>}</div></article>)}</div>}
+        {offerMeta && <div className="catalog-pagination"><button className="text-button" disabled={offerLoading || offerMeta.page <= 1} type="button" onClick={() => void loadOffers(offerMeta.query, offerMeta.expectedCategory ?? "", offerMeta.page - 1)}>← Poprzednie oferty</button><span>Strona {offerMeta.page} z {Math.max(1, Math.ceil(offerMeta.total / offerMeta.limit))}</span><button className="text-button" disabled={offerLoading || !offerMeta.hasNext} type="button" onClick={() => void loadOffers(offerMeta.query, offerMeta.expectedCategory ?? "", offerMeta.page + 1)}>Następne oferty →</button></div>}
+      </section>
+    </div>
+  );
+}

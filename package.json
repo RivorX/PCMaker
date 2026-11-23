@@ -6,13 +6,20 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare:firebase-catalog": "node --experimental-strip-types scripts/prepare-firebase-catalog.mjs",
+    "import:userbenchmark-batch": "node --experimental-strip-types scripts/import-userbenchmark-batch.mjs",
+    "import:firebase-admin": "node --experimental-strip-types scripts/import-firebase-admin.mjs",
+    "import:buildcores-specs": "node --experimental-strip-types scripts/import-buildcores-specs.mjs",
+    "test:catalog": "node --experimental-strip-types --test tests/userbenchmark.test.mjs tests/catalog.test.mjs tests/firebase-catalog.test.mjs tests/firebase-import-preview.test.mjs tests/userbenchmark-batch.test.mjs tests/firebase-admin-import.test.mjs tests/serpapi.test.mjs tests/cpu-offer-matcher.test.mjs tests/cpu-offers.test.mjs tests/cpu-specifications.test.mjs tests/buildcores-spec-import.test.mjs"
   },
   "dependencies": {
     "@pcmaker/dataconnect": "file:src/lib/dataconnect-generated",
+    "bcryptjs": "^3.0.3",
     "firebase": "^13.1.0",
+    "firebase-admin": "^14.5.1",
     "jose": "^6.2.13",
-    "next": "16.4.2",
+    "next": "16.4.6",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "three": "^0.187.0"
@@ -23,5 +30,9 @@
     "@types/react-dom": "19.3.0",
     "@types/three": "^0.187.0",
     "typescript": "5.9.3"
+  },
+  "overrides": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
   }
 }

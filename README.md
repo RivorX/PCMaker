@@ -1,61 +1,73 @@
 # PCMaker
 
-PCMaker łączy konfigurator komputerów z przygotowaniem zgłoszenia serwisowego. Konfigurator pokazuje podzespoły z katalogu Data Connect, pozwala ułożyć lokalny zestaw i sprawdzić podstawowe zależności socket/DDR. Formularz serwisowy zapisuje wersję roboczą i nie udaje wysłanego zgłoszenia.
+PCMaker łączy konfigurator komputerów z katalogiem podzespołów i przygotowaniem zgłoszenia serwisowego. Konfigurator pozwala układać zestaw, sprawdza podstawową zgodność socketu i pamięci oraz zapisuje wersję roboczą lokalnie w przeglądarce. Formularz serwisowy także zapisuje draft i nie wysyła zgłoszenia na serwer.
 
-Konfigurator pobiera katalog komponentów z Firebase Data Connect przez publiczne zapytanie `ListComponents`. Wymaga to działającego projektu, tabeli `components` z danymi, klucza `NEXT_PUBLIC_FIREBASE_API_KEY` oraz wdrożonego konektora. Po zmianie `dataconnect/connector/queries.gql` wdroż konektor, aby serwer zwracał pełny katalog zamiast filtrować go po typie. Pola socketu i typu pamięci pozostają puste, dopóki zapytanie nie pobiera specyfikacji komponentów.
+## Uruchomienie lokalne
 
-Źródła ofert sklepów nie są jeszcze podłączone. Aplikacja celowo nie pokazuje przykładowych produktów ani fikcyjnych ofert. Stan integracji jest dostępny pod `GET /api/v1/integrations`, a `GET /api/v1/offers` zwraca `503 source_not_configured` do czasu uzyskania prawdziwego dostępu do API sklepów. Kontrakty opisano w [docs/api-contract.md](docs/api-contract.md).
+Wymagany jest Node.js 24 lub nowszy. Przy pierwszym uruchomieniu skopiuj `.env.example` do `.env.local`, uzupełnij potrzebne wartości i uruchom aplikację. Istniejący `.env.local` pozostaw bez zmian.
 
-## Uruchomienie
-
-> **Wybierz tylko jedną opcję: Docker ALBO uruchomienie ręczne.**
-> Wykonaj wyłącznie instrukcję z wybranej sekcji.
-
-Komendy wykonaj w katalogu projektu. W obu wariantach aplikacja działa pod **<http://localhost:3000>**.
-
-### 🐳 Opcja: Docker
-
-Uruchom Docker Desktop i wykonaj:
-
-```bash
-docker compose up -d --build
-```
-
-Później: **Docker Desktop → Containers → pcmaker → ▶ Start / ■ Stop**. Po zmianach w kodzie powtórz komendę powyżej.
-
-Docker buduje aplikację z wartościami `NEXT_PUBLIC_*` z lokalnego `.env.local`, korzystając z tymczasowego sekretu BuildKit. Plik pozostaje poza obrazem. Jeśli zmienisz publiczne ustawienia Firebase w `.env.local`, przebuduj bez cache:
-
-```bash
-docker compose build --no-cache
-docker compose up -d
-```
-
----
-
-**ALBO**
-
-### 💻 Opcja: uruchomienie ręczne
-
-Wymagany **Node.js 20.9+**.
-
-```bash
-npm install
+```powershell
+if (-not (Test-Path .env.local)) { Copy-Item .env.example .env.local }
+npm ci
 npm run dev
 ```
 
-## Struktura pierwszego przyrostu
+Aplikacja działa pod <http://localhost:3000>.
 
-```text
-src/app/                 routing, shell i endpointy API
-src/components/          interfejs konfiguratora i serwisu
-src/lib/drafts.ts        wersjonowane, walidowane drafty localStorage
-src/lib/compatibility.ts czyste reguły socket i typu pamięci
-src/types/api.ts         wspólne typy kontraktów HTTP
-docs/api-contract.md     kontrakt dla przyszłego backendu ofert
+## Docker
+
+Uruchom Docker Desktop i wykonaj:
+
+```powershell
+if (-not (Test-Path .env.local)) { Copy-Item .env.example .env.local }
+docker compose up -d --build
 ```
 
-Draft ma wersję w kluczu `pcmaker:configuration-draft:v1` albo `pcmaker:service-draft:v1`. Odczyt odrzuca uszkodzony, niezgodny lub nadmiernie duży kształt danych, a zapis lokalny jest sygnalizowany użytkownikowi. Nie jest to jeszcze zapis serwerowy.
+Compose używa `.env.local` jako sekretu BuildKit przy budowaniu, a `./secrets/firebase-admin.json` montuje jako sekret runtime. Plik service account musi być przygotowany lokalnie do operacji administracyjnych i logowania. Nie dodawaj go do repozytorium.
 
-## Granice odpowiedzialności
+## Konfiguracja katalogu
 
-Ten przyrost nie instaluje SDK Firebase, nie modyfikuje modelu bazy, nie dodaje logowania i nie tworzy endpointów mutujących. Te granice pozostają do uzgodnienia z osobami odpowiedzialnymi za bazę, uwierzytelnianie, testy i deployment.
+Katalog używa źródła `sample`, `file` albo `firebase`. Domyślnie aplikacja pokazuje niewielki zbiór przykładowy. Dla Firebase ustaw w `.env.local`:
+
+```env
+CATALOG_SOURCE="firebase"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="pcmaker-b0b0a"
+NEXT_PUBLIC_FIREBASE_API_KEY="..."
+FIREBASE_DATACONNECT_LOCATION="europe-central2"
+FIREBASE_DATACONNECT_SERVICE="pcmaker-service"
+FIREBASE_DATACONNECT_CONNECTOR="default"
+```
+
+Odczyt katalogu Data Connect jest tylko do odczytu. Szczegóły źródeł danych, importu i ofert znajdują się w [docs/catalog.md](docs/catalog.md), [docs/catalog-sources.md](docs/catalog-sources.md) oraz kontrakcie [docs/api-contract.md](docs/api-contract.md).
+
+Operacje serwerowe wymagają dodatkowych ustawień, takich jak `SESSION_SECRET`, `FIREBASE_PROJECT_ID` i `GOOGLE_APPLICATION_CREDENTIALS`. Przykładowe wartości i pozostałe zmienne opisuje [.env.example](.env.example). `SERPAPI_API_KEY` jest opcjonalny. Bez niego wyszukiwanie ofert zwraca `503 source_not_configured`.
+
+## API
+
+- `GET /api/v1/components` wyszukuje części według frazy, kategorii i producenta z paginacją.
+- `GET /api/v1/components/:id` zwraca szczegóły komponentu.
+- `GET /api/v1/components/categories` zwraca dostępne kategorie i producentów.
+- `GET /api/v1/components/:id/offers` dopasowuje oferty tylko dla obsługiwanych procesorów.
+- `GET /api/v1/offers?action=search&keyword=...` wykonuje jawne wyszukiwanie ofert.
+- `GET /api/v1/integrations` zwraca stan konfiguracji integracji.
+
+Logowanie i rejestracja korzystają z Firebase Admin i sesyjnego cookie JWT. Panel administracyjny jest podstawowy i nie zawiera pełnego workflow CRUD.
+
+## Import katalogu
+
+Istniejący katalog Firebase nie wymaga lokalnego importu. Skrypty służą do przygotowania lub administracyjnego dodania danych. Pełny przepływ opisuje [docs/catalog.md](docs/catalog.md).
+
+```powershell
+npm run import:userbenchmark-batch
+npm run prepare:firebase-catalog -- .\.local\catalog\userbenchmark.components.json
+npm run import:firebase-admin -- --limit 1
+```
+
+## Sprawdzenia
+
+```powershell
+npm run test:catalog
+npm run typecheck
+```
+
+Build produkcyjny można sprawdzić poleceniem `npm run build`. Build Docker wymaga Docker Desktop i lokalnego `.env.local`.

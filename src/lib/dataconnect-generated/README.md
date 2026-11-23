@@ -14,6 +14,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*ListServiceTickets*](#listservicetickets)
   - [*GetServiceTicketById*](#getserviceticketbyid)
   - [*ListPublicConfigurations*](#listpublicconfigurations)
+  - [*GetUserByEmail*](#getuserbyemail)
 - [**Mutations**](#mutations)
   - [*CreateUser*](#createuser)
   - [*CreateServiceTicket*](#createserviceticket)
@@ -116,9 +117,14 @@ export interface ListComponentsData {
     model?: string | null;
     componentType: string;
     description?: string | null;
-    price: number;
+    price?: number | null;
     performanceScore?: number | null;
     productUrl?: string | null;
+    specifications: ({
+      id: UUIDString;
+      specificationName: string;
+      specificationValue: string;
+    } & ComponentSpecification_Key)[];
   } & Component_Key)[];
 }
 ```
@@ -239,9 +245,14 @@ export interface GetComponentByIdData {
     model?: string | null;
     componentType: string;
     description?: string | null;
-    price: number;
+    price?: number | null;
     performanceScore?: number | null;
     productUrl?: string | null;
+    specifications: ({
+      id: UUIDString;
+      specificationName: string;
+      specificationValue: string;
+    } & ComponentSpecification_Key)[];
   } & Component_Key;
 }
 ```
@@ -253,7 +264,7 @@ import { connectorConfig, getComponentById, GetComponentByIdVariables } from '@p
 
 // The `GetComponentById` query requires an argument of type `GetComponentByIdVariables`:
 const getComponentByIdVars: GetComponentByIdVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `getComponentById()` function to execute the query.
@@ -283,7 +294,7 @@ import { connectorConfig, getComponentByIdRef, GetComponentByIdVariables } from 
 
 // The `GetComponentById` query requires an argument of type `GetComponentByIdVariables`:
 const getComponentByIdVars: GetComponentByIdVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `getComponentByIdRef()` function to get a reference to the query.
@@ -576,7 +587,7 @@ import { connectorConfig, getServiceTicketById, GetServiceTicketByIdVariables } 
 
 // The `GetServiceTicketById` query requires an argument of type `GetServiceTicketByIdVariables`:
 const getServiceTicketByIdVars: GetServiceTicketByIdVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `getServiceTicketById()` function to execute the query.
@@ -606,7 +617,7 @@ import { connectorConfig, getServiceTicketByIdRef, GetServiceTicketByIdVariables
 
 // The `GetServiceTicketById` query requires an argument of type `GetServiceTicketByIdVariables`:
 const getServiceTicketByIdVars: GetServiceTicketByIdVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `getServiceTicketByIdRef()` function to get a reference to the query.
@@ -729,6 +740,123 @@ executeQuery(ref).then((response) => {
 });
 ```
 
+## GetUserByEmail
+You can execute the `GetUserByEmail` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+getUserByEmail(vars: GetUserByEmailVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserByEmailData, GetUserByEmailVariables>;
+
+interface GetUserByEmailRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetUserByEmailVariables): QueryRef<GetUserByEmailData, GetUserByEmailVariables>;
+}
+export const getUserByEmailRef: GetUserByEmailRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getUserByEmail(dc: DataConnect, vars: GetUserByEmailVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserByEmailData, GetUserByEmailVariables>;
+
+interface GetUserByEmailRef {
+  ...
+  (dc: DataConnect, vars: GetUserByEmailVariables): QueryRef<GetUserByEmailData, GetUserByEmailVariables>;
+}
+export const getUserByEmailRef: GetUserByEmailRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getUserByEmailRef:
+```typescript
+const name = getUserByEmailRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetUserByEmail` query requires an argument of type `GetUserByEmailVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetUserByEmailVariables {
+  email: string;
+}
+```
+### Return Type
+Recall that executing the `GetUserByEmail` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetUserByEmailData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetUserByEmailData {
+  users: ({
+    id: UUIDString;
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    role: UserRole;
+    isActive: boolean;
+  } & User_Key)[];
+}
+```
+### Using `GetUserByEmail`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getUserByEmail, GetUserByEmailVariables } from '@pcmaker/dataconnect';
+
+// The `GetUserByEmail` query requires an argument of type `GetUserByEmailVariables`:
+const getUserByEmailVars: GetUserByEmailVariables = {
+  email: ...,
+};
+
+// Call the `getUserByEmail()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getUserByEmail(getUserByEmailVars);
+// Variables can be defined inline as well.
+const { data } = await getUserByEmail({ email: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getUserByEmail(dataConnect, getUserByEmailVars);
+
+console.log(data.users);
+
+// Or, you can use the `Promise` API.
+getUserByEmail(getUserByEmailVars).then((response) => {
+  const data = response.data;
+  console.log(data.users);
+});
+```
+
+### Using `GetUserByEmail`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getUserByEmailRef, GetUserByEmailVariables } from '@pcmaker/dataconnect';
+
+// The `GetUserByEmail` query requires an argument of type `GetUserByEmailVariables`:
+const getUserByEmailVars: GetUserByEmailVariables = {
+  email: ...,
+};
+
+// Call the `getUserByEmailRef()` function to get a reference to the query.
+const ref = getUserByEmailRef(getUserByEmailVars);
+// Variables can be defined inline as well.
+const ref = getUserByEmailRef({ email: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getUserByEmailRef(dataConnect, getUserByEmailVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.users);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.users);
+});
+```
+
 # Mutations
 
 There are two ways to execute a Data Connect Mutation using the generated Web SDK:
@@ -783,7 +911,6 @@ export interface CreateUserVariables {
   email: string;
   password: string;
   phone?: string | null;
-  role?: UserRole | null;
 }
 ```
 ### Return Type
@@ -803,19 +930,18 @@ import { connectorConfig, createUser, CreateUserVariables } from '@pcmaker/datac
 
 // The `CreateUser` mutation requires an argument of type `CreateUserVariables`:
 const createUserVars: CreateUserVariables = {
-  firstName: ..., 
-  lastName: ..., 
-  email: ..., 
-  password: ..., 
+  firstName: ...,
+  lastName: ...,
+  email: ...,
+  password: ...,
   phone: ..., // optional
-  role: ..., // optional
 };
 
 // Call the `createUser()` function to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await createUser(createUserVars);
 // Variables can be defined inline as well.
-const { data } = await createUser({ firstName: ..., lastName: ..., email: ..., password: ..., phone: ..., role: ..., });
+const { data } = await createUser({ firstName: ..., lastName: ..., email: ..., password: ..., phone: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -838,18 +964,17 @@ import { connectorConfig, createUserRef, CreateUserVariables } from '@pcmaker/da
 
 // The `CreateUser` mutation requires an argument of type `CreateUserVariables`:
 const createUserVars: CreateUserVariables = {
-  firstName: ..., 
-  lastName: ..., 
-  email: ..., 
-  password: ..., 
+  firstName: ...,
+  lastName: ...,
+  email: ...,
+  password: ...,
   phone: ..., // optional
-  role: ..., // optional
 };
 
 // Call the `createUserRef()` function to get a reference to the mutation.
 const ref = createUserRef(createUserVars);
 // Variables can be defined inline as well.
-const ref = createUserRef({ firstName: ..., lastName: ..., email: ..., password: ..., phone: ..., role: ..., });
+const ref = createUserRef({ firstName: ..., lastName: ..., email: ..., password: ..., phone: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -929,11 +1054,11 @@ import { connectorConfig, createServiceTicket, CreateServiceTicketVariables } fr
 
 // The `CreateServiceTicket` mutation requires an argument of type `CreateServiceTicketVariables`:
 const createServiceTicketVars: CreateServiceTicketVariables = {
-  ticketNumber: ..., 
-  clientId: ..., 
-  serviceTypeId: ..., 
-  title: ..., 
-  description: ..., 
+  ticketNumber: ...,
+  clientId: ...,
+  serviceTypeId: ...,
+  title: ...,
+  description: ...,
   deviceName: ..., // optional
   deviceSerialNumber: ..., // optional
   priority: ..., // optional
@@ -966,11 +1091,11 @@ import { connectorConfig, createServiceTicketRef, CreateServiceTicketVariables }
 
 // The `CreateServiceTicket` mutation requires an argument of type `CreateServiceTicketVariables`:
 const createServiceTicketVars: CreateServiceTicketVariables = {
-  ticketNumber: ..., 
-  clientId: ..., 
-  serviceTypeId: ..., 
-  title: ..., 
-  description: ..., 
+  ticketNumber: ...,
+  clientId: ...,
+  serviceTypeId: ...,
+  title: ...,
+  description: ...,
   deviceName: ..., // optional
   deviceSerialNumber: ..., // optional
   priority: ..., // optional
@@ -1055,9 +1180,9 @@ import { connectorConfig, addTicketComment, AddTicketCommentVariables } from '@p
 
 // The `AddTicketComment` mutation requires an argument of type `AddTicketCommentVariables`:
 const addTicketCommentVars: AddTicketCommentVariables = {
-  ticketId: ..., 
-  authorId: ..., 
-  content: ..., 
+  ticketId: ...,
+  authorId: ...,
+  content: ...,
   isInternal: ..., // optional
 };
 
@@ -1088,9 +1213,9 @@ import { connectorConfig, addTicketCommentRef, AddTicketCommentVariables } from 
 
 // The `AddTicketComment` mutation requires an argument of type `AddTicketCommentVariables`:
 const addTicketCommentVars: AddTicketCommentVariables = {
-  ticketId: ..., 
-  authorId: ..., 
-  content: ..., 
+  ticketId: ...,
+  authorId: ...,
+  content: ...,
   isInternal: ..., // optional
 };
 
@@ -1175,8 +1300,8 @@ import { connectorConfig, createPcConfiguration, CreatePcConfigurationVariables 
 
 // The `CreatePcConfiguration` mutation requires an argument of type `CreatePcConfigurationVariables`:
 const createPcConfigurationVars: CreatePcConfigurationVariables = {
-  userId: ..., 
-  name: ..., 
+  userId: ...,
+  name: ...,
   description: ..., // optional
   totalPrice: ..., // optional
   estimatedPerformance: ..., // optional
@@ -1210,8 +1335,8 @@ import { connectorConfig, createPcConfigurationRef, CreatePcConfigurationVariabl
 
 // The `CreatePcConfiguration` mutation requires an argument of type `CreatePcConfigurationVariables`:
 const createPcConfigurationVars: CreatePcConfigurationVariables = {
-  userId: ..., 
-  name: ..., 
+  userId: ...,
+  name: ...,
   description: ..., // optional
   totalPrice: ..., // optional
   estimatedPerformance: ..., // optional
@@ -1298,10 +1423,10 @@ import { connectorConfig, addConfigurationComponent, AddConfigurationComponentVa
 
 // The `AddConfigurationComponent` mutation requires an argument of type `AddConfigurationComponentVariables`:
 const addConfigurationComponentVars: AddConfigurationComponentVariables = {
-  configurationId: ..., 
-  componentId: ..., 
+  configurationId: ...,
+  componentId: ...,
   quantity: ..., // optional
-  priceAtSelection: ..., 
+  priceAtSelection: ...,
   isSelected: ..., // optional
 };
 
@@ -1332,10 +1457,10 @@ import { connectorConfig, addConfigurationComponentRef, AddConfigurationComponen
 
 // The `AddConfigurationComponent` mutation requires an argument of type `AddConfigurationComponentVariables`:
 const addConfigurationComponentVars: AddConfigurationComponentVariables = {
-  configurationId: ..., 
-  componentId: ..., 
+  configurationId: ...,
+  componentId: ...,
   quantity: ..., // optional
-  priceAtSelection: ..., 
+  priceAtSelection: ...,
   isSelected: ..., // optional
 };
 
@@ -1360,4 +1485,3 @@ executeMutation(ref).then((response) => {
   console.log(data.configurationComponent_insert);
 });
 ```
-

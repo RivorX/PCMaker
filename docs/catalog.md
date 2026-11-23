@@ -1,0 +1,139 @@
+# Katalog podzespołów — etap 02
+
+Katalog rozdziela opis produktu od ofert handlowych. Rekord `CatalogComponent` zawiera nazwę, kategorię, producenta, model i znane specyfikacje. `price` jest nullable i w obecnym zbiorze przykładowym ma wartość `null`; nie jest to cena sklepu.
+
+## Źródło danych
+
+Porównanie dostępnych źródeł ofert, ograniczeń licencyjnych i wyniku researchu znajduje się w [docs/catalog-sources.md](catalog-sources.md).
+
+Domyślnie API używa małego pliku `src/data/components.sample.json`. Rekordy mają `source.kind: "sample"`, więc UI może uczciwie oznaczyć je jako dane demonstracyjne. Nie są automatycznie pobierane ani odświeżane podczas żądania HTTP.
+
+Po otrzymaniu pliku CSV z UserBenchmark można uruchomić importer:
+
+```bash
+node --experimental-strip-types scripts/import-userbenchmark.mjs .\UserBenchmarks.csv .\data\userbenchmark.components.json
+```
+
+Importer wymaga dokładnie kolumn `Type,Part Number,Brand,Model,Rank,Benchmark,Samples,URL`. Obsługuje BOM, CRLF, pola w cudzysłowie, przecinki w nazwach i powtórzone cudzysłowy. Obsługiwane typy to `CPU`, `GPU`, `SSD`, `HDD` i `RAM`; pozostałe są raportowane jako pominięte. URL-e importowanych rekordów muszą być HTTPS i należeć do `userbenchmark.com` lub jego subdomen. Nie wylicza socketu, typu pamięci, ceny ani uniwersalnego wyniku wydajności. `Benchmark`, `Rank` i `Samples` są zachowane jako metryka źródła `userbenchmark`, a `Part Number` trafia do `sourceIdentity.externalId`.
+
+Dla pięciu pobranych plików można uruchomić bezpieczny batch:
+
+```bash
+npm run import:userbenchmark-batch
+```
+
+Bez argumentów skrypt czyta `.local/catalog/raw/CPU_UserBenchmarks.csv`, `GPU_UserBenchmarks.csv`, `SSD_UserBenchmarks.csv`, `HDD_UserBenchmarks.csv` i `RAM_UserBenchmarks.csv`. Można podać własną listę plików CSV jako argumenty. Każdy niepusty fizyczny wiersz przechodzi przez ten sam ścisły importer co pojedynczy plik; batch nie naprawia cudzysłowów ani nie scala rekordów wielowierszowych. Błędne wiersze trafiają do lokalnej kwarantanny z nazwą pliku, numerem wiersza i oryginalnym tekstem. Dokładne duplikaty są odrzucane z licznikiem, natomiast wszystkie rekordy w konflikcie stabilnego ID albo w niejednoznacznej grupie `manufacturer/model` są odrzucane razem.
+
+Batch zapisuje `.local/catalog/userbenchmark.components.json`, `.local/catalog/userbenchmark.batch.report.json` i `.local/catalog/userbenchmark.quarantine.json`. Snapshot ma `version: 1`, wspólne `importedAt` i `source: "UserBenchmark CSV"`; raport podaje `rawRead`, `parsed`, `accepted`, `deduplicatedIdentical`, `quarantined`, grupy konfliktów i wyniki per plik. Kwarantanna zachowuje oryginalne rekordy lokalnie. Nie ma cen ani zgadywanych specyfikacji; metryki UserBenchmark pozostają w `sourceMetrics`.
+
+Wygenerowany plik jest snapshotem. Aby przygotować lokalny, niepublikowany podgląd mapowania do pól Firebase `Component`, uruchom:
+
+```bash
+node --experimental-strip-types scripts/prepare-firebase-catalog.mjs .\\data\\userbenchmark.components.json
+```
+
+Narzędzie przyjmuje wyłącznie snapshot `version: 1` z tablicą `components` (czyli wynik importera, a nie surowy alternatywny format `components.sample.json`). Zapisuje domyślnie `.local/catalog/firebase-import.preview.json`, tworzy katalog wyjściowy i ustawia `readyToWrite: false`. Podgląd zawiera wyłącznie pola `Component`, ceny i wyniki wydajności pozostawia jako `null`, a źródłową tożsamość, czas i metryki zachowuje w osobnym `manifest`. Identyfikatory są deterministycznymi UUID opartymi o `sourceIdentity` albo istniejące ID katalogu, więc ponowienie przygotowania nie losuje nowych rekordów. Błędne rekordy, nieznane kategorie, duplikaty ID oraz powtórzone pary `manufacturer`/`model` kończą się błędem zamiast cichego nadpisania.
+
+Podgląd pozostaje opisowy i ma `readyToWrite: false`; nie jest żądaniem zapisu. Jawny CLI administracyjny może wykonać wyłącznie kontrolowane inserty po ponownym odczycie istniejących rekordów, bez nadpisywania metadanych, cen i specyfikacji. Sam generator podglądu nie wykonuje sieci, SQL ani mutacji Firebase. Aby obejrzeć snapshot lokalnie, ustaw `CATALOG_SOURCE=file` i `CATALOG_DATA_FILE` na jego ścieżkę; po zakończeniu lokalnego sprawdzenia przywróć `CATALOG_SOURCE=firebase`. Pliki `.local/`, wygenerowany snapshot oraz rozpoznawalne surowe CSV UserBenchmark i pliki service-account są ignorowane przez Git, ale katalog `data/` jako całość pozostaje śledzony.
+
+### Jawny import administracyjny
+
+Import do Firebase jest osobnym, serwerowym CLI i domyślnie wykonuje tylko plan odczytowy:
+
+```bash
+npm run import:firebase-admin -- --limit 1
+npm run import:firebase-admin -- --apply --limit 1 --batch-size 25
+npm run import:firebase-admin -- --apply --batch-size 25
+```
+
+CLI ładuje lokalne zmienne przez Next, używa ADC i czyta istniejące `Component` w stronach do 500 rekordów, z ustaloną kolejnością `id`. Przed zapisem ponownie generuje preview z oryginalnego snapshotu; nie ufa ręcznie edytowanemu preview. `--apply` jest wymagane do insertów, `--limit 1` służy do pilota, a `--batch-size` ogranicza porcję (maksymalnie 50). Operacja używa wyłącznie `insertMany` dla tabeli `Component`: nie wykonuje UPSERT, nie nadpisuje istniejących metadanych/cen/specyfikacji i nie zapisuje obecnie manifestu specyfikacji do drugiej tabeli. Specyfikacje są tylko bezpiecznie odczytywane przez katalog publiczny/admin query. Konflikt ID lub pary `manufacturer/model` blokuje zapis przed pierwszą mutacją. Raport `.local/catalog/firebase-admin-import.report.json` jest zapisywany przed i po każdej potwierdzonej porcji; błąd zatrzymuje import, a ponowne uruchomienie ponownie wykonuje preflight i pomija już istniejące rekordy.
+
+### Import specyfikacji BuildCores OpenDB
+
+W Firebase uzupełniono 1030 istniejących części o 4894 wartości specyfikacji i 1030 wpisów z odnośnikami do źródła. Ponowny odczyt potwierdził wszystkie wartości i odnośniki. Dane przeszły normalizację, a katalog pokazuje źródło i licencję w szczegółach części.
+
+Z pierwotnego katalogu usunięto 3548 rekordów bez specyfikacji i powiązań. Po operacji w bazie pozostało dokładnie 1030 części. Pełne dane usuniętych rekordów są w lokalnym pliku `.local/catalog/firebase-buildcores-cleanup-preview.json`, a wynik kontroli w `.local/catalog/firebase-buildcores-cleanup-result.json`.
+
+Lokalny `npm run import:buildcores-specs` jest domyślnie dry-runem. Czyta przypięte raporty pokrycia, snapshot UserBenchmark i lokalne archiwum `opendb-c9002fe308396c780d8a378cc93c10d85b215b8b.zip`, sprawdza hash snapshotu i archiwum oraz planuje wyłącznie dodatkowe rekordy `ComponentSpecification`. Zweryfikowane wejście daje 1030 unikalnych, dokładnie powiązanych komponentów (260 z MPN i 7 dodatkowych CPU po modelu, 276 GPU, 52 RAM, 435 Storage); wartości pochodzą z przypiętego commita BuildCores `c9002fe308396c780d8a378cc93c10d85b215b8b`, licencja źródła to `CC BY-NC-SA 4.0`.
+
+```powershell
+npm run import:buildcores-specs
+npm run import:buildcores-specs -- --existing .\.local\catalog\firebase-existing-components.json
+```
+
+Raport trafia do `.local/catalog/buildcores-spec-import.report.json` i zawiera liczniki `add`, `keep`, `conflicts` oraz `deleteCandidates`. Import zachowuje istniejące wartości i dodaje jeden zarezerwowany wpis `BuildCores OpenDB` z przypiętym URL-em rekordu, gdy dodaje pola tego źródła. `--apply-specs` jest osobną, jawną ścieżką administracyjną wykonującą atomizowane porcje per komponent przez `insertMany("ComponentSpecification")`; nie jest uruchamiana w zwykłym dry-runie. Narzędzie nie wykonuje DELETE. Raport zaznacza, że cleanup wymaga osobnego preflightu wszystkich referencji (`ComponentSpecification`, `ComponentCompatibility`, `ConfigurationComponent` i `ComponentRecommendation`) oraz backupu pełnych pól.
+
+Aby lokalny serwer używał snapshotu jako źródła katalogu, ustaw po stronie serwera `CATALOG_DATA_FILE` na ścieżkę tego pliku i uruchom ponownie aplikację. Gdy zmienna nie jest ustawiona, endpoint korzysta z `components.sample.json`. Gdy jest ustawiona, ale plik jest niedostępny lub nie przejdzie walidacji, endpoint zwraca `503 catalog_unavailable` i nie przełącza się po cichu na zbiór przykładowy. Ścieżka nie jest zwracana klientowi.
+
+Snapshot nie modyfikuje bazy ani nie pobiera sieci podczas żądania. Dla aplikacji opisanej w README (Node 20+) importer/testy używają `node --experimental-strip-types`, dlatego wymagają Node 24+ albo wcześniejszego skompilowania pliku TypeScript.
+
+### Firebase Data Connect (odczyt)
+
+Po ustawieniu `CATALOG_SOURCE=firebase` katalog wykonuje serwerowy, wyłącznie read-only request `ListCatalogPage` do Firebase Data Connect. Stały limit zapytania wynosi 500 rekordów, a adapter pobiera kolejne strony przez `offset` aż do krótszej strony. Klucz `NEXT_PUBLIC_FIREBASE_API_KEY` jest używany tylko w nagłówku backendowego requestu i nie jest zwracany w odpowiedzi. Odczyt ma ogólny limit czasu około 30 sekund, limit rozmiaru pojedynczej odpowiedzi i pamięć podręczną procesu przez 60 sekund; błąd dowolnej strony zwraca `503 catalog_unavailable` bez fallbacku ani częściowego cache. Puste, poprawne `data.components` jest poprawnym wynikiem.
+
+Mapowane są wyłącznie znane typy (`CPU`, `GPU`, `Motherboard`, `RAM`/`Memory`, `SSD`/`HDD`/`Storage`, `PSU`, `Case`, `Cooling`). Nieznany typ lub niepoprawny rekord powoduje `503`, zamiast cichego pominięcia. Bazowe `specifications` pochodzą wyłącznie z kontraktu zapytania. Prawidłowa, nieujemna i skończona wartość `Component.price` jest odczytywana jako nullable liczba PLN i prezentowana w katalogu wyłącznie jako cena demonstracyjna — nie jest aktualną ofertą sklepową ani wynikiem SerpAPI. Niepoprawna cena powoduje `503`, bez zgadywania wartości. `performanceScore` pozostaje `null`, bo kontrakt nie potwierdza jednostek benchmarku. `source.kind` ma wartość `database`, a `source.provider` — `firebase-sql-connect`; `capturedAt` oznacza czas odczytu, nie czas aktualizacji rekordu w bazie.
+
+Skrypt `node --experimental-strip-types scripts/seed-demo-prices.mjs` pokazuje plan przypisania cen demonstracyjnych. Opcja `--apply` zapisuje tylko brakujące kwoty w katalogu Firebase. Kwoty są dobierane na podstawie ID części z zakresu kategorii (CPU 250–1800 PLN, GPU 400–3500 PLN, RAM 100–550 PLN, dyski 120–1000 PLN). Wszystkie 1030 części BuildCores ma już zapisaną cenę. Tryby `sample` i `file` zachowują dotychczasowy kontrakt.
+
+Przy odczycie Firebase wykonywany jest dodatkowo mały, read-only pilotaż specyfikacji dla dokładnych par producent/model: `AMD Ryzen 7 7800X3D`, `AMD Ryzen 5 7600` oraz `Intel Core i5-14600K`. Wartości pochodzą ze stron producentów, a API/UI pokazują przy nich osobną informację o źródle. Pilotaż nie dopasowuje wariantów sąsiednich (`7800X`, `7600X`, `14600KF`), nie nadpisuje istniejącej specyfikacji z bazy i nie zmienia snapshotu ani danych Firebase. Rozszerzenie kolejnych modeli wymaga dodania jawnej pary producent/model, wartości i URL-a producenta w wersjonowanym module pilotażu oraz testu niezgodnego wariantu.
+
+Paginacja ma limit bezpieczeństwa 100 000 rekordów i sprawdza powtórzone lub nieuporządkowane ID. `meta.total` oznacza liczbę rekordów pełnego ukończonego snapshotu po filtrach; kolejność/offset nie daje migawkowej izolacji przy równoczesnych mutacjach bazy.
+
+Weryfikacja 2026-11-11: rzeczywisty `ListComponents` i lokalny `GET /api/v1/components` zwróciły HTTP 200 oraz pustą listę z `source: "database"`. Sprawdzono również endpoint kategorii, stan konfiguracji bazy i odpowiedzi 400/404. Testy kontrolowanych odpowiedzi obejmują niepuste rekordy; nie potwierdzono jeszcze odczytu niepustego katalogu zdalnego. Przeszło 16 testów katalogu, sprawdzenie TypeScript i kompilacja produkcyjna. Nie wykonywano mutacji ani wdrożenia schematu.
+
+### Wykonany import — 2026-11-17
+
+Odczyt administracyjny potwierdził działanie poświadczeń i wdrożoną relację specyfikacji. Dodano pilota `Intel Core i9-14900KS` z `price: null`, potwierdzono jego odczyt przez publiczny `GetComponentById`, a następnie dodano pozostałe 4577 rekordów w porcjach po 25. Firebase zwraca UUID również jako 32 znaki bez myślników; adapter i importer normalizują je do wspólnej postaci. Końcowy preflight odczytał 4578 komponentów, pominął wszystkie 4578, zaplanował 0 insertów i nie wykrył konfliktów. Raporty są lokalne w `.local/catalog/firebase-admin-*.json`.
+
+Przeszło 30 testów, TypeScript i build produkcyjny. CSV nie zawiera cen ani kompletnych specyfikacji; import nie wypełnia ich domysłami.
+
+### Pełny katalog z Firebase — 2026-11-17
+
+Zwalidowano i wdrożono `ListCatalogPage` do konektora `default`, dodając wyłącznie nowe zapytanie. Przed wdrożeniem porównano istniejące źródła z repozytorium; aktualizację zabezpieczono znacznikiem `etag`. Pozostałe operacje, schemat i dane pozostały bez zmian.
+
+Lokalna konfiguracja używa teraz `CATALOG_SOURCE=firebase`. Rzeczywisty odczyt zwrócił 4578 unikalnych części i potwierdził wszystkie identyfikatory importu. API zwróciło `source: database`; sprawdzono rozłączne strony 1 i 2, ostatnią stronę 763, wyszukiwanie `7800X3D`, filtr 88 pamięci RAM i szczegóły części. Widok katalogu pokazał źródło „baza danych” i 4578 rekordów. Przeszły 32 testy, TypeScript i build produkcyjny. Ponowny odczyt używa kompletnego cache; błąd dowolnej strony nie zwraca częściowego katalogu.
+
+## API
+
+- `GET /api/v1/components` — listuje katalog; parametry `q`/`query`, `category`, `manufacturer`, `page` (1–1000) i `limit` (1–50).
+- `GET /api/v1/components/:id` — zwraca szczegóły albo `404`.
+- `GET /api/v1/components/:id/offers` — automatycznie dopasowuje oferty tylko dla wybranego, obsługiwanego CPU po tytule modelu.
+- `GET /api/v1/components/categories` — zwraca kategorie i producentów obecnego źródła.
+
+Lista jest deterministycznie sortowana po nazwie. Nieznana kategoria, zbyt długie wyszukiwanie i błędna paginacja zwracają `400`. Dane pozostają publiczne na potrzeby demonstracji; po podłączeniu bazy i autoryzacji zasady dostępu ustala właściciel tych modułów.
+
+## Przejście do bazy i ofert
+
+Istniejący Firebase Data Connect ma `components` i `component_specifications`; `Component.price` jest nullable, a obecny typ to `Float`. Dla katalogu produkcyjnego cena powinna należeć do oferty, a nie do kanonicznego produktu. Proponowane tabele i ograniczenia są w [database/catalog-reference.sql](../database/catalog-reference.sql). Plik jest dokumentem referencyjnym, nie uruchomioną migracją.
+
+Projekt obejmuje komponenty, specyfikacje, źródła, identyfikatory zewnętrzne, obserwacje benchmarków, oferty oraz historię cen. `components.public_id` przechowuje identyfikator używany przez REST/importer; wewnętrzny UUID bazy pozostaje osobnym kluczem. Metryki UserBenchmark zachowują własne źródło i czas importu. Oferta i historia mają kwoty w groszach, osobny koszt dostawy i walutę PLN. Nieznany koszt dostawy jest `NULL`, nie oznacza darmowej wysyłki.
+
+## Sprawdzenie
+
+Weryfikacja lokalnego katalogu 2026-11-11: pobrano CSV dla CPU, GPU, SSD, HDD i RAM. Z 5029 wierszy zaakceptowano 4578 komponentów: 1427 CPU, 1148 GPU, 1915 dysków i 88 pamięci RAM. Usunięto 5 identycznych powtórzeń; 446 wierszy przeniesiono do raportu kwarantanny, w tym 98 błędnie zapisanych. Dane i raporty są wyłącznie lokalne w ignorowanym `.local/catalog/`.
+
+Lokalne `CATALOG_SOURCE=file` i `CATALOG_DATA_FILE=./.local/catalog/userbenchmark.components.json` uruchamiają ten katalog. Sprawdzono HTTP listy, kategorii, wyszukiwanie `7800X3D`, szczegóły i rozłączne strony wyników. Interfejs pokazał 4578 rekordów. Podgląd importu zawiera 4578 części i `readyToWrite: false`; nie wykonano zapisu do Firebase. Przeszły 24 testy oraz sprawdzenie TypeScript. Ten etap nie zmieniał kodu aplikacji Next.js i nie wymagał ponownej kompilacji produkcyjnej.
+
+```bash
+npm run test:catalog
+npm run typecheck
+npm run build
+```
+
+Podczas weryfikacji 2026-11-03 oficjalny CSV CPU dał 1427 rekordów bez pominiętych typów i duplikatów. Sprawdzono przepływ CSV → snapshot → REST z `meta.source: "external"`, `provider: "userbenchmark"` i cenami `null`. Sprawdzono także HTTP listy, szczegółów, kategorii, filtrów, paginacji i odpowiedzi 400/404 na danych przykładowych. Domyślny katalog nadal zawiera 9 rekordów przykładowych; pełny plik zewnętrzny nie jest dołączony do repozytorium.
+
+Końcowe sprawdzenia: 5 testów `test:catalog`, TypeScript i build produkcyjny przeszły. Pakowanie istniejącego trybu `standalone` wymagało uruchomienia buildu poza sandboxem z powodu blokady zapisu plików przez Windows. Projekt SQL nie był wykonywany na bazie; żadne zmiany nie zostały wdrożone do Firebase.
+
+## Oferty Google Shopping przez SerpAPI
+
+Adapter ofert jest oddzielony od katalogu kanonicznych modeli. Jawne `GET /api/v1/offers?action=search&keyword=...` pobiera wyniki Google Shopping przez serwerowy `SERPAPI_API_KEY`; żadne żądanie nie jest wykonywane przy otwarciu katalogu ani przy wpisywaniu tekstu. Znormalizowane wyniki mogą pochodzić z płaskiego `shopping_results`, grup `categorized_shopping_results` albo sponsorowanych `inline_shopping_results`. Surowe metadane SerpAPI nie opuszczają backendu.
+
+Po wybraniu procesora widok wykonuje po krótkim opóźnieniu dodatkowy, automatyczny odczyt `GET /api/v1/components/:id/offers`. Endpoint najpierw pobiera zaufany rekord katalogowy, a dopiero potem — wyłącznie dla obsługiwanych rodzin AMD Ryzen i Intel Core/Core Ultra — pyta SerpAPI nazwą tego modelu. Wyniki są filtrowane po pełnym tytule modelu (w tym rodzinie, tierze i przyrostku, więc `7800X` nie pasuje do `7800X3D`, a `14600K` do `14600KF`). Odrzucane są m.in. zestawy, kompletne komputery, akcesoria i tytuły z wieloma kodami CPU. Dopasowanie jest heurystyką nazwy; nie potwierdza MPN/EAN i nie zapisuje ceny do `CatalogComponent.price`.
+
+Automatyczne sprawdzenie nie uruchamia się dla GPU ani pozostałych kategorii, a nieobsługiwany/niejednoznaczny model dostaje stan `unsupported` bez wywołania dostawcy. Brak zgodnych tytułów to `no_matches`; błąd dostawcy jest pokazywany osobno. Ręczne wyszukiwanie w sekcji Google Shopping pozostaje dostępne dla wszystkich kategorii i nadal wymaga jawnego działania użytkownika.
+
+Waluta jest rozpoznawana z tekstu ceny. PLN zachowuje kwotę źródłową, EUR może zostać przeliczone stałą `EUR_PLN_RATE=4.30` i jest oznaczone jako estymacja, a USD i nieznane waluty pozostają bez ceny. Brak ceny jest `null`, nigdy nie oznacza zera. Wyszukiwanie CPU odrzuca oczywiste zestawy PC/bundle, jeśli tytuł zawiera wystarczające sygnały; nie jest to uniwersalne dopasowanie kategorii.
+
+Wyniki są kandydatami i nie są automatycznie przypisywane do modelu katalogowego. Link jest używany tylko po walidacji HTTPS, bez poświadczeń, parametrów kluczy ani linków do SerpAPI. Brak klucza daje `503 source_not_configured`, limit dostawcy `429 rate_limited`, timeout `504 upstream_timeout`, a inny błąd lub niepoprawna odpowiedź dostawcy sanitizowany `502`. Cache jest ograniczony do procesu, 100 wpisów i TTL jednej godziny.
+
+Weryfikacja automatycznych ofert 2026-11-17: rzeczywisty endpoint dla Intel Core i5-14600K zwrócił 8 ofert po filtrowaniu tytułów; warianty KF/T i model bez przyrostka zostały odrzucone. Powtórny odczyt zwrócił te same wyniki; GPU otrzymał `unsupported`, a nieistniejący rekord 404. W interfejsie samo wybranie CPU uruchomiło oferty, a zmiana kategorii usunęła poprzedni panel. Wyniki i stany widoku są powiązane z identyfikatorem zaznaczonej części. Przeszło 36 testów, dodatkowych 14 sprawdzeń tytułów, TypeScript i build. Nie zapisywano cen w Firebase. Zrzut testowy jest lokalny w ignorowanym `.local/catalog/cpu-auto-offers.png`.
