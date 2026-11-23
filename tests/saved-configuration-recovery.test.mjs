@@ -8,6 +8,7 @@ import {
 import {
   configurationContentKey,
   configurationSnapshot,
+  MAX_SAVED_CONFIGURATIONS,
   parseSavedConfigurationLibrary,
   parseWorkingConfiguration,
   saveConfigurationToLibrary,
@@ -83,6 +84,7 @@ test("reads the previous working-draft format for explicit recovery", () => {
 
 test("preserves optional descriptions while keeping older drafts valid", () => {
   assert.equal(MAX_CONFIGURATION_DESCRIPTION_LENGTH, 300);
+  assert.equal(MAX_SAVED_CONFIGURATIONS, 4);
   assert.equal(parseConfigurationDraft(JSON.stringify(draft))?.description, "");
 
   const describedDraft = { ...draft, description: "Komputer do pracy i gier" };
@@ -127,4 +129,15 @@ test("preserves optional descriptions while keeping older drafts valid", () => {
   const localSave = saveConfigurationToLibrary(storage, describedDraft, "copy", null);
   assert.equal(localSave.ok, true);
   if (localSave.ok) assert.equal(localSave.saved.description, describedDraft.description);
+
+  const existingOverLimit = parseSavedConfigurationLibrary(JSON.stringify({
+    version: 1,
+    configurations: Array.from({ length: MAX_SAVED_CONFIGURATIONS + 1 }, (_, index) => ({
+      ...oldConfiguration,
+      id: `existing-${index}`,
+    })),
+    updatedAt: timestamp,
+  }));
+  assert.equal(existingOverLimit.status, "valid");
+  if (existingOverLimit.status === "valid") assert.equal(existingOverLimit.value.configurations.length, MAX_SAVED_CONFIGURATIONS + 1);
 });

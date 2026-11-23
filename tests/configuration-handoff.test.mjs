@@ -1,9 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  clearGuestConfigurationDraft,
   clearConfigurationHandoff,
   CONFIGURATION_HANDOFF_KEY,
+  GUEST_CONFIGURATION_DRAFT_KEY,
+  hasGuestConfigurationDraft,
+  readGuestConfigurationDraft,
   readConfigurationHandoff,
+  writeGuestConfigurationDraft,
   writeConfigurationHandoff,
 } from "../src/lib/configuration-handoff.ts";
 
@@ -70,4 +75,26 @@ test("ignores malformed and expired drafts", () => {
   } finally {
     Date.now = originalNow;
   }
+});
+
+test("keeps one replaceable guest draft and preserves a newer cross-tab write", () => {
+  const storage = new MemoryStorage();
+  const first = { ...draft, title: "Pierwszy zestaw", description: "pierwszy" };
+  const newer = { ...draft, title: "Nowszy zestaw", description: "nowszy opis" };
+
+  assert.equal(writeGuestConfigurationDraft(storage, first), true);
+  const firstSlot = readGuestConfigurationDraft(storage);
+  assert.equal(firstSlot?.draft.title, first.title);
+  assert.equal(firstSlot?.draft.description, first.description);
+
+  assert.equal(writeGuestConfigurationDraft(storage, newer), true);
+  assert.equal(storage.values.size, 1);
+  assert.equal(storage.getItem(GUEST_CONFIGURATION_DRAFT_KEY) !== null, true);
+  assert.equal(clearGuestConfigurationDraft(storage, firstSlot.raw), false);
+  assert.equal(hasGuestConfigurationDraft(storage), true);
+  assert.equal(readGuestConfigurationDraft(storage)?.draft.description, newer.description);
+
+  const latest = readGuestConfigurationDraft(storage);
+  assert.equal(clearGuestConfigurationDraft(storage, latest.raw), true);
+  assert.equal(hasGuestConfigurationDraft(storage), false);
 });

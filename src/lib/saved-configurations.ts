@@ -10,6 +10,7 @@ import {
 export const SAVED_CONFIGURATION_LIBRARY_VERSION = 1;
 export const SAVED_CONFIGURATION_LIBRARY_KEY = "pcmaker:saved-configurations:v1";
 export const WORKING_CONFIGURATION_KEY = "pcmaker:configuration-working:v1";
+export const MAX_SAVED_CONFIGURATIONS = 4;
 export const MAX_CONFIGURATION_NAME_LENGTH = 80;
 
 export interface SavedConfiguration {
