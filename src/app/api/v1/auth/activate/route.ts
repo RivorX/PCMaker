@@ -70,6 +70,11 @@ export async function GET(request: Request) {
     }
 
     if (authToken.user.isActive) {
+      await adminDataConnect.executeMutation("InvalidateUserAuthTokens", {
+        userId: authToken.user.id,
+        type: "ACTIVATION",
+      });
+
       return redirectToLogin("success");
     }
 
@@ -80,6 +85,11 @@ export async function GET(request: Request) {
 
     await adminDataConnect.executeMutation("ActivateUser", {
       id: authToken.user.id,
+    });
+
+    await adminDataConnect.executeMutation("InvalidateUserAuthTokens", {
+      userId: authToken.user.id,
+      type: "ACTIVATION",
     });
 
     return redirectToLogin("success");

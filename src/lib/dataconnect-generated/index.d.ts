@@ -277,6 +277,15 @@ export interface GetUserByEmailVariables {
   email: string;
 }
 
+export interface InvalidateUserAuthTokensData {
+  authToken_updateMany: number;
+}
+
+export interface InvalidateUserAuthTokensVariables {
+  userId: UUIDString;
+  type: AuthTokenType;
+}
+
 export interface ListCatalogPageData {
   components: ({
     id: UUIDString;
@@ -598,6 +607,18 @@ export const deleteUserByEmailRef: DeleteUserByEmailRef;
 
 export function deleteUserByEmail(vars: DeleteUserByEmailVariables): MutationPromise<DeleteUserByEmailData, DeleteUserByEmailVariables>;
 export function deleteUserByEmail(dc: DataConnect, vars: DeleteUserByEmailVariables): MutationPromise<DeleteUserByEmailData, DeleteUserByEmailVariables>;
+
+interface InvalidateUserAuthTokensRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: InvalidateUserAuthTokensVariables): MutationRef<InvalidateUserAuthTokensData, InvalidateUserAuthTokensVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: InvalidateUserAuthTokensVariables): MutationRef<InvalidateUserAuthTokensData, InvalidateUserAuthTokensVariables>;
+  operationName: string;
+}
+export const invalidateUserAuthTokensRef: InvalidateUserAuthTokensRef;
+
+export function invalidateUserAuthTokens(vars: InvalidateUserAuthTokensVariables): MutationPromise<InvalidateUserAuthTokensData, InvalidateUserAuthTokensVariables>;
+export function invalidateUserAuthTokens(dc: DataConnect, vars: InvalidateUserAuthTokensVariables): MutationPromise<InvalidateUserAuthTokensData, InvalidateUserAuthTokensVariables>;
 
 interface ListComponentsRef {
   /* Allow users to create refs without passing in DataConnect */

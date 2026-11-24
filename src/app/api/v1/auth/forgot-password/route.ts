@@ -78,8 +78,8 @@ export async function POST(request: Request) {
         throw new Error("Missing APP_URL environment variable.");
       }
 
-        const resetUrl = new URL("/", appUrl);
-        resetUrl.searchParams.set("resetToken", token);
+      const resetUrl = new URL("/", appUrl);
+      resetUrl.searchParams.set("resetToken", token);
 
       await sendEmail({
         to: email,
@@ -166,6 +166,11 @@ export async function POST(request: Request) {
             </body>
           </html>
         `,
+      });
+
+      await adminDataConnect.executeMutation("InvalidateUserAuthTokens", {
+        userId: user.id,
+        type: "PASSWORD_RESET",
       });
     }
 

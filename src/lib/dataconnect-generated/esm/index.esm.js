@@ -188,6 +188,18 @@ export function deleteUserByEmail(dcOrVars, vars) {
   return executeMutation(deleteUserByEmailRef(dcInstance, inputVars));
 }
 
+export const invalidateUserAuthTokensRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'InvalidateUserAuthTokens', inputVars);
+}
+invalidateUserAuthTokensRef.operationName = 'InvalidateUserAuthTokens';
+
+export function invalidateUserAuthTokens(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(invalidateUserAuthTokensRef(dcInstance, inputVars));
+}
+
 export const listComponentsRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars);
   dcInstance._useGeneratedSdk();

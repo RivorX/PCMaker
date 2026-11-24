@@ -33,6 +33,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*ActivateUser*](#activateuser)
   - [*UpdateUserPassword*](#updateuserpassword)
   - [*DeleteUserByEmail*](#deleteuserbyemail)
+  - [*InvalidateUserAuthTokens*](#invalidateuserauthtokens)
 
 # Accessing the connector
 A connector is a collection of Queries and Mutations. One SDK is generated for each connector - this SDK is generated for the connector `default`. You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
@@ -2902,6 +2903,118 @@ console.log(data.user_deleteMany);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.user_deleteMany);
+});
+```
+
+## InvalidateUserAuthTokens
+You can execute the `InvalidateUserAuthTokens` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+invalidateUserAuthTokens(vars: InvalidateUserAuthTokensVariables): MutationPromise<InvalidateUserAuthTokensData, InvalidateUserAuthTokensVariables>;
+
+interface InvalidateUserAuthTokensRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: InvalidateUserAuthTokensVariables): MutationRef<InvalidateUserAuthTokensData, InvalidateUserAuthTokensVariables>;
+}
+export const invalidateUserAuthTokensRef: InvalidateUserAuthTokensRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+invalidateUserAuthTokens(dc: DataConnect, vars: InvalidateUserAuthTokensVariables): MutationPromise<InvalidateUserAuthTokensData, InvalidateUserAuthTokensVariables>;
+
+interface InvalidateUserAuthTokensRef {
+  ...
+  (dc: DataConnect, vars: InvalidateUserAuthTokensVariables): MutationRef<InvalidateUserAuthTokensData, InvalidateUserAuthTokensVariables>;
+}
+export const invalidateUserAuthTokensRef: InvalidateUserAuthTokensRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the invalidateUserAuthTokensRef:
+```typescript
+const name = invalidateUserAuthTokensRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `InvalidateUserAuthTokens` mutation requires an argument of type `InvalidateUserAuthTokensVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface InvalidateUserAuthTokensVariables {
+  userId: UUIDString;
+  type: AuthTokenType;
+}
+```
+### Return Type
+Recall that executing the `InvalidateUserAuthTokens` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `InvalidateUserAuthTokensData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface InvalidateUserAuthTokensData {
+  authToken_updateMany: number;
+}
+```
+### Using `InvalidateUserAuthTokens`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, invalidateUserAuthTokens, InvalidateUserAuthTokensVariables } from '@pcmaker/dataconnect';
+
+// The `InvalidateUserAuthTokens` mutation requires an argument of type `InvalidateUserAuthTokensVariables`:
+const invalidateUserAuthTokensVars: InvalidateUserAuthTokensVariables = {
+  userId: ..., 
+  type: ..., 
+};
+
+// Call the `invalidateUserAuthTokens()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await invalidateUserAuthTokens(invalidateUserAuthTokensVars);
+// Variables can be defined inline as well.
+const { data } = await invalidateUserAuthTokens({ userId: ..., type: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await invalidateUserAuthTokens(dataConnect, invalidateUserAuthTokensVars);
+
+console.log(data.authToken_updateMany);
+
+// Or, you can use the `Promise` API.
+invalidateUserAuthTokens(invalidateUserAuthTokensVars).then((response) => {
+  const data = response.data;
+  console.log(data.authToken_updateMany);
+});
+```
+
+### Using `InvalidateUserAuthTokens`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, invalidateUserAuthTokensRef, InvalidateUserAuthTokensVariables } from '@pcmaker/dataconnect';
+
+// The `InvalidateUserAuthTokens` mutation requires an argument of type `InvalidateUserAuthTokensVariables`:
+const invalidateUserAuthTokensVars: InvalidateUserAuthTokensVariables = {
+  userId: ..., 
+  type: ..., 
+};
+
+// Call the `invalidateUserAuthTokensRef()` function to get a reference to the mutation.
+const ref = invalidateUserAuthTokensRef(invalidateUserAuthTokensVars);
+// Variables can be defined inline as well.
+const ref = invalidateUserAuthTokensRef({ userId: ..., type: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = invalidateUserAuthTokensRef(dataConnect, invalidateUserAuthTokensVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.authToken_updateMany);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.authToken_updateMany);
 });
 ```
 

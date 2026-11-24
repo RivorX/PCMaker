@@ -240,3 +240,21 @@ mutation DeleteUserByEmail(
     }
   )
 }
+
+
+# Unieważnienie niewykorzystanych tokenów użytkownika
+mutation InvalidateUserAuthTokens(
+  $userId: UUID!
+  $type: AuthTokenType!
+) @auth(level: NO_ACCESS) {
+  authToken_updateMany(
+    where: {
+      userId: { eq: $userId }
+      type: { eq: $type }
+      usedAt: { isNull: true }
+    }
+    data: {
+      usedAt_expr: "request.time"
+    }
+  )
+}
