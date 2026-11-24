@@ -5,19 +5,22 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+type AuthMode = "login" | "register" | "forgot" | "reset" | "checking";
+
 export default function LoginPage() {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<AuthMode>("login");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resetToken, setResetToken] = useState("");
 
   const router = useRouter();
 
   useEffect(() => {
-    const activation = new URLSearchParams(
-      window.location.search
-    ).get("activation");
+    const params = new URLSearchParams(window.location.search);
+    const activation = params.get("activation");
+    const token = params.get("resetToken");
 
-    const messages: Record<string, string> = {
+    const activationMessages: Record<string, string> = {
       success: "Konto zostało aktywowane. Możesz się zalogować.",
       expired: "Link aktywacyjny wygasł. Poproś o nowy link.",
       used: "Ten link aktywacyjny został już wykorzystany.",
@@ -25,9 +28,58 @@ export default function LoginPage() {
       error: "Nie udało się aktywować konta. Spróbuj ponownie później.",
     };
 
-    if (activation && messages[activation]) {
-      setMessage(messages[activation]);
+    if (activation && activationMessages[activation]) {
+      setMessage(activationMessages[activation]);
     }
+
+    if (!token) return;
+
+    let cancelled = false;
+
+    setMode("checking");
+    setResetToken(token);
+    setMessage("");
+
+    async function validateToken() {
+      try {
+        const response = await fetch("/api/v1/auth/validate-reset-token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token }),
+        });
+
+        const result = await response.json();
+
+        if (cancelled) return;
+
+        if (!response.ok || !result.valid) {
+          window.history.replaceState({}, "", "/");
+          setResetToken("");
+          setMode("login");
+          setMessage(
+            result.error ?? "Link resetowania hasła jest nieprawidłowy."
+          );
+          return;
+        }
+
+        setMode("reset");
+      } catch {
+        if (cancelled) return;
+
+        window.history.replaceState({}, "", "/");
+        setResetToken("");
+        setMode("login");
+        setMessage("Nie udało się zweryfikować linku. Spróbuj ponownie.");
+      }
+    }
+
+    validateToken();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function changeMode(newMode: "login" | "register") {
@@ -35,11 +87,16 @@ export default function LoginPage() {
     setMessage("");
   }
 
+  function openForgotMode() {
+    setMode("forgot");
+    setMessage("");
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
 
-    if (isSubmitting) return;
+    if (isSubmitting || mode === "checking") return;
 
     const formData = new FormData(event.currentTarget);
 
@@ -86,6 +143,77 @@ export default function LoginPage() {
         return;
       }
 
+      if (mode === "forgot") {
+        const email = String(formData.get("email") ?? "").trim();
+
+        const response = await fetch("/api/v1/auth/forgot-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          setMessage(result.error ?? "Nie udało się wysłać wiadomości.");
+          return;
+        }
+
+        setMessage(
+          result.message ??
+            "Jeśli konto z podanym adresem istnieje, wysłaliśmy wiadomość z instrukcją resetowania hasła."
+        );
+        return;
+      }
+
+      if (mode === "reset") {
+        const password = String(formData.get("password") ?? "");
+        const confirmPassword = String(
+          formData.get("confirm-password") ?? ""
+        );
+
+        if (password !== confirmPassword) {
+          setMessage("Podane hasła nie są identyczne.");
+          return;
+        }
+
+        if (!resetToken) {
+          setMessage("Brak prawidłowego tokenu resetowania hasła.");
+          return;
+        }
+
+        const response = await fetch("/api/v1/auth/reset-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token: resetToken,
+            password,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          setMessage(result.error ?? "Nie udało się zmienić hasła.");
+          return;
+        }
+
+        window.history.replaceState({}, "", "/");
+        setResetToken("");
+        setMode("login");
+        setMessage(
+          result.message ?? "Hasło zostało zmienione. Możesz się zalogować."
+        );
+
+        event.currentTarget.reset();
+
+        return;
+      }
+
       const identifier = String(formData.get("identifier") ?? "").trim();
       const password = String(formData.get("password") ?? "");
 
@@ -115,6 +243,12 @@ export default function LoginPage() {
       setIsSubmitting(false);
     }
   }
+
+  const isLogin = mode === "login";
+  const isRegister = mode === "register";
+  const isForgot = mode === "forgot";
+  const isReset = mode === "reset";
+  const isChecking = mode === "checking";
 
   return (
     <main className="auth-page">
@@ -196,90 +330,135 @@ export default function LoginPage() {
 
           <div className="auth-heading">
             <p className="eyebrow">
-              {mode === "login"
+              {isLogin
                 ? "WITAJ PONOWNIE"
-                : "DOŁĄCZ DO PCMAKER"}
+                : isRegister
+                  ? "DOŁĄCZ DO PCMAKER"
+                  : isForgot
+                    ? "ODZYSKIWANIE DOSTĘPU"
+                    : isReset
+                      ? "NOWE HASŁO"
+                      : "WERYFIKACJA LINKU"}
             </p>
 
             <h2>
-              {mode === "login" ? "Zaloguj się." : "Utwórz konto."}
+              {isLogin
+                ? "Zaloguj się."
+                : isRegister
+                  ? "Utwórz konto."
+                  : isForgot
+                    ? "Resetuj hasło."
+                    : isReset
+                      ? "Ustaw nowe hasło."
+                      : "Sprawdzanie linku."}
             </h2>
 
             <p>
-              {mode === "login"
+              {isLogin
                 ? "Zaloguj się, aby przejść do swojego workspace."
-                : "Utwórz konto, aby w przyszłości korzystać ze wszystkich funkcji PCMaker."}
+                : isRegister
+                  ? "Utwórz konto, aby w przyszłości korzystać ze wszystkich funkcji PCMaker."
+                  : isForgot
+                    ? "Podaj adres e-mail przypisany do konta. Wyślemy na niego link do zmiany hasła."
+                    : isReset
+                      ? "Wprowadź nowe hasło do swojego konta."
+                      : "Trwa sprawdzanie poprawności linku resetowania hasła."}
             </p>
           </div>
 
-          <div className="auth-switch" aria-label="Wybierz formularz">
-            <button
-              type="button"
-              className={mode === "login" ? "active" : ""}
-              aria-pressed={mode === "login"}
-              onClick={() => changeMode("login")}
+          {(isLogin || isRegister) && (
+            <div className="auth-switch" aria-label="Wybierz formularz">
+              <button
+                type="button"
+                className={isLogin ? "active" : ""}
+                aria-pressed={isLogin}
+                onClick={() => changeMode("login")}
+              >
+                Logowanie
+              </button>
+
+              <button
+                type="button"
+                className={isRegister ? "active" : ""}
+                aria-pressed={isRegister}
+                onClick={() => changeMode("register")}
+              >
+                Rejestracja
+              </button>
+            </div>
+          )}
+
+          {isChecking ? (
+            <p className="auth-message" role="status">
+              Weryfikowanie linku resetowania hasła...
+            </p>
+          ) : (
+            <form
+              key={mode}
+              className="auth-form"
+              onSubmit={handleSubmit}
             >
-              Logowanie
-            </button>
-
-            <button
-              type="button"
-              className={mode === "register" ? "active" : ""}
-              aria-pressed={mode === "register"}
-              onClick={() => changeMode("register")}
-            >
-              Rejestracja
-            </button>
-          </div>
-
-          <form className="auth-form" onSubmit={handleSubmit}>
-            {mode === "login" ? (
-              <div className="auth-field">
-                <label htmlFor="identifier">
-                  Login lub adres e-mail
-                </label>
-
-                <input
-                  id="identifier"
-                  name="identifier"
-                  type="text"
-                  inputMode="email"
-                  placeholder="login lub e-mail"
-                  autoComplete="email"
-                  required
-                />
-              </div>
-            ) : (
-              <>
+              {isLogin && (
                 <div className="auth-field">
-                  <label htmlFor="firstName">Imię</label>
+                  <label htmlFor="identifier">
+                    Login lub adres e-mail
+                  </label>
 
                   <input
-                    id="firstName"
-                    name="firstName"
+                    id="identifier"
+                    name="identifier"
                     type="text"
-                    placeholder="Jan"
-                    autoComplete="given-name"
+                    inputMode="email"
+                    placeholder="login lub e-mail"
+                    autoComplete="email"
                     required
                   />
                 </div>
+              )}
 
-                <div className="auth-field">
-                  <label htmlFor="lastName">Nazwisko</label>
+              {isRegister && (
+                <>
+                  <div className="auth-field">
+                    <label htmlFor="firstName">Imię</label>
+                    <input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      placeholder="Jan"
+                      autoComplete="given-name"
+                      required
+                    />
+                  </div>
 
-                  <input
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    placeholder="Kowalski"
-                    autoComplete="family-name"
-                    required
-                  />
-                </div>
+                  <div className="auth-field">
+                    <label htmlFor="lastName">Nazwisko</label>
+                    <input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      placeholder="Kowalski"
+                      autoComplete="family-name"
+                      required
+                    />
+                  </div>
 
+                  <div className="auth-field">
+                    <label htmlFor="email">Adres e-mail</label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="jan@example.com"
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
+              {isForgot && (
                 <div className="auth-field">
                   <label htmlFor="email">Adres e-mail</label>
-
                   <input
                     id="email"
                     name="email"
@@ -289,82 +468,105 @@ export default function LoginPage() {
                     required
                   />
                 </div>
-              </>
-            )}
+              )}
 
-            <div className="auth-field">
-              <label htmlFor="password">Hasło</label>
+              {(isLogin || isRegister || isReset) && (
+                <div className="auth-field">
+                  <label htmlFor="password">
+                    {isReset ? "Nowe hasło" : "Hasło"}
+                  </label>
 
-              <input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Wprowadź hasło"
-                autoComplete={
-                  mode === "login"
-                    ? "current-password"
-                    : "new-password"
-                }
-                minLength={mode === "register" ? 8 : undefined}
-                required
-              />
-            </div>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder={
+                      isReset ? "Wprowadź nowe hasło" : "Wprowadź hasło"
+                    }
+                    autoComplete={
+                      isLogin ? "current-password" : "new-password"
+                    }
+                    minLength={isRegister || isReset ? 8 : undefined}
+                    required
+                  />
+                </div>
+              )}
 
-            {mode === "register" && (
-              <div className="auth-field">
-                <label htmlFor="confirm-password">
-                  Powtórz hasło
-                </label>
+              {(isRegister || isReset) && (
+                <div className="auth-field">
+                  <label htmlFor="confirm-password">
+                    Powtórz hasło
+                  </label>
 
-                <input
-                  id="confirm-password"
-                  name="confirm-password"
-                  type="password"
-                  placeholder="Wpisz hasło ponownie"
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                />
-              </div>
-            )}
+                  <input
+                    id="confirm-password"
+                    name="confirm-password"
+                    type="password"
+                    placeholder="Wpisz hasło ponownie"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                  />
+                </div>
+              )}
 
-            {mode === "login" && (
-              <div className="auth-form-options">
-                <label className="auth-checkbox">
-                  <input type="checkbox" />
-                  <span>Zapamiętaj mnie</span>
-                </label>
+              {isLogin && (
+                <div className="auth-form-options">
+                  <label className="auth-checkbox">
+                    <input type="checkbox" />
+                    <span>Zapamiętaj mnie</span>
+                  </label>
 
-                <span className="auth-muted">
-                  Odzyskiwanie hasła wkrótce
-                </span>
-              </div>
-            )}
+                  <button
+                    type="button"
+                    className="auth-muted"
+                    onClick={openForgotMode}
+                    style={{
+                      background: "none",
+                      border: 0,
+                      padding: 0,
+                      cursor: "pointer",
+                      font: "inherit",
+                    }}
+                  >
+                    Nie pamiętasz hasła?
+                  </button>
+                </div>
+              )}
 
-            <button
-              type="submit"
-              className="auth-submit"
-              disabled={isSubmitting}
-            >
-              {isSubmitting
-                ? mode === "login"
-                  ? "Sprawdzanie..."
-                  : "Tworzenie konta..."
-                : mode === "login"
-                  ? "Zaloguj się"
-                  : "Utwórz konto"}
+              <button
+                type="submit"
+                className="auth-submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? isLogin
+                    ? "Sprawdzanie..."
+                    : isRegister
+                      ? "Tworzenie konta..."
+                      : isForgot
+                        ? "Wysyłanie..."
+                        : "Zmienianie hasła..."
+                  : isLogin
+                    ? "Zaloguj się"
+                    : isRegister
+                      ? "Utwórz konto"
+                      : isForgot
+                        ? "Wyślij link"
+                        : "Zmień hasło"}
 
-              <span>→</span>
-            </button>
+                <span>→</span>
+              </button>
 
-            {message && (
-              <p className="auth-message" role="alert">
-                {message}
-              </p>
-            )}
-          </form>
+              {message && (
+                <p className="auth-message" role="alert">
+                  {message}
+                </p>
+              )}
+            </form>
+          )}
 
-          {mode === "login" && (
+          {isLogin && (
             <div className="auth-guest">
               <div className="auth-guest-divider">
                 <span>lub</span>
@@ -381,7 +583,7 @@ export default function LoginPage() {
           )}
 
           <div className="auth-bottom">
-            {mode === "login" ? (
+            {isLogin ? (
               <>
                 Nie masz jeszcze konta?{" "}
                 <button
@@ -391,7 +593,7 @@ export default function LoginPage() {
                   Zarejestruj się
                 </button>
               </>
-            ) : (
+            ) : isRegister ? (
               <>
                 Masz już konto?{" "}
                 <button
@@ -401,6 +603,13 @@ export default function LoginPage() {
                   Zaloguj się
                 </button>
               </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => changeMode("login")}
+              >
+                ← Wróć do logowania
+              </button>
             )}
           </div>
 
