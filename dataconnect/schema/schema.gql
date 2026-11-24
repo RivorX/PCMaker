@@ -35,6 +35,11 @@ enum RecommendationType {
   BETTER_VALUE
 }
 
+enum AuthTokenType {
+  ACTIVATION
+  PASSWORD_RESET
+}
+
 # ------------------------------------------------------------------------------
 # TABELE I RELACJE
 # ------------------------------------------------------------------------------
@@ -48,7 +53,7 @@ type User @table(name: "users") {
   password: String! @col(name: "password", dataType: "varchar(255)")
   phone: String @col(name: "phone", dataType: "varchar(20)")
   role: UserRole! @default(value: CLIENT)
-  isActive: Boolean! @default(value: true) @col(name: "is_active")
+  isActive: Boolean! @default(value: false) @col(name: "is_active")
   createdAt: Timestamp! @default(expr: "request.time") @col(name: "created_at")
   updatedAt: Timestamp @col(name: "updated_at")
 }
@@ -161,6 +166,7 @@ type PcConfiguration @table(name: "pc_configurations") {
   totalPrice: Float! @default(value: 0.0) @col(name: "total_price", dataType: "decimal(12,2)")
   estimatedPerformance: Float @col(name: "estimated_performance", dataType: "decimal(10,2)")
   isPublic: Boolean! @default(value: false) @col(name: "is_public")
+  savedSnapshot: Any @col(name: "saved_snapshot")
   createdAt: Timestamp! @default(expr: "request.time") @col(name: "created_at")
   updatedAt: Timestamp @col(name: "updated_at")
 }
@@ -186,5 +192,16 @@ type ComponentRecommendation @table(name: "component_recommendations")
   reason: String
   priceDifference: Float @col(name: "price_difference", dataType: "decimal(10,2)")
   performanceDifference: Float @col(name: "performance_difference", dataType: "decimal(10,2)")
+  createdAt: Timestamp! @default(expr: "request.time") @col(name: "created_at")
+}
+
+# Tokeny aktywacji kont i resetowania hasla
+type AuthToken @table(name: "auth_tokens") {
+  id: UUID! @default(expr: "uuidV4()")
+  user: User!
+  tokenHash: String! @unique @col(name: "token_hash", dataType: "varchar(64)")
+  type: AuthTokenType!
+  expiresAt: Timestamp! @col(name: "expires_at")
+  usedAt: Timestamp @col(name: "used_at")
   createdAt: Timestamp! @default(expr: "request.time") @col(name: "created_at")
 }

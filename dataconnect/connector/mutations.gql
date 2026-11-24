@@ -95,6 +95,66 @@ mutation CreatePcConfiguration(
   )
 }
 
+# Zapis kompletnych danych zestawu do prywatnej biblioteki.
+mutation CreateSavedPcConfiguration(
+  $id: UUID!
+  $userId: UUID!
+  $name: String!
+  $description: String
+  $totalPrice: Float!
+  $savedSnapshot: Any!
+) @auth(level: NO_ACCESS) {
+  pcConfiguration_insert(
+    data: {
+      id: $id
+      userId: $userId
+      name: $name
+      description: $description
+      totalPrice: $totalPrice
+      isPublic: false
+      savedSnapshot: $savedSnapshot
+    }
+  )
+}
+
+# Aktualizacja prywatnego szkicu.
+mutation UpdateSavedPcConfiguration(
+  $id: UUID!
+  $userId: UUID!
+  $name: String!
+  $description: String
+  $totalPrice: Float!
+  $savedSnapshot: Any!
+) @auth(level: NO_ACCESS) {
+  pcConfiguration_updateMany(
+    where: {
+      id: { eq: $id }
+      userId: { eq: $userId }
+      savedSnapshot: { isNull: false }
+    }
+    data: {
+      name: $name
+      description: $description
+      totalPrice: $totalPrice
+      savedSnapshot: $savedSnapshot
+      updatedAt_expr: "request.time"
+      isPublic: false
+    }
+  )
+}
+
+# Usuwanie prywatnego szkicu.
+mutation DeleteSavedPcConfiguration($id: UUID!, $userId: UUID!)
+  @auth(level: NO_ACCESS) {
+  pcConfiguration_deleteMany(
+    where: {
+      id: { eq: $id }
+      userId: { eq: $userId }
+      savedSnapshot: { isNull: false }
+    }
+  )
+}
+
 # Dodanie wybranego komponentu do zestawu PC. Operacja musi najpierw
 # sprawdzać, czy konfiguracja należy do zalogowanego użytkownika.
 mutation AddConfigurationComponent(
@@ -111,6 +171,72 @@ mutation AddConfigurationComponent(
       quantity: $quantity
       priceAtSelection: $priceAtSelection
       isSelected: $isSelected
+    }
+  )
+}
+
+# Utworzenie tokenu aktywacyjnego lub resetujacego
+mutation CreateAuthToken(
+  $userId: UUID!
+  $tokenHash: String!
+  $type: AuthTokenType!
+  $expiresAt: Timestamp!
+) @auth(level: NO_ACCESS) {
+  authToken_insert(
+    data: {
+      userId: $userId
+      tokenHash: $tokenHash
+      type: $type
+      expiresAt: $expiresAt
+    }
+  )
+}
+
+# Oznaczenie tokenu jako wykorzystanego
+mutation MarkAuthTokenUsed(
+  $id: UUID!
+  $usedAt: Timestamp!
+) @auth(level: NO_ACCESS) {
+  authToken_update(
+    id: $id
+    data: {
+      usedAt: $usedAt
+    }
+  )
+}
+
+# Aktywacja konta
+mutation ActivateUser(
+  $id: UUID!
+) @auth(level: NO_ACCESS) {
+  user_update(
+    id: $id
+    data: {
+      isActive: true
+    }
+  )
+}
+
+# Aktualizacja hasla uzytkownika
+mutation UpdateUserPassword(
+  $id: UUID!
+  $password: String!
+) @auth(level: NO_ACCESS) {
+  user_update(
+    id: $id
+    data: {
+      password: $password
+    }
+  )
+}
+
+# Usuwanie uzytkownika
+mutation DeleteUserByEmail(
+  $email: String!
+  ) @auth(level: NO_ACCESS) {
+  user_deleteMany(
+    where: {
+      email: { eq: $email }
     }
   )
 }

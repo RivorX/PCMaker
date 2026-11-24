@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -11,6 +11,24 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const router = useRouter();
+
+  useEffect(() => {
+    const activation = new URLSearchParams(
+      window.location.search
+    ).get("activation");
+
+    const messages: Record<string, string> = {
+      success: "Konto zostało aktywowane. Możesz się zalogować.",
+      expired: "Link aktywacyjny wygasł. Poproś o nowy link.",
+      used: "Ten link aktywacyjny został już wykorzystany.",
+      invalid: "Link aktywacyjny jest nieprawidłowy.",
+      error: "Nie udało się aktywować konta. Spróbuj ponownie później.",
+    };
+
+    if (activation && messages[activation]) {
+      setMessage(messages[activation]);
+    }
+  }, []);
 
   function changeMode(newMode: "login" | "register") {
     setMode(newMode);
@@ -62,7 +80,9 @@ export default function LoginPage() {
           return;
         }
 
-        setMessage("Konto zostało utworzone. Możesz teraz się zalogować.");
+        setMessage(
+          "Konto zostało utworzone. Sprawdź swoją skrzynkę e-mail i aktywuj konto, aby móc się zalogować."
+        );
         return;
       }
 

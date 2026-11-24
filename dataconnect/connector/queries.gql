@@ -134,6 +134,47 @@ query ListPublicConfigurations @auth(level: PUBLIC, insecureReason: "Publicly ac
   }
 }
 
+# Prywatna biblioteka szkiców.
+query ListUserSavedPcConfigurations($userId: UUID!, $offset: Int = 0) @auth(level: NO_ACCESS) {
+  pcConfigurations(
+    where: {
+      userId: { eq: $userId }
+      savedSnapshot: { isNull: false }
+    }
+    orderBy: [{ createdAt: ASC }, { id: ASC }]
+    limit: 100
+    offset: $offset
+  ) {
+    id
+    name
+    description
+    totalPrice
+    savedSnapshot
+    createdAt
+    updatedAt
+  }
+}
+
+# Odczyt pojedynczego szkicu należącego do użytkownika.
+query GetSavedPcConfiguration($id: UUID!, $userId: UUID!) @auth(level: NO_ACCESS) {
+  pcConfigurations(
+    where: {
+      id: { eq: $id }
+      userId: { eq: $userId }
+      savedSnapshot: { isNull: false }
+    }
+    limit: 1
+  ) {
+    id
+    name
+    description
+    totalPrice
+    savedSnapshot
+    createdAt
+    updatedAt
+  }
+}
+
 # Wyszukanie użytkownika po e-mailu.
 # Nie wolno wystawiać tej operacji klientowi: zwraca hash hasła i umożliwia
 # enumerację adresów e-mail. Logowanie realizuje endpoint aplikacji.
@@ -146,5 +187,31 @@ query GetUserByEmail($email: String!) @auth(level: NO_ACCESS) {
     password
     role
     isActive
+  }
+}
+
+# Pobranie tokenu po jego hashu.
+# Wynik jest dostępny tylko dla backendu.
+query GetAuthTokenByHash(
+  $tokenHash: String!
+  $type: AuthTokenType!
+) @auth(level: NO_ACCESS) {
+  authTokens(
+    where: {
+      tokenHash: { eq: $tokenHash }
+      type: { eq: $type }
+    }
+    limit: 1
+  ) {
+    id
+    tokenHash
+    type
+    expiresAt
+    usedAt
+    user {
+      id
+      email
+      isActive
+    }
   }
 }

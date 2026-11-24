@@ -1,5 +1,11 @@
 const { queryRef, executeQuery, validateArgsWithOptions, mutationRef, executeMutation, validateArgs } = require('firebase/data-connect');
 
+const AuthTokenType = {
+  ACTIVATION: "ACTIVATION",
+  PASSWORD_RESET: "PASSWORD_RESET",
+}
+exports.AuthTokenType = AuthTokenType;
+
 const TicketPriority = {
   LOW: "LOW",
   NORMAL: "NORMAL",
@@ -88,6 +94,48 @@ exports.createPcConfiguration = function createPcConfiguration(dcOrVars, vars) {
 }
 ;
 
+const createSavedPcConfigurationRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateSavedPcConfiguration', inputVars);
+}
+createSavedPcConfigurationRef.operationName = 'CreateSavedPcConfiguration';
+exports.createSavedPcConfigurationRef = createSavedPcConfigurationRef;
+
+exports.createSavedPcConfiguration = function createSavedPcConfiguration(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(createSavedPcConfigurationRef(dcInstance, inputVars));
+}
+;
+
+const updateSavedPcConfigurationRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateSavedPcConfiguration', inputVars);
+}
+updateSavedPcConfigurationRef.operationName = 'UpdateSavedPcConfiguration';
+exports.updateSavedPcConfigurationRef = updateSavedPcConfigurationRef;
+
+exports.updateSavedPcConfiguration = function updateSavedPcConfiguration(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(updateSavedPcConfigurationRef(dcInstance, inputVars));
+}
+;
+
+const deleteSavedPcConfigurationRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'DeleteSavedPcConfiguration', inputVars);
+}
+deleteSavedPcConfigurationRef.operationName = 'DeleteSavedPcConfiguration';
+exports.deleteSavedPcConfigurationRef = deleteSavedPcConfigurationRef;
+
+exports.deleteSavedPcConfiguration = function deleteSavedPcConfiguration(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(deleteSavedPcConfigurationRef(dcInstance, inputVars));
+}
+;
+
 const addConfigurationComponentRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();
@@ -102,6 +150,76 @@ exports.addConfigurationComponent = function addConfigurationComponent(dcOrVars,
 }
 ;
 
+const createAuthTokenRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateAuthToken', inputVars);
+}
+createAuthTokenRef.operationName = 'CreateAuthToken';
+exports.createAuthTokenRef = createAuthTokenRef;
+
+exports.createAuthToken = function createAuthToken(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(createAuthTokenRef(dcInstance, inputVars));
+}
+;
+
+const markAuthTokenUsedRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'MarkAuthTokenUsed', inputVars);
+}
+markAuthTokenUsedRef.operationName = 'MarkAuthTokenUsed';
+exports.markAuthTokenUsedRef = markAuthTokenUsedRef;
+
+exports.markAuthTokenUsed = function markAuthTokenUsed(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(markAuthTokenUsedRef(dcInstance, inputVars));
+}
+;
+
+const activateUserRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'ActivateUser', inputVars);
+}
+activateUserRef.operationName = 'ActivateUser';
+exports.activateUserRef = activateUserRef;
+
+exports.activateUser = function activateUser(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(activateUserRef(dcInstance, inputVars));
+}
+;
+
+const updateUserPasswordRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateUserPassword', inputVars);
+}
+updateUserPasswordRef.operationName = 'UpdateUserPassword';
+exports.updateUserPasswordRef = updateUserPasswordRef;
+
+exports.updateUserPassword = function updateUserPassword(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(updateUserPasswordRef(dcInstance, inputVars));
+}
+;
+
+const deleteUserByEmailRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'DeleteUserByEmail', inputVars);
+}
+deleteUserByEmailRef.operationName = 'DeleteUserByEmail';
+exports.deleteUserByEmailRef = deleteUserByEmailRef;
+
+exports.deleteUserByEmail = function deleteUserByEmail(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(deleteUserByEmailRef(dcInstance, inputVars));
+}
+;
+
 const listComponentsRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars);
   dcInstance._useGeneratedSdk();
@@ -111,9 +229,24 @@ listComponentsRef.operationName = 'ListComponents';
 exports.listComponentsRef = listComponentsRef;
 
 exports.listComponents = function listComponents(dcOrVars, varsOrOptions, options) {
-
+  
   const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, false);
   return executeQuery(listComponentsRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
+}
+;
+
+const listCatalogPageRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'ListCatalogPage', inputVars);
+}
+listCatalogPageRef.operationName = 'ListCatalogPage';
+exports.listCatalogPageRef = listCatalogPageRef;
+
+exports.listCatalogPage = function listCatalogPage(dcOrVars, varsOrOptions, options) {
+  
+  const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
+  return executeQuery(listCatalogPageRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
 ;
 
@@ -126,7 +259,7 @@ getComponentByIdRef.operationName = 'GetComponentById';
 exports.getComponentByIdRef = getComponentByIdRef;
 
 exports.getComponentById = function getComponentById(dcOrVars, varsOrOptions, options) {
-
+  
   const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
   return executeQuery(getComponentByIdRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
@@ -141,7 +274,7 @@ listServiceTypesRef.operationName = 'ListServiceTypes';
 exports.listServiceTypesRef = listServiceTypesRef;
 
 exports.listServiceTypes = function listServiceTypes(dcOrOptions, options) {
-
+  
   const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrOptions, options, undefined,false, false);
   return executeQuery(listServiceTypesRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
@@ -156,7 +289,7 @@ listServiceTicketsRef.operationName = 'ListServiceTickets';
 exports.listServiceTicketsRef = listServiceTicketsRef;
 
 exports.listServiceTickets = function listServiceTickets(dcOrOptions, options) {
-
+  
   const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrOptions, options, undefined,false, false);
   return executeQuery(listServiceTicketsRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
@@ -171,7 +304,7 @@ getServiceTicketByIdRef.operationName = 'GetServiceTicketById';
 exports.getServiceTicketByIdRef = getServiceTicketByIdRef;
 
 exports.getServiceTicketById = function getServiceTicketById(dcOrVars, varsOrOptions, options) {
-
+  
   const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
   return executeQuery(getServiceTicketByIdRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
@@ -186,9 +319,39 @@ listPublicConfigurationsRef.operationName = 'ListPublicConfigurations';
 exports.listPublicConfigurationsRef = listPublicConfigurationsRef;
 
 exports.listPublicConfigurations = function listPublicConfigurations(dcOrOptions, options) {
-
+  
   const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrOptions, options, undefined,false, false);
   return executeQuery(listPublicConfigurationsRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
+}
+;
+
+const listUserSavedPcConfigurationsRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'ListUserSavedPcConfigurations', inputVars);
+}
+listUserSavedPcConfigurationsRef.operationName = 'ListUserSavedPcConfigurations';
+exports.listUserSavedPcConfigurationsRef = listUserSavedPcConfigurationsRef;
+
+exports.listUserSavedPcConfigurations = function listUserSavedPcConfigurations(dcOrVars, varsOrOptions, options) {
+  
+  const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
+  return executeQuery(listUserSavedPcConfigurationsRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
+}
+;
+
+const getSavedPcConfigurationRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetSavedPcConfiguration', inputVars);
+}
+getSavedPcConfigurationRef.operationName = 'GetSavedPcConfiguration';
+exports.getSavedPcConfigurationRef = getSavedPcConfigurationRef;
+
+exports.getSavedPcConfiguration = function getSavedPcConfiguration(dcOrVars, varsOrOptions, options) {
+  
+  const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
+  return executeQuery(getSavedPcConfigurationRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
 ;
 
@@ -201,8 +364,23 @@ getUserByEmailRef.operationName = 'GetUserByEmail';
 exports.getUserByEmailRef = getUserByEmailRef;
 
 exports.getUserByEmail = function getUserByEmail(dcOrVars, varsOrOptions, options) {
-
+  
   const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
   return executeQuery(getUserByEmailRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
+}
+;
+
+const getAuthTokenByHashRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetAuthTokenByHash', inputVars);
+}
+getAuthTokenByHashRef.operationName = 'GetAuthTokenByHash';
+exports.getAuthTokenByHashRef = getAuthTokenByHashRef;
+
+exports.getAuthTokenByHash = function getAuthTokenByHash(dcOrVars, varsOrOptions, options) {
+  
+  const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
+  return executeQuery(getAuthTokenByHashRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
 ;

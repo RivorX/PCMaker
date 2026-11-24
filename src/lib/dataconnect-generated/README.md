@@ -9,18 +9,30 @@ This README will guide you through the process of using the generated JavaScript
   - [*Connecting to the local Emulator*](#connecting-to-the-local-emulator)
 - [**Queries**](#queries)
   - [*ListComponents*](#listcomponents)
+  - [*ListCatalogPage*](#listcatalogpage)
   - [*GetComponentById*](#getcomponentbyid)
   - [*ListServiceTypes*](#listservicetypes)
   - [*ListServiceTickets*](#listservicetickets)
   - [*GetServiceTicketById*](#getserviceticketbyid)
   - [*ListPublicConfigurations*](#listpublicconfigurations)
+  - [*ListUserSavedPcConfigurations*](#listusersavedpcconfigurations)
+  - [*GetSavedPcConfiguration*](#getsavedpcconfiguration)
   - [*GetUserByEmail*](#getuserbyemail)
+  - [*GetAuthTokenByHash*](#getauthtokenbyhash)
 - [**Mutations**](#mutations)
   - [*CreateUser*](#createuser)
   - [*CreateServiceTicket*](#createserviceticket)
   - [*AddTicketComment*](#addticketcomment)
   - [*CreatePcConfiguration*](#createpcconfiguration)
+  - [*CreateSavedPcConfiguration*](#createsavedpcconfiguration)
+  - [*UpdateSavedPcConfiguration*](#updatesavedpcconfiguration)
+  - [*DeleteSavedPcConfiguration*](#deletesavedpcconfiguration)
   - [*AddConfigurationComponent*](#addconfigurationcomponent)
+  - [*CreateAuthToken*](#createauthtoken)
+  - [*MarkAuthTokenUsed*](#markauthtokenused)
+  - [*ActivateUser*](#activateuser)
+  - [*UpdateUserPassword*](#updateuserpassword)
+  - [*DeleteUserByEmail*](#deleteuserbyemail)
 
 # Accessing the connector
 A connector is a collection of Queries and Mutations. One SDK is generated for each connector - this SDK is generated for the connector `default`. You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
@@ -195,6 +207,130 @@ executeQuery(ref).then((response) => {
 });
 ```
 
+## ListCatalogPage
+You can execute the `ListCatalogPage` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+listCatalogPage(vars: ListCatalogPageVariables, options?: ExecuteQueryOptions): QueryPromise<ListCatalogPageData, ListCatalogPageVariables>;
+
+interface ListCatalogPageRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ListCatalogPageVariables): QueryRef<ListCatalogPageData, ListCatalogPageVariables>;
+}
+export const listCatalogPageRef: ListCatalogPageRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+listCatalogPage(dc: DataConnect, vars: ListCatalogPageVariables, options?: ExecuteQueryOptions): QueryPromise<ListCatalogPageData, ListCatalogPageVariables>;
+
+interface ListCatalogPageRef {
+  ...
+  (dc: DataConnect, vars: ListCatalogPageVariables): QueryRef<ListCatalogPageData, ListCatalogPageVariables>;
+}
+export const listCatalogPageRef: ListCatalogPageRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the listCatalogPageRef:
+```typescript
+const name = listCatalogPageRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ListCatalogPage` query requires an argument of type `ListCatalogPageVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface ListCatalogPageVariables {
+  offset: number;
+}
+```
+### Return Type
+Recall that executing the `ListCatalogPage` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ListCatalogPageData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ListCatalogPageData {
+  components: ({
+    id: UUIDString;
+    name: string;
+    manufacturer?: string | null;
+    model?: string | null;
+    componentType: string;
+    description?: string | null;
+    price?: number | null;
+    performanceScore?: number | null;
+    productUrl?: string | null;
+    specifications: ({
+      id: UUIDString;
+      specificationName: string;
+      specificationValue: string;
+    } & ComponentSpecification_Key)[];
+  } & Component_Key)[];
+}
+```
+### Using `ListCatalogPage`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, listCatalogPage, ListCatalogPageVariables } from '@pcmaker/dataconnect';
+
+// The `ListCatalogPage` query requires an argument of type `ListCatalogPageVariables`:
+const listCatalogPageVars: ListCatalogPageVariables = {
+  offset: ..., 
+};
+
+// Call the `listCatalogPage()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await listCatalogPage(listCatalogPageVars);
+// Variables can be defined inline as well.
+const { data } = await listCatalogPage({ offset: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await listCatalogPage(dataConnect, listCatalogPageVars);
+
+console.log(data.components);
+
+// Or, you can use the `Promise` API.
+listCatalogPage(listCatalogPageVars).then((response) => {
+  const data = response.data;
+  console.log(data.components);
+});
+```
+
+### Using `ListCatalogPage`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, listCatalogPageRef, ListCatalogPageVariables } from '@pcmaker/dataconnect';
+
+// The `ListCatalogPage` query requires an argument of type `ListCatalogPageVariables`:
+const listCatalogPageVars: ListCatalogPageVariables = {
+  offset: ..., 
+};
+
+// Call the `listCatalogPageRef()` function to get a reference to the query.
+const ref = listCatalogPageRef(listCatalogPageVars);
+// Variables can be defined inline as well.
+const ref = listCatalogPageRef({ offset: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = listCatalogPageRef(dataConnect, listCatalogPageVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.components);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.components);
+});
+```
+
 ## GetComponentById
 You can execute the `GetComponentById` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
 ```typescript
@@ -264,7 +400,7 @@ import { connectorConfig, getComponentById, GetComponentByIdVariables } from '@p
 
 // The `GetComponentById` query requires an argument of type `GetComponentByIdVariables`:
 const getComponentByIdVars: GetComponentByIdVariables = {
-  id: ...,
+  id: ..., 
 };
 
 // Call the `getComponentById()` function to execute the query.
@@ -294,7 +430,7 @@ import { connectorConfig, getComponentByIdRef, GetComponentByIdVariables } from 
 
 // The `GetComponentById` query requires an argument of type `GetComponentByIdVariables`:
 const getComponentByIdVars: GetComponentByIdVariables = {
-  id: ...,
+  id: ..., 
 };
 
 // Call the `getComponentByIdRef()` function to get a reference to the query.
@@ -587,7 +723,7 @@ import { connectorConfig, getServiceTicketById, GetServiceTicketByIdVariables } 
 
 // The `GetServiceTicketById` query requires an argument of type `GetServiceTicketByIdVariables`:
 const getServiceTicketByIdVars: GetServiceTicketByIdVariables = {
-  id: ...,
+  id: ..., 
 };
 
 // Call the `getServiceTicketById()` function to execute the query.
@@ -617,7 +753,7 @@ import { connectorConfig, getServiceTicketByIdRef, GetServiceTicketByIdVariables
 
 // The `GetServiceTicketById` query requires an argument of type `GetServiceTicketByIdVariables`:
 const getServiceTicketByIdVars: GetServiceTicketByIdVariables = {
-  id: ...,
+  id: ..., 
 };
 
 // Call the `getServiceTicketByIdRef()` function to get a reference to the query.
@@ -740,6 +876,246 @@ executeQuery(ref).then((response) => {
 });
 ```
 
+## ListUserSavedPcConfigurations
+You can execute the `ListUserSavedPcConfigurations` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+listUserSavedPcConfigurations(vars: ListUserSavedPcConfigurationsVariables, options?: ExecuteQueryOptions): QueryPromise<ListUserSavedPcConfigurationsData, ListUserSavedPcConfigurationsVariables>;
+
+interface ListUserSavedPcConfigurationsRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ListUserSavedPcConfigurationsVariables): QueryRef<ListUserSavedPcConfigurationsData, ListUserSavedPcConfigurationsVariables>;
+}
+export const listUserSavedPcConfigurationsRef: ListUserSavedPcConfigurationsRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+listUserSavedPcConfigurations(dc: DataConnect, vars: ListUserSavedPcConfigurationsVariables, options?: ExecuteQueryOptions): QueryPromise<ListUserSavedPcConfigurationsData, ListUserSavedPcConfigurationsVariables>;
+
+interface ListUserSavedPcConfigurationsRef {
+  ...
+  (dc: DataConnect, vars: ListUserSavedPcConfigurationsVariables): QueryRef<ListUserSavedPcConfigurationsData, ListUserSavedPcConfigurationsVariables>;
+}
+export const listUserSavedPcConfigurationsRef: ListUserSavedPcConfigurationsRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the listUserSavedPcConfigurationsRef:
+```typescript
+const name = listUserSavedPcConfigurationsRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ListUserSavedPcConfigurations` query requires an argument of type `ListUserSavedPcConfigurationsVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface ListUserSavedPcConfigurationsVariables {
+  userId: UUIDString;
+  offset?: number | null;
+}
+```
+### Return Type
+Recall that executing the `ListUserSavedPcConfigurations` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ListUserSavedPcConfigurationsData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ListUserSavedPcConfigurationsData {
+  pcConfigurations: ({
+    id: UUIDString;
+    name: string;
+    description?: string | null;
+    totalPrice: number;
+    savedSnapshot?: unknown | null;
+    createdAt: TimestampString;
+    updatedAt?: TimestampString | null;
+  } & PcConfiguration_Key)[];
+}
+```
+### Using `ListUserSavedPcConfigurations`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, listUserSavedPcConfigurations, ListUserSavedPcConfigurationsVariables } from '@pcmaker/dataconnect';
+
+// The `ListUserSavedPcConfigurations` query requires an argument of type `ListUserSavedPcConfigurationsVariables`:
+const listUserSavedPcConfigurationsVars: ListUserSavedPcConfigurationsVariables = {
+  userId: ..., 
+  offset: ..., // optional
+};
+
+// Call the `listUserSavedPcConfigurations()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await listUserSavedPcConfigurations(listUserSavedPcConfigurationsVars);
+// Variables can be defined inline as well.
+const { data } = await listUserSavedPcConfigurations({ userId: ..., offset: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await listUserSavedPcConfigurations(dataConnect, listUserSavedPcConfigurationsVars);
+
+console.log(data.pcConfigurations);
+
+// Or, you can use the `Promise` API.
+listUserSavedPcConfigurations(listUserSavedPcConfigurationsVars).then((response) => {
+  const data = response.data;
+  console.log(data.pcConfigurations);
+});
+```
+
+### Using `ListUserSavedPcConfigurations`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, listUserSavedPcConfigurationsRef, ListUserSavedPcConfigurationsVariables } from '@pcmaker/dataconnect';
+
+// The `ListUserSavedPcConfigurations` query requires an argument of type `ListUserSavedPcConfigurationsVariables`:
+const listUserSavedPcConfigurationsVars: ListUserSavedPcConfigurationsVariables = {
+  userId: ..., 
+  offset: ..., // optional
+};
+
+// Call the `listUserSavedPcConfigurationsRef()` function to get a reference to the query.
+const ref = listUserSavedPcConfigurationsRef(listUserSavedPcConfigurationsVars);
+// Variables can be defined inline as well.
+const ref = listUserSavedPcConfigurationsRef({ userId: ..., offset: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = listUserSavedPcConfigurationsRef(dataConnect, listUserSavedPcConfigurationsVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.pcConfigurations);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.pcConfigurations);
+});
+```
+
+## GetSavedPcConfiguration
+You can execute the `GetSavedPcConfiguration` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+getSavedPcConfiguration(vars: GetSavedPcConfigurationVariables, options?: ExecuteQueryOptions): QueryPromise<GetSavedPcConfigurationData, GetSavedPcConfigurationVariables>;
+
+interface GetSavedPcConfigurationRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetSavedPcConfigurationVariables): QueryRef<GetSavedPcConfigurationData, GetSavedPcConfigurationVariables>;
+}
+export const getSavedPcConfigurationRef: GetSavedPcConfigurationRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getSavedPcConfiguration(dc: DataConnect, vars: GetSavedPcConfigurationVariables, options?: ExecuteQueryOptions): QueryPromise<GetSavedPcConfigurationData, GetSavedPcConfigurationVariables>;
+
+interface GetSavedPcConfigurationRef {
+  ...
+  (dc: DataConnect, vars: GetSavedPcConfigurationVariables): QueryRef<GetSavedPcConfigurationData, GetSavedPcConfigurationVariables>;
+}
+export const getSavedPcConfigurationRef: GetSavedPcConfigurationRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getSavedPcConfigurationRef:
+```typescript
+const name = getSavedPcConfigurationRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetSavedPcConfiguration` query requires an argument of type `GetSavedPcConfigurationVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetSavedPcConfigurationVariables {
+  id: UUIDString;
+  userId: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `GetSavedPcConfiguration` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetSavedPcConfigurationData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetSavedPcConfigurationData {
+  pcConfigurations: ({
+    id: UUIDString;
+    name: string;
+    description?: string | null;
+    totalPrice: number;
+    savedSnapshot?: unknown | null;
+    createdAt: TimestampString;
+    updatedAt?: TimestampString | null;
+  } & PcConfiguration_Key)[];
+}
+```
+### Using `GetSavedPcConfiguration`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getSavedPcConfiguration, GetSavedPcConfigurationVariables } from '@pcmaker/dataconnect';
+
+// The `GetSavedPcConfiguration` query requires an argument of type `GetSavedPcConfigurationVariables`:
+const getSavedPcConfigurationVars: GetSavedPcConfigurationVariables = {
+  id: ..., 
+  userId: ..., 
+};
+
+// Call the `getSavedPcConfiguration()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getSavedPcConfiguration(getSavedPcConfigurationVars);
+// Variables can be defined inline as well.
+const { data } = await getSavedPcConfiguration({ id: ..., userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getSavedPcConfiguration(dataConnect, getSavedPcConfigurationVars);
+
+console.log(data.pcConfigurations);
+
+// Or, you can use the `Promise` API.
+getSavedPcConfiguration(getSavedPcConfigurationVars).then((response) => {
+  const data = response.data;
+  console.log(data.pcConfigurations);
+});
+```
+
+### Using `GetSavedPcConfiguration`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getSavedPcConfigurationRef, GetSavedPcConfigurationVariables } from '@pcmaker/dataconnect';
+
+// The `GetSavedPcConfiguration` query requires an argument of type `GetSavedPcConfigurationVariables`:
+const getSavedPcConfigurationVars: GetSavedPcConfigurationVariables = {
+  id: ..., 
+  userId: ..., 
+};
+
+// Call the `getSavedPcConfigurationRef()` function to get a reference to the query.
+const ref = getSavedPcConfigurationRef(getSavedPcConfigurationVars);
+// Variables can be defined inline as well.
+const ref = getSavedPcConfigurationRef({ id: ..., userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getSavedPcConfigurationRef(dataConnect, getSavedPcConfigurationVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.pcConfigurations);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.pcConfigurations);
+});
+```
+
 ## GetUserByEmail
 You can execute the `GetUserByEmail` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
 ```typescript
@@ -802,7 +1178,7 @@ import { connectorConfig, getUserByEmail, GetUserByEmailVariables } from '@pcmak
 
 // The `GetUserByEmail` query requires an argument of type `GetUserByEmailVariables`:
 const getUserByEmailVars: GetUserByEmailVariables = {
-  email: ...,
+  email: ..., 
 };
 
 // Call the `getUserByEmail()` function to execute the query.
@@ -832,7 +1208,7 @@ import { connectorConfig, getUserByEmailRef, GetUserByEmailVariables } from '@pc
 
 // The `GetUserByEmail` query requires an argument of type `GetUserByEmailVariables`:
 const getUserByEmailVars: GetUserByEmailVariables = {
-  email: ...,
+  email: ..., 
 };
 
 // Call the `getUserByEmailRef()` function to get a reference to the query.
@@ -854,6 +1230,129 @@ console.log(data.users);
 executeQuery(ref).then((response) => {
   const data = response.data;
   console.log(data.users);
+});
+```
+
+## GetAuthTokenByHash
+You can execute the `GetAuthTokenByHash` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+getAuthTokenByHash(vars: GetAuthTokenByHashVariables, options?: ExecuteQueryOptions): QueryPromise<GetAuthTokenByHashData, GetAuthTokenByHashVariables>;
+
+interface GetAuthTokenByHashRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetAuthTokenByHashVariables): QueryRef<GetAuthTokenByHashData, GetAuthTokenByHashVariables>;
+}
+export const getAuthTokenByHashRef: GetAuthTokenByHashRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getAuthTokenByHash(dc: DataConnect, vars: GetAuthTokenByHashVariables, options?: ExecuteQueryOptions): QueryPromise<GetAuthTokenByHashData, GetAuthTokenByHashVariables>;
+
+interface GetAuthTokenByHashRef {
+  ...
+  (dc: DataConnect, vars: GetAuthTokenByHashVariables): QueryRef<GetAuthTokenByHashData, GetAuthTokenByHashVariables>;
+}
+export const getAuthTokenByHashRef: GetAuthTokenByHashRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getAuthTokenByHashRef:
+```typescript
+const name = getAuthTokenByHashRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetAuthTokenByHash` query requires an argument of type `GetAuthTokenByHashVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetAuthTokenByHashVariables {
+  tokenHash: string;
+  type: AuthTokenType;
+}
+```
+### Return Type
+Recall that executing the `GetAuthTokenByHash` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetAuthTokenByHashData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetAuthTokenByHashData {
+  authTokens: ({
+    id: UUIDString;
+    tokenHash: string;
+    type: AuthTokenType;
+    expiresAt: TimestampString;
+    usedAt?: TimestampString | null;
+    user: {
+      id: UUIDString;
+      email: string;
+      isActive: boolean;
+    } & User_Key;
+  } & AuthToken_Key)[];
+}
+```
+### Using `GetAuthTokenByHash`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getAuthTokenByHash, GetAuthTokenByHashVariables } from '@pcmaker/dataconnect';
+
+// The `GetAuthTokenByHash` query requires an argument of type `GetAuthTokenByHashVariables`:
+const getAuthTokenByHashVars: GetAuthTokenByHashVariables = {
+  tokenHash: ..., 
+  type: ..., 
+};
+
+// Call the `getAuthTokenByHash()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getAuthTokenByHash(getAuthTokenByHashVars);
+// Variables can be defined inline as well.
+const { data } = await getAuthTokenByHash({ tokenHash: ..., type: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getAuthTokenByHash(dataConnect, getAuthTokenByHashVars);
+
+console.log(data.authTokens);
+
+// Or, you can use the `Promise` API.
+getAuthTokenByHash(getAuthTokenByHashVars).then((response) => {
+  const data = response.data;
+  console.log(data.authTokens);
+});
+```
+
+### Using `GetAuthTokenByHash`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getAuthTokenByHashRef, GetAuthTokenByHashVariables } from '@pcmaker/dataconnect';
+
+// The `GetAuthTokenByHash` query requires an argument of type `GetAuthTokenByHashVariables`:
+const getAuthTokenByHashVars: GetAuthTokenByHashVariables = {
+  tokenHash: ..., 
+  type: ..., 
+};
+
+// Call the `getAuthTokenByHashRef()` function to get a reference to the query.
+const ref = getAuthTokenByHashRef(getAuthTokenByHashVars);
+// Variables can be defined inline as well.
+const ref = getAuthTokenByHashRef({ tokenHash: ..., type: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getAuthTokenByHashRef(dataConnect, getAuthTokenByHashVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.authTokens);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.authTokens);
 });
 ```
 
@@ -930,10 +1429,10 @@ import { connectorConfig, createUser, CreateUserVariables } from '@pcmaker/datac
 
 // The `CreateUser` mutation requires an argument of type `CreateUserVariables`:
 const createUserVars: CreateUserVariables = {
-  firstName: ...,
-  lastName: ...,
-  email: ...,
-  password: ...,
+  firstName: ..., 
+  lastName: ..., 
+  email: ..., 
+  password: ..., 
   phone: ..., // optional
 };
 
@@ -964,10 +1463,10 @@ import { connectorConfig, createUserRef, CreateUserVariables } from '@pcmaker/da
 
 // The `CreateUser` mutation requires an argument of type `CreateUserVariables`:
 const createUserVars: CreateUserVariables = {
-  firstName: ...,
-  lastName: ...,
-  email: ...,
-  password: ...,
+  firstName: ..., 
+  lastName: ..., 
+  email: ..., 
+  password: ..., 
   phone: ..., // optional
 };
 
@@ -1054,11 +1553,11 @@ import { connectorConfig, createServiceTicket, CreateServiceTicketVariables } fr
 
 // The `CreateServiceTicket` mutation requires an argument of type `CreateServiceTicketVariables`:
 const createServiceTicketVars: CreateServiceTicketVariables = {
-  ticketNumber: ...,
-  clientId: ...,
-  serviceTypeId: ...,
-  title: ...,
-  description: ...,
+  ticketNumber: ..., 
+  clientId: ..., 
+  serviceTypeId: ..., 
+  title: ..., 
+  description: ..., 
   deviceName: ..., // optional
   deviceSerialNumber: ..., // optional
   priority: ..., // optional
@@ -1091,11 +1590,11 @@ import { connectorConfig, createServiceTicketRef, CreateServiceTicketVariables }
 
 // The `CreateServiceTicket` mutation requires an argument of type `CreateServiceTicketVariables`:
 const createServiceTicketVars: CreateServiceTicketVariables = {
-  ticketNumber: ...,
-  clientId: ...,
-  serviceTypeId: ...,
-  title: ...,
-  description: ...,
+  ticketNumber: ..., 
+  clientId: ..., 
+  serviceTypeId: ..., 
+  title: ..., 
+  description: ..., 
   deviceName: ..., // optional
   deviceSerialNumber: ..., // optional
   priority: ..., // optional
@@ -1180,9 +1679,9 @@ import { connectorConfig, addTicketComment, AddTicketCommentVariables } from '@p
 
 // The `AddTicketComment` mutation requires an argument of type `AddTicketCommentVariables`:
 const addTicketCommentVars: AddTicketCommentVariables = {
-  ticketId: ...,
-  authorId: ...,
-  content: ...,
+  ticketId: ..., 
+  authorId: ..., 
+  content: ..., 
   isInternal: ..., // optional
 };
 
@@ -1213,9 +1712,9 @@ import { connectorConfig, addTicketCommentRef, AddTicketCommentVariables } from 
 
 // The `AddTicketComment` mutation requires an argument of type `AddTicketCommentVariables`:
 const addTicketCommentVars: AddTicketCommentVariables = {
-  ticketId: ...,
-  authorId: ...,
-  content: ...,
+  ticketId: ..., 
+  authorId: ..., 
+  content: ..., 
   isInternal: ..., // optional
 };
 
@@ -1300,8 +1799,8 @@ import { connectorConfig, createPcConfiguration, CreatePcConfigurationVariables 
 
 // The `CreatePcConfiguration` mutation requires an argument of type `CreatePcConfigurationVariables`:
 const createPcConfigurationVars: CreatePcConfigurationVariables = {
-  userId: ...,
-  name: ...,
+  userId: ..., 
+  name: ..., 
   description: ..., // optional
   totalPrice: ..., // optional
   estimatedPerformance: ..., // optional
@@ -1335,8 +1834,8 @@ import { connectorConfig, createPcConfigurationRef, CreatePcConfigurationVariabl
 
 // The `CreatePcConfiguration` mutation requires an argument of type `CreatePcConfigurationVariables`:
 const createPcConfigurationVars: CreatePcConfigurationVariables = {
-  userId: ...,
-  name: ...,
+  userId: ..., 
+  name: ..., 
   description: ..., // optional
   totalPrice: ..., // optional
   estimatedPerformance: ..., // optional
@@ -1362,6 +1861,366 @@ console.log(data.pcConfiguration_insert);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.pcConfiguration_insert);
+});
+```
+
+## CreateSavedPcConfiguration
+You can execute the `CreateSavedPcConfiguration` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+createSavedPcConfiguration(vars: CreateSavedPcConfigurationVariables): MutationPromise<CreateSavedPcConfigurationData, CreateSavedPcConfigurationVariables>;
+
+interface CreateSavedPcConfigurationRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateSavedPcConfigurationVariables): MutationRef<CreateSavedPcConfigurationData, CreateSavedPcConfigurationVariables>;
+}
+export const createSavedPcConfigurationRef: CreateSavedPcConfigurationRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createSavedPcConfiguration(dc: DataConnect, vars: CreateSavedPcConfigurationVariables): MutationPromise<CreateSavedPcConfigurationData, CreateSavedPcConfigurationVariables>;
+
+interface CreateSavedPcConfigurationRef {
+  ...
+  (dc: DataConnect, vars: CreateSavedPcConfigurationVariables): MutationRef<CreateSavedPcConfigurationData, CreateSavedPcConfigurationVariables>;
+}
+export const createSavedPcConfigurationRef: CreateSavedPcConfigurationRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createSavedPcConfigurationRef:
+```typescript
+const name = createSavedPcConfigurationRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateSavedPcConfiguration` mutation requires an argument of type `CreateSavedPcConfigurationVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateSavedPcConfigurationVariables {
+  id: UUIDString;
+  userId: UUIDString;
+  name: string;
+  description?: string | null;
+  totalPrice: number;
+  savedSnapshot: unknown;
+}
+```
+### Return Type
+Recall that executing the `CreateSavedPcConfiguration` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateSavedPcConfigurationData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateSavedPcConfigurationData {
+  pcConfiguration_insert: PcConfiguration_Key;
+}
+```
+### Using `CreateSavedPcConfiguration`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createSavedPcConfiguration, CreateSavedPcConfigurationVariables } from '@pcmaker/dataconnect';
+
+// The `CreateSavedPcConfiguration` mutation requires an argument of type `CreateSavedPcConfigurationVariables`:
+const createSavedPcConfigurationVars: CreateSavedPcConfigurationVariables = {
+  id: ..., 
+  userId: ..., 
+  name: ..., 
+  description: ..., // optional
+  totalPrice: ..., 
+  savedSnapshot: ..., 
+};
+
+// Call the `createSavedPcConfiguration()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createSavedPcConfiguration(createSavedPcConfigurationVars);
+// Variables can be defined inline as well.
+const { data } = await createSavedPcConfiguration({ id: ..., userId: ..., name: ..., description: ..., totalPrice: ..., savedSnapshot: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createSavedPcConfiguration(dataConnect, createSavedPcConfigurationVars);
+
+console.log(data.pcConfiguration_insert);
+
+// Or, you can use the `Promise` API.
+createSavedPcConfiguration(createSavedPcConfigurationVars).then((response) => {
+  const data = response.data;
+  console.log(data.pcConfiguration_insert);
+});
+```
+
+### Using `CreateSavedPcConfiguration`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createSavedPcConfigurationRef, CreateSavedPcConfigurationVariables } from '@pcmaker/dataconnect';
+
+// The `CreateSavedPcConfiguration` mutation requires an argument of type `CreateSavedPcConfigurationVariables`:
+const createSavedPcConfigurationVars: CreateSavedPcConfigurationVariables = {
+  id: ..., 
+  userId: ..., 
+  name: ..., 
+  description: ..., // optional
+  totalPrice: ..., 
+  savedSnapshot: ..., 
+};
+
+// Call the `createSavedPcConfigurationRef()` function to get a reference to the mutation.
+const ref = createSavedPcConfigurationRef(createSavedPcConfigurationVars);
+// Variables can be defined inline as well.
+const ref = createSavedPcConfigurationRef({ id: ..., userId: ..., name: ..., description: ..., totalPrice: ..., savedSnapshot: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createSavedPcConfigurationRef(dataConnect, createSavedPcConfigurationVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.pcConfiguration_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.pcConfiguration_insert);
+});
+```
+
+## UpdateSavedPcConfiguration
+You can execute the `UpdateSavedPcConfiguration` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+updateSavedPcConfiguration(vars: UpdateSavedPcConfigurationVariables): MutationPromise<UpdateSavedPcConfigurationData, UpdateSavedPcConfigurationVariables>;
+
+interface UpdateSavedPcConfigurationRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateSavedPcConfigurationVariables): MutationRef<UpdateSavedPcConfigurationData, UpdateSavedPcConfigurationVariables>;
+}
+export const updateSavedPcConfigurationRef: UpdateSavedPcConfigurationRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateSavedPcConfiguration(dc: DataConnect, vars: UpdateSavedPcConfigurationVariables): MutationPromise<UpdateSavedPcConfigurationData, UpdateSavedPcConfigurationVariables>;
+
+interface UpdateSavedPcConfigurationRef {
+  ...
+  (dc: DataConnect, vars: UpdateSavedPcConfigurationVariables): MutationRef<UpdateSavedPcConfigurationData, UpdateSavedPcConfigurationVariables>;
+}
+export const updateSavedPcConfigurationRef: UpdateSavedPcConfigurationRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateSavedPcConfigurationRef:
+```typescript
+const name = updateSavedPcConfigurationRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateSavedPcConfiguration` mutation requires an argument of type `UpdateSavedPcConfigurationVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateSavedPcConfigurationVariables {
+  id: UUIDString;
+  userId: UUIDString;
+  name: string;
+  description?: string | null;
+  totalPrice: number;
+  savedSnapshot: unknown;
+}
+```
+### Return Type
+Recall that executing the `UpdateSavedPcConfiguration` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateSavedPcConfigurationData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateSavedPcConfigurationData {
+  pcConfiguration_updateMany: number;
+}
+```
+### Using `UpdateSavedPcConfiguration`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateSavedPcConfiguration, UpdateSavedPcConfigurationVariables } from '@pcmaker/dataconnect';
+
+// The `UpdateSavedPcConfiguration` mutation requires an argument of type `UpdateSavedPcConfigurationVariables`:
+const updateSavedPcConfigurationVars: UpdateSavedPcConfigurationVariables = {
+  id: ..., 
+  userId: ..., 
+  name: ..., 
+  description: ..., // optional
+  totalPrice: ..., 
+  savedSnapshot: ..., 
+};
+
+// Call the `updateSavedPcConfiguration()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateSavedPcConfiguration(updateSavedPcConfigurationVars);
+// Variables can be defined inline as well.
+const { data } = await updateSavedPcConfiguration({ id: ..., userId: ..., name: ..., description: ..., totalPrice: ..., savedSnapshot: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateSavedPcConfiguration(dataConnect, updateSavedPcConfigurationVars);
+
+console.log(data.pcConfiguration_updateMany);
+
+// Or, you can use the `Promise` API.
+updateSavedPcConfiguration(updateSavedPcConfigurationVars).then((response) => {
+  const data = response.data;
+  console.log(data.pcConfiguration_updateMany);
+});
+```
+
+### Using `UpdateSavedPcConfiguration`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateSavedPcConfigurationRef, UpdateSavedPcConfigurationVariables } from '@pcmaker/dataconnect';
+
+// The `UpdateSavedPcConfiguration` mutation requires an argument of type `UpdateSavedPcConfigurationVariables`:
+const updateSavedPcConfigurationVars: UpdateSavedPcConfigurationVariables = {
+  id: ..., 
+  userId: ..., 
+  name: ..., 
+  description: ..., // optional
+  totalPrice: ..., 
+  savedSnapshot: ..., 
+};
+
+// Call the `updateSavedPcConfigurationRef()` function to get a reference to the mutation.
+const ref = updateSavedPcConfigurationRef(updateSavedPcConfigurationVars);
+// Variables can be defined inline as well.
+const ref = updateSavedPcConfigurationRef({ id: ..., userId: ..., name: ..., description: ..., totalPrice: ..., savedSnapshot: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateSavedPcConfigurationRef(dataConnect, updateSavedPcConfigurationVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.pcConfiguration_updateMany);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.pcConfiguration_updateMany);
+});
+```
+
+## DeleteSavedPcConfiguration
+You can execute the `DeleteSavedPcConfiguration` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+deleteSavedPcConfiguration(vars: DeleteSavedPcConfigurationVariables): MutationPromise<DeleteSavedPcConfigurationData, DeleteSavedPcConfigurationVariables>;
+
+interface DeleteSavedPcConfigurationRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteSavedPcConfigurationVariables): MutationRef<DeleteSavedPcConfigurationData, DeleteSavedPcConfigurationVariables>;
+}
+export const deleteSavedPcConfigurationRef: DeleteSavedPcConfigurationRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteSavedPcConfiguration(dc: DataConnect, vars: DeleteSavedPcConfigurationVariables): MutationPromise<DeleteSavedPcConfigurationData, DeleteSavedPcConfigurationVariables>;
+
+interface DeleteSavedPcConfigurationRef {
+  ...
+  (dc: DataConnect, vars: DeleteSavedPcConfigurationVariables): MutationRef<DeleteSavedPcConfigurationData, DeleteSavedPcConfigurationVariables>;
+}
+export const deleteSavedPcConfigurationRef: DeleteSavedPcConfigurationRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteSavedPcConfigurationRef:
+```typescript
+const name = deleteSavedPcConfigurationRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteSavedPcConfiguration` mutation requires an argument of type `DeleteSavedPcConfigurationVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteSavedPcConfigurationVariables {
+  id: UUIDString;
+  userId: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteSavedPcConfiguration` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteSavedPcConfigurationData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteSavedPcConfigurationData {
+  pcConfiguration_deleteMany: number;
+}
+```
+### Using `DeleteSavedPcConfiguration`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteSavedPcConfiguration, DeleteSavedPcConfigurationVariables } from '@pcmaker/dataconnect';
+
+// The `DeleteSavedPcConfiguration` mutation requires an argument of type `DeleteSavedPcConfigurationVariables`:
+const deleteSavedPcConfigurationVars: DeleteSavedPcConfigurationVariables = {
+  id: ..., 
+  userId: ..., 
+};
+
+// Call the `deleteSavedPcConfiguration()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteSavedPcConfiguration(deleteSavedPcConfigurationVars);
+// Variables can be defined inline as well.
+const { data } = await deleteSavedPcConfiguration({ id: ..., userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteSavedPcConfiguration(dataConnect, deleteSavedPcConfigurationVars);
+
+console.log(data.pcConfiguration_deleteMany);
+
+// Or, you can use the `Promise` API.
+deleteSavedPcConfiguration(deleteSavedPcConfigurationVars).then((response) => {
+  const data = response.data;
+  console.log(data.pcConfiguration_deleteMany);
+});
+```
+
+### Using `DeleteSavedPcConfiguration`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteSavedPcConfigurationRef, DeleteSavedPcConfigurationVariables } from '@pcmaker/dataconnect';
+
+// The `DeleteSavedPcConfiguration` mutation requires an argument of type `DeleteSavedPcConfigurationVariables`:
+const deleteSavedPcConfigurationVars: DeleteSavedPcConfigurationVariables = {
+  id: ..., 
+  userId: ..., 
+};
+
+// Call the `deleteSavedPcConfigurationRef()` function to get a reference to the mutation.
+const ref = deleteSavedPcConfigurationRef(deleteSavedPcConfigurationVars);
+// Variables can be defined inline as well.
+const ref = deleteSavedPcConfigurationRef({ id: ..., userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteSavedPcConfigurationRef(dataConnect, deleteSavedPcConfigurationVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.pcConfiguration_deleteMany);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.pcConfiguration_deleteMany);
 });
 ```
 
@@ -1423,10 +2282,10 @@ import { connectorConfig, addConfigurationComponent, AddConfigurationComponentVa
 
 // The `AddConfigurationComponent` mutation requires an argument of type `AddConfigurationComponentVariables`:
 const addConfigurationComponentVars: AddConfigurationComponentVariables = {
-  configurationId: ...,
-  componentId: ...,
+  configurationId: ..., 
+  componentId: ..., 
   quantity: ..., // optional
-  priceAtSelection: ...,
+  priceAtSelection: ..., 
   isSelected: ..., // optional
 };
 
@@ -1457,10 +2316,10 @@ import { connectorConfig, addConfigurationComponentRef, AddConfigurationComponen
 
 // The `AddConfigurationComponent` mutation requires an argument of type `AddConfigurationComponentVariables`:
 const addConfigurationComponentVars: AddConfigurationComponentVariables = {
-  configurationId: ...,
-  componentId: ...,
+  configurationId: ..., 
+  componentId: ..., 
   quantity: ..., // optional
-  priceAtSelection: ...,
+  priceAtSelection: ..., 
   isSelected: ..., // optional
 };
 
@@ -1485,3 +2344,564 @@ executeMutation(ref).then((response) => {
   console.log(data.configurationComponent_insert);
 });
 ```
+
+## CreateAuthToken
+You can execute the `CreateAuthToken` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+createAuthToken(vars: CreateAuthTokenVariables): MutationPromise<CreateAuthTokenData, CreateAuthTokenVariables>;
+
+interface CreateAuthTokenRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateAuthTokenVariables): MutationRef<CreateAuthTokenData, CreateAuthTokenVariables>;
+}
+export const createAuthTokenRef: CreateAuthTokenRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createAuthToken(dc: DataConnect, vars: CreateAuthTokenVariables): MutationPromise<CreateAuthTokenData, CreateAuthTokenVariables>;
+
+interface CreateAuthTokenRef {
+  ...
+  (dc: DataConnect, vars: CreateAuthTokenVariables): MutationRef<CreateAuthTokenData, CreateAuthTokenVariables>;
+}
+export const createAuthTokenRef: CreateAuthTokenRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createAuthTokenRef:
+```typescript
+const name = createAuthTokenRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateAuthToken` mutation requires an argument of type `CreateAuthTokenVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateAuthTokenVariables {
+  userId: UUIDString;
+  tokenHash: string;
+  type: AuthTokenType;
+  expiresAt: TimestampString;
+}
+```
+### Return Type
+Recall that executing the `CreateAuthToken` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateAuthTokenData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateAuthTokenData {
+  authToken_insert: AuthToken_Key;
+}
+```
+### Using `CreateAuthToken`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createAuthToken, CreateAuthTokenVariables } from '@pcmaker/dataconnect';
+
+// The `CreateAuthToken` mutation requires an argument of type `CreateAuthTokenVariables`:
+const createAuthTokenVars: CreateAuthTokenVariables = {
+  userId: ..., 
+  tokenHash: ..., 
+  type: ..., 
+  expiresAt: ..., 
+};
+
+// Call the `createAuthToken()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createAuthToken(createAuthTokenVars);
+// Variables can be defined inline as well.
+const { data } = await createAuthToken({ userId: ..., tokenHash: ..., type: ..., expiresAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createAuthToken(dataConnect, createAuthTokenVars);
+
+console.log(data.authToken_insert);
+
+// Or, you can use the `Promise` API.
+createAuthToken(createAuthTokenVars).then((response) => {
+  const data = response.data;
+  console.log(data.authToken_insert);
+});
+```
+
+### Using `CreateAuthToken`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createAuthTokenRef, CreateAuthTokenVariables } from '@pcmaker/dataconnect';
+
+// The `CreateAuthToken` mutation requires an argument of type `CreateAuthTokenVariables`:
+const createAuthTokenVars: CreateAuthTokenVariables = {
+  userId: ..., 
+  tokenHash: ..., 
+  type: ..., 
+  expiresAt: ..., 
+};
+
+// Call the `createAuthTokenRef()` function to get a reference to the mutation.
+const ref = createAuthTokenRef(createAuthTokenVars);
+// Variables can be defined inline as well.
+const ref = createAuthTokenRef({ userId: ..., tokenHash: ..., type: ..., expiresAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createAuthTokenRef(dataConnect, createAuthTokenVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.authToken_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.authToken_insert);
+});
+```
+
+## MarkAuthTokenUsed
+You can execute the `MarkAuthTokenUsed` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+markAuthTokenUsed(vars: MarkAuthTokenUsedVariables): MutationPromise<MarkAuthTokenUsedData, MarkAuthTokenUsedVariables>;
+
+interface MarkAuthTokenUsedRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: MarkAuthTokenUsedVariables): MutationRef<MarkAuthTokenUsedData, MarkAuthTokenUsedVariables>;
+}
+export const markAuthTokenUsedRef: MarkAuthTokenUsedRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+markAuthTokenUsed(dc: DataConnect, vars: MarkAuthTokenUsedVariables): MutationPromise<MarkAuthTokenUsedData, MarkAuthTokenUsedVariables>;
+
+interface MarkAuthTokenUsedRef {
+  ...
+  (dc: DataConnect, vars: MarkAuthTokenUsedVariables): MutationRef<MarkAuthTokenUsedData, MarkAuthTokenUsedVariables>;
+}
+export const markAuthTokenUsedRef: MarkAuthTokenUsedRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the markAuthTokenUsedRef:
+```typescript
+const name = markAuthTokenUsedRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `MarkAuthTokenUsed` mutation requires an argument of type `MarkAuthTokenUsedVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface MarkAuthTokenUsedVariables {
+  id: UUIDString;
+  usedAt: TimestampString;
+}
+```
+### Return Type
+Recall that executing the `MarkAuthTokenUsed` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `MarkAuthTokenUsedData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface MarkAuthTokenUsedData {
+  authToken_update?: AuthToken_Key | null;
+}
+```
+### Using `MarkAuthTokenUsed`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, markAuthTokenUsed, MarkAuthTokenUsedVariables } from '@pcmaker/dataconnect';
+
+// The `MarkAuthTokenUsed` mutation requires an argument of type `MarkAuthTokenUsedVariables`:
+const markAuthTokenUsedVars: MarkAuthTokenUsedVariables = {
+  id: ..., 
+  usedAt: ..., 
+};
+
+// Call the `markAuthTokenUsed()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await markAuthTokenUsed(markAuthTokenUsedVars);
+// Variables can be defined inline as well.
+const { data } = await markAuthTokenUsed({ id: ..., usedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await markAuthTokenUsed(dataConnect, markAuthTokenUsedVars);
+
+console.log(data.authToken_update);
+
+// Or, you can use the `Promise` API.
+markAuthTokenUsed(markAuthTokenUsedVars).then((response) => {
+  const data = response.data;
+  console.log(data.authToken_update);
+});
+```
+
+### Using `MarkAuthTokenUsed`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, markAuthTokenUsedRef, MarkAuthTokenUsedVariables } from '@pcmaker/dataconnect';
+
+// The `MarkAuthTokenUsed` mutation requires an argument of type `MarkAuthTokenUsedVariables`:
+const markAuthTokenUsedVars: MarkAuthTokenUsedVariables = {
+  id: ..., 
+  usedAt: ..., 
+};
+
+// Call the `markAuthTokenUsedRef()` function to get a reference to the mutation.
+const ref = markAuthTokenUsedRef(markAuthTokenUsedVars);
+// Variables can be defined inline as well.
+const ref = markAuthTokenUsedRef({ id: ..., usedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = markAuthTokenUsedRef(dataConnect, markAuthTokenUsedVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.authToken_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.authToken_update);
+});
+```
+
+## ActivateUser
+You can execute the `ActivateUser` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+activateUser(vars: ActivateUserVariables): MutationPromise<ActivateUserData, ActivateUserVariables>;
+
+interface ActivateUserRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ActivateUserVariables): MutationRef<ActivateUserData, ActivateUserVariables>;
+}
+export const activateUserRef: ActivateUserRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+activateUser(dc: DataConnect, vars: ActivateUserVariables): MutationPromise<ActivateUserData, ActivateUserVariables>;
+
+interface ActivateUserRef {
+  ...
+  (dc: DataConnect, vars: ActivateUserVariables): MutationRef<ActivateUserData, ActivateUserVariables>;
+}
+export const activateUserRef: ActivateUserRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the activateUserRef:
+```typescript
+const name = activateUserRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ActivateUser` mutation requires an argument of type `ActivateUserVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface ActivateUserVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `ActivateUser` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ActivateUserData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ActivateUserData {
+  user_update?: User_Key | null;
+}
+```
+### Using `ActivateUser`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, activateUser, ActivateUserVariables } from '@pcmaker/dataconnect';
+
+// The `ActivateUser` mutation requires an argument of type `ActivateUserVariables`:
+const activateUserVars: ActivateUserVariables = {
+  id: ..., 
+};
+
+// Call the `activateUser()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await activateUser(activateUserVars);
+// Variables can be defined inline as well.
+const { data } = await activateUser({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await activateUser(dataConnect, activateUserVars);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+activateUser(activateUserVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+### Using `ActivateUser`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, activateUserRef, ActivateUserVariables } from '@pcmaker/dataconnect';
+
+// The `ActivateUser` mutation requires an argument of type `ActivateUserVariables`:
+const activateUserVars: ActivateUserVariables = {
+  id: ..., 
+};
+
+// Call the `activateUserRef()` function to get a reference to the mutation.
+const ref = activateUserRef(activateUserVars);
+// Variables can be defined inline as well.
+const ref = activateUserRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = activateUserRef(dataConnect, activateUserVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+## UpdateUserPassword
+You can execute the `UpdateUserPassword` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+updateUserPassword(vars: UpdateUserPasswordVariables): MutationPromise<UpdateUserPasswordData, UpdateUserPasswordVariables>;
+
+interface UpdateUserPasswordRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateUserPasswordVariables): MutationRef<UpdateUserPasswordData, UpdateUserPasswordVariables>;
+}
+export const updateUserPasswordRef: UpdateUserPasswordRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateUserPassword(dc: DataConnect, vars: UpdateUserPasswordVariables): MutationPromise<UpdateUserPasswordData, UpdateUserPasswordVariables>;
+
+interface UpdateUserPasswordRef {
+  ...
+  (dc: DataConnect, vars: UpdateUserPasswordVariables): MutationRef<UpdateUserPasswordData, UpdateUserPasswordVariables>;
+}
+export const updateUserPasswordRef: UpdateUserPasswordRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateUserPasswordRef:
+```typescript
+const name = updateUserPasswordRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateUserPassword` mutation requires an argument of type `UpdateUserPasswordVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateUserPasswordVariables {
+  id: UUIDString;
+  password: string;
+}
+```
+### Return Type
+Recall that executing the `UpdateUserPassword` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateUserPasswordData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateUserPasswordData {
+  user_update?: User_Key | null;
+}
+```
+### Using `UpdateUserPassword`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateUserPassword, UpdateUserPasswordVariables } from '@pcmaker/dataconnect';
+
+// The `UpdateUserPassword` mutation requires an argument of type `UpdateUserPasswordVariables`:
+const updateUserPasswordVars: UpdateUserPasswordVariables = {
+  id: ..., 
+  password: ..., 
+};
+
+// Call the `updateUserPassword()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateUserPassword(updateUserPasswordVars);
+// Variables can be defined inline as well.
+const { data } = await updateUserPassword({ id: ..., password: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateUserPassword(dataConnect, updateUserPasswordVars);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+updateUserPassword(updateUserPasswordVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+### Using `UpdateUserPassword`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateUserPasswordRef, UpdateUserPasswordVariables } from '@pcmaker/dataconnect';
+
+// The `UpdateUserPassword` mutation requires an argument of type `UpdateUserPasswordVariables`:
+const updateUserPasswordVars: UpdateUserPasswordVariables = {
+  id: ..., 
+  password: ..., 
+};
+
+// Call the `updateUserPasswordRef()` function to get a reference to the mutation.
+const ref = updateUserPasswordRef(updateUserPasswordVars);
+// Variables can be defined inline as well.
+const ref = updateUserPasswordRef({ id: ..., password: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateUserPasswordRef(dataConnect, updateUserPasswordVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+## DeleteUserByEmail
+You can execute the `DeleteUserByEmail` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+deleteUserByEmail(vars: DeleteUserByEmailVariables): MutationPromise<DeleteUserByEmailData, DeleteUserByEmailVariables>;
+
+interface DeleteUserByEmailRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteUserByEmailVariables): MutationRef<DeleteUserByEmailData, DeleteUserByEmailVariables>;
+}
+export const deleteUserByEmailRef: DeleteUserByEmailRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteUserByEmail(dc: DataConnect, vars: DeleteUserByEmailVariables): MutationPromise<DeleteUserByEmailData, DeleteUserByEmailVariables>;
+
+interface DeleteUserByEmailRef {
+  ...
+  (dc: DataConnect, vars: DeleteUserByEmailVariables): MutationRef<DeleteUserByEmailData, DeleteUserByEmailVariables>;
+}
+export const deleteUserByEmailRef: DeleteUserByEmailRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteUserByEmailRef:
+```typescript
+const name = deleteUserByEmailRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteUserByEmail` mutation requires an argument of type `DeleteUserByEmailVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteUserByEmailVariables {
+  email: string;
+}
+```
+### Return Type
+Recall that executing the `DeleteUserByEmail` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteUserByEmailData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteUserByEmailData {
+  user_deleteMany: number;
+}
+```
+### Using `DeleteUserByEmail`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteUserByEmail, DeleteUserByEmailVariables } from '@pcmaker/dataconnect';
+
+// The `DeleteUserByEmail` mutation requires an argument of type `DeleteUserByEmailVariables`:
+const deleteUserByEmailVars: DeleteUserByEmailVariables = {
+  email: ..., 
+};
+
+// Call the `deleteUserByEmail()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteUserByEmail(deleteUserByEmailVars);
+// Variables can be defined inline as well.
+const { data } = await deleteUserByEmail({ email: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteUserByEmail(dataConnect, deleteUserByEmailVars);
+
+console.log(data.user_deleteMany);
+
+// Or, you can use the `Promise` API.
+deleteUserByEmail(deleteUserByEmailVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_deleteMany);
+});
+```
+
+### Using `DeleteUserByEmail`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteUserByEmailRef, DeleteUserByEmailVariables } from '@pcmaker/dataconnect';
+
+// The `DeleteUserByEmail` mutation requires an argument of type `DeleteUserByEmailVariables`:
+const deleteUserByEmailVars: DeleteUserByEmailVariables = {
+  email: ..., 
+};
+
+// Call the `deleteUserByEmailRef()` function to get a reference to the mutation.
+const ref = deleteUserByEmailRef(deleteUserByEmailVars);
+// Variables can be defined inline as well.
+const ref = deleteUserByEmailRef({ email: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteUserByEmailRef(dataConnect, deleteUserByEmailVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_deleteMany);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_deleteMany);
+});
+```
+
