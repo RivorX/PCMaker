@@ -209,8 +209,6 @@ export default function LoginPage() {
           result.message ?? "Hasło zostało zmienione. Możesz się zalogować."
         );
 
-        event.currentTarget.reset();
-
         return;
       }
 
