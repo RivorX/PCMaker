@@ -35,6 +35,8 @@ import { getCompatibilityChecks } from "@/lib/compatibility";
 import styles from "./Configurator.module.css";
 
 const categories: ComponentCategory[] = ["cpu", "motherboard", "memory", "gpu", "storage", "psu", "case", "cooling"];
+const localDraftSavedNotice = "Zestaw zapisano lokalnie";
+const restoredGuestDraftNotice = "Przywrócono lokalny zestaw. Zapisz go na koncie po zalogowaniu.";
 const categoryIcons: Record<ComponentCategory, string> = {
   cpu: "CPU", motherboard: "MB", memory: "RAM", gpu: "GPU", storage: "SSD", psu: "PSU", case: "CASE", cooling: "FAN", other: "PC",
 };
@@ -143,6 +145,13 @@ export default function Configurator() {
   const savedDialogWasOpenRef = useRef(false);
   const backdropPointerRef = useRef(false);
   const [search, setSearch] = useState("");
+  const [lastAddedCategory, setLastAddedCategory] = useState<ComponentCategory | null>(null);
+  const [previewExpanded, setPreviewExpanded] = useState(true);
+  const savedLibraryRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    if (libraryNotice) savedLibraryRef.current?.setAttribute("open", "");
+  }, [libraryNotice]);
 
   useEffect(() => { draftRef.current = draft; }, [draft]);
 
@@ -212,7 +221,7 @@ export default function Configurator() {
         setRestoredHandoff(true);
       } else {
         setRestoredHandoff(false);
-        setLibraryNotice("Przywrócono lokalny zestaw. Zapisz go na koncie po zalogowaniu.");
+        setLibraryNotice(restoredGuestDraftNotice);
       }
       return true;
     };
@@ -352,6 +361,8 @@ export default function Configurator() {
     const query = search.trim().toLocaleLowerCase("pl-PL");
     return catalog.filter((part) => part.category === activeCategory && (!query || `${part.name} ${part.manufacturer} ${part.description}`.toLocaleLowerCase("pl-PL").includes(query)));
   }, [catalog, activeCategory, search]);
+  const nextCategory = categories.find((category) => !selected.has(category));
+  const canSuggestNextCategory = Boolean(lastAddedCategory && activeCategory === lastAddedCategory && selected.has(lastAddedCategory) && nextCategory);
   const selectedParts = useMemo(() => [...selected.values()].map((part) => ({
     id: part.id,
     category: part.category,
@@ -381,6 +392,7 @@ export default function Configurator() {
   const choosePart = (part: ConfiguratorCatalogComponent) => {
     const chosen = asDraftComponent(part);
     updateParts([...draft.components.filter((item) => item.category !== part.category), chosen]);
+    setLastAddedCategory(part.category);
   };
 
   const chooseOwnPart = (category: ComponentCategory) => {
@@ -406,6 +418,7 @@ export default function Configurator() {
         note: "",
       },
     ]);
+    setLastAddedCategory(category);
   };
 
   const requestSignIn = () => {
@@ -430,7 +443,7 @@ export default function Configurator() {
       }
       setDraft((current) => configurationContentKey(configurationSnapshot(current)) === configurationContentKey(configurationSnapshot(draft)) ? localDraft : current);
       setHasLocalGuestDraft(true);
-      setLibraryNotice("Zestaw zapisano jako jeden lokalny szkic. Zaloguj się, aby otworzyć go na koncie.");
+      setLibraryNotice(localDraftSavedNotice);
       return;
     }
     if (libraryAccess === "account-required") {
@@ -693,34 +706,70 @@ export default function Configurator() {
         <div><p className={styles.eyebrow}>PCMAKER <span>/</span> BUDOWANIE ZESTAWU</p><h1>Konfigurator komputera</h1><p className={styles.lede}>Wybierz części z katalogu i kliknij element komputera, żeby zobaczyć jego status.</p></div>
         <div className={styles.saveBox}><span><i className={styles.liveDot} />{saveStatusText}</span></div>
       </header>
-      <section className={styles.savedLibrary} aria-labelledby="saved-configurations-title">
-        <div className={styles.libraryTopline}>
-          <div className={styles.libraryHeading}>
-            <span className={styles.libraryIcon} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5v-15Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M5 6h11M8.5 9.5h7M8.5 12.5h7M5 20.5A2.5 2.5 0 0 1 7.5 18H19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
-            <div><p className={styles.eyebrow}>TWOJA KOLEKCJA</p><h2 id="saved-configurations-title" tabIndex={-1}>Zapisane zestawy</h2></div>
-            <span className={styles.libraryCount} title={`Limit ${MAX_SAVED_CONFIGURATIONS} zestawów`} aria-label={libraryAccess === "ready" ? `${savedConfigurations.length} z ${MAX_SAVED_CONFIGURATIONS} zapisanych zestawów` : "Liczba zapisanych zestawów nieznana"}>{libraryAccess === "ready" ? `${savedConfigurations.length} / ${MAX_SAVED_CONFIGURATIONS}` : "—"}</span>
-          </div>
-          <span className={styles.localStorageNote}><i className={styles.liveDot} />{libraryAccess === "ready" ? "Zapisane na koncie" : libraryAccess === "guest" ? hasLocalGuestDraft ? "Szkic lokalny" : "Wymagane logowanie" : libraryAccess === "account-required" ? "Konto użytkownika" : libraryAccess === "error" ? "Firebase niedostępne" : "Ładowanie zapisów…"}</span>
-        </div>
+      <details className={styles.previewDisclosure} open={previewExpanded} onToggle={(event) => setPreviewExpanded(event.currentTarget.open)}>
+        <summary className={styles.previewToggle}>Zobacz podgląd 3D <span aria-hidden="true">{previewExpanded ? "−" : "+"}</span></summary>
+        <section className={styles.studio} aria-label="Interaktywny podgląd komputera">
+          <div className={styles.previewPane}><PcPreview selectedParts={previewParts} activeCategory={activeCategory} onSelectCategory={activateCategory} onCategoryThumbnail={receiveCategoryThumbnail} /></div>
+          <aside className={styles.stageInspector} aria-live="polite">
+            <div className={styles.inspectorHeader}><p className={styles.eyebrow}>AKTYWNY ELEMENT</p><span className={`${styles.inspectorBadge} ${activePart ? styles.inspectorBadgeChosen : ""}`}>{activePart ? "W ZESTAWIE" : "DO WYBORU"}</span></div>
+            <h2 className={styles.inspectorTitle}>{componentCategoryLabels[activeCategory]}</h2>
+            {activePart ? <><div className={`${styles.inspectorProduct} ${activePart.source === "own" ? styles.ownPartCard : ""}`}><span className={styles.productIcon}>{categoryIcons[activeCategory]}</span><div><small>{activePart.source === "own" ? "MAM WŁASNĄ CZĘŚĆ" : "WYBRANO"}</small><strong>{activePart.source === "own" ? `Własna część · ${componentCategoryLabels[activeCategory]}` : activePart.name}</strong>{activePart.source === "own" ? <span>Poza katalogiem i sumą ceny. Sprawdź parametry przed zakupem.</span> : activePart.manufacturer && <span>{activePart.manufacturer}</span>}</div></div><div className={styles.inspectorActions}><button type="button" className={styles.inspectorPrimary} onClick={focusCatalog}>Zobacz opcje z katalogu <span>↓</span></button><button type="button" className={styles.removePart} onClick={() => updateParts(draft.components.filter((part) => part.category !== activeCategory))}>Usuń wybraną część ×</button></div></> : <><div className={styles.inspectorEmpty}><span className={styles.focusPlus}>＋</span><div><strong>Jeszcze nie wybrano</strong><span>Kliknij model albo wybierz część z katalogu.</span></div></div><button type="button" className={styles.inspectorPrimary} onClick={() => chooseOwnPart(activeCategory)}>Mam własną część</button><button type="button" className={styles.inspectorPrimary} onClick={focusCatalog}>Dobierz {componentCategoryLabels[activeCategory].toLocaleLowerCase("pl-PL")} z katalogu <span>↓</span></button></>}
+            <div className={styles.categoryInfo} data-active-category={activeCategory}>
+              <div className={styles.categoryInfoArt}>
+                {categoryThumbnails[activeVisualCategory] ? <img src={categoryThumbnails[activeVisualCategory]} alt={`Poglądowy model kategorii: ${componentCategoryLabels[activeVisualCategory]}`} className={styles.categoryInfoModel} draggable={false} /> : <PartCategoryIcon category={activeVisualCategory} className={styles.categoryInfoIcon} />}
+                <span className={styles.categoryInfoHint}>MODEL POGLĄDOWY</span>
+              </div>
+              <div className={styles.categoryInfoCopy}>
+                <span>FUNKCJA CZĘŚCI</span>
+                <p>{categoryDescriptions[activeVisualCategory]}</p>
+              </div>
+            </div>
+            <div className={styles.modelLegend}><span><i className={styles.legendBright} /> Wybrano</span><span><i className={styles.legendDim} /> Do wyboru</span></div>
+          </aside>
+        </section>
+      </details>
+      <details className={styles.savedLibrary} ref={savedLibraryRef}>
+        <summary className={styles.libraryToggle} id="saved-configurations-title">
+          <span className={styles.libraryIcon} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5v-15Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M5 6h11M8.5 9.5h7M8.5 12.5h7M5 20.5A2.5 2.5 0 0 1 7.5 18H19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+          <span className={styles.librarySummaryTitle}>Zapisane zestawy</span>
+          <span className={styles.librarySummaryMeta}>
+            {libraryAccess === "ready" && savedConfigurations.length >= MAX_SAVED_CONFIGURATIONS - 1 && <span className={styles.libraryCount} title={`Limit ${MAX_SAVED_CONFIGURATIONS} zestawów`} aria-label={`${savedConfigurations.length} z ${MAX_SAVED_CONFIGURATIONS} zapisanych zestawów`}>{savedConfigurations.length} / {MAX_SAVED_CONFIGURATIONS}</span>}
+            <span className={`${styles.localStorageNote} ${libraryAccess === "guest" && hasLocalGuestDraft ? styles.localDraftStatus : ""}`}>
+              {libraryAccess === "guest" && hasLocalGuestDraft ? <svg aria-hidden="true" className={styles.localWarningIcon} viewBox="0 0 16 16" fill="none"><path d="M8 1.5 14.3 13H1.7L8 1.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M8 5.2v3.9m0 1.8v.1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg> : <i className={styles.liveDot} />}
+              {libraryAccess === "ready" ? "Zapisane na koncie" : libraryAccess === "guest" ? hasLocalGuestDraft ? "Szkic lokalny" : "Wymagane logowanie" : libraryAccess === "account-required" ? "Konto użytkownika" : libraryAccess === "error" ? "Firebase niedostępne" : "Ładowanie zapisów…"}
+            </span>
+            {libraryNotice === restoredGuestDraftNotice && <span className={styles.restoredGuestNotice} role="status">{restoredGuestDraftNotice}</span>}
+          </span>
+        </summary>
+        <div className={styles.libraryContent}>
         <div className={styles.libraryEditor}>
-          <label className={styles.configurationName}><span>Nazwa aktualnego zestawu</span><input value={draft.title} maxLength={80} onChange={(event) => { setDraft((current) => ({ ...current, title: event.target.value, updatedAt: new Date().toISOString() })); setLibraryNotice(null); }} placeholder="Mój zestaw" /></label>
+          <label className={styles.configurationName}><span>Nazwa zestawu</span><input value={draft.title} maxLength={80} onChange={(event) => { setDraft((current) => ({ ...current, title: event.target.value, updatedAt: new Date().toISOString() })); setLibraryNotice(null); }} placeholder="Mój zestaw" /></label>
           <div className={styles.libraryButtons}>
             <button type="button" className={styles.libraryPrimary} disabled={saving || libraryAccess === "loading" || (libraryAccess === "ready" && savedConfigurations.length >= MAX_SAVED_CONFIGURATIONS && !activeSavedId)} onClick={() => { void saveDraft(); }}>{saving ? "Zapisywanie…" : primarySaveLabel}</button>
             {libraryAccess === "ready" && activeSavedConfiguration && <button type="button" disabled={saving || savedConfigurations.length >= MAX_SAVED_CONFIGURATIONS} onClick={() => { void saveDraft("copy"); }}>Zapisz jako kopię</button>}
             <button type="button" onClick={requestNewConfiguration}>Nowy zestaw</button>
           </div>
-          <label className={styles.configurationDescription}><span>Krótki opis zestawu</span><textarea value={draft.description ?? ""} maxLength={MAX_CONFIGURATION_DESCRIPTION_LENGTH} rows={2} onChange={(event) => { setDraft((current) => ({ ...current, description: event.target.value, updatedAt: new Date().toISOString() })); setLibraryNotice(null); }} placeholder="Na przykład: komputer do pracy i gier" /></label>
+          <label className={styles.configurationDescription}>
+            <span>Opis</span>
+            <span className={styles.descriptionField}>
+              <span aria-hidden="true" className={styles.descriptionSizer}>{draft.description ?? ""}{" "}</span>
+              <textarea value={draft.description ?? ""} maxLength={MAX_CONFIGURATION_DESCRIPTION_LENGTH} rows={1} onChange={(event) => { setDraft((current) => ({ ...current, description: event.target.value, updatedAt: new Date().toISOString() })); setLibraryNotice(null); }} placeholder="Na przykład: komputer do pracy i gier" />
+            </span>
+          </label>
         </div>
-        {libraryNotice && <p className={styles.libraryMessage + " " + (libraryNotice.startsWith("Nie") || libraryNotice.startsWith("Wybrany") || libraryNotice.startsWith("Ten zestaw") || libraryNotice.startsWith("Ta sesja") || libraryNotice.startsWith("Sesja wygasła") || libraryNotice.startsWith("Osiągnięto limit") ? styles.libraryError : styles.librarySuccess)} role="status">{libraryNotice}</p>}
+        {libraryNotice && libraryNotice !== localDraftSavedNotice && libraryNotice !== restoredGuestDraftNotice && <p className={styles.libraryMessage + " " + (libraryNotice.startsWith("Nie") || libraryNotice.startsWith("Wybrany") || libraryNotice.startsWith("Ten zestaw") || libraryNotice.startsWith("Ta sesja") || libraryNotice.startsWith("Sesja wygasła") || libraryNotice.startsWith("Osiągnięto limit") ? styles.libraryError : styles.librarySuccess)} role="status">{libraryNotice}</p>}
         {libraryAccess === "ready" && savedConfigurations.length >= MAX_SAVED_CONFIGURATIONS && <p className={styles.libraryWarning} role="status">{savedConfigurations.length === MAX_SAVED_CONFIGURATIONS ? `Masz już ${MAX_SAVED_CONFIGURATIONS} z ${MAX_SAVED_CONFIGURATIONS} zapisów. Możesz tworzyć robocze szkice, edytować lub usuwać zapisane zestawy; aby zapisać kolejny na koncie, usuń jeden.` : `Biblioteka zawiera ${savedConfigurations.length} zapisów, czyli więcej niż obecny limit ${MAX_SAVED_CONFIGURATIONS}. Możesz tworzyć szkice oraz edytować i usuwać istniejące zestawy.`}</p>}
         {hasLocalGuestDraft && libraryAccess === "error" && <p className={styles.libraryWarning} role="status">Lokalny szkic pozostał w tej przeglądarce i jest otwarty. Po przywróceniu połączenia możesz zalogować się, aby zapisać go na koncie.</p>}
         {libraryAccess === "guest" && <div className={styles.accountPrompt}>
-          <div><strong>Zaloguj się, aby otworzyć zestaw na koncie</strong><span>{hasLocalGuestDraft ? "Lokalny szkic otworzy się po zalogowaniu. Zapis na koncie potwierdzisz osobno." : "Zapisz lokalny szkic jednym kliknięciem; po zalogowaniu otworzy się w konfiguratorze, a zapis na koncie potwierdzisz osobno."}</span></div>
+          <div>
+            {libraryNotice === localDraftSavedNotice && <span className={styles.localDraftNotice} role="status"><strong>{localDraftSavedNotice}</strong><span>Szkic jest zapisany w tej przeglądarce.</span></span>}
+            <strong>Zaloguj się, aby otworzyć zestaw na koncie</strong><span>{hasLocalGuestDraft ? "Lokalny szkic otworzy się po zalogowaniu. Zapis na koncie potwierdzisz osobno." : "Zapisz lokalny szkic jednym kliknięciem; po zalogowaniu otworzy się w konfiguratorze, a zapis na koncie potwierdzisz osobno."}</span>
+          </div>
           <button type="button" onClick={requestSignIn}>Zaloguj się lub utwórz konto</button>
         </div>}
         {libraryAccess === "account-required" && <p className={styles.libraryWarning} role="status">Ta sesja nie jest powiązana z kontem klienta. Wyloguj się i zaloguj na konto użytkownika, aby zapisywać zestawy.</p>}
         {libraryAccess === "error" && <p className={styles.libraryError} role="alert">Nie udało się pobrać zestawów z Firebase. <button type="button" onClick={() => { void loadSavedConfigurations(); }}>Spróbuj ponownie</button></p>}
-        {restoredHandoff && <p className={styles.librarySuccess} role="status">Przywróciłem szkic sprzed logowania. {hasLocalGuestDraft ? "Nowszy szkic zapisany w innej karcie pozostał w przeglądarce." : ""}Gdy będziesz gotowy, użyj przycisku „{primarySaveLabel}”, aby zapisać go na koncie.</p>}
+        {restoredHandoff && libraryAccess !== "guest" && <p className={styles.librarySuccess} role="status">Przywróciłem szkic sprzed logowania. {hasLocalGuestDraft ? "Nowszy szkic zapisany w innej karcie pozostał w przeglądarce." : ""}Gdy będziesz gotowy, użyj przycisku „{primarySaveLabel}”, aby zapisać go na koncie.</p>}
         {hasLocalGuestDraft && libraryAccess === "ready" && !restoredHandoff && <p className={styles.libraryWarning} role="status">Pozostał lokalny szkic z innej karty; bieżący zestaw jest nadal otwarty i niczego nie usunąłem.</p>}
         {pendingTransition && <div className={styles.discardConfirm} role="alert"><span>Masz niezapisane zmiany. {pendingTransition.type === "new" ? "Rozpoczęcie nowego zestawu" : "Wczytanie innego zestawu"} je odrzuci.</span><div><button type="button" className={styles.discardAction} onClick={continuePendingTransition}>Odrzuć i kontynuuj</button><button type="button" onClick={() => setPendingTransition(null)}>Zostań przy tym zestawie</button></div></div>}
         {libraryAccess === "ready" && <div className={styles.savedConfigurationList} aria-label="Lista zapisanych konfiguracji">
@@ -737,8 +786,49 @@ export default function Configurator() {
             </div>
           </article>)}
         </div>}
-      </section>
+        </div>
+      </details>
 
+      <section className={styles.builder}>
+        <div className={styles.builderMain}>
+          <div className={styles.sectionHead}><div><p className={styles.eyebrow}>01 / PODZESPOŁY</p><h2>Wybierz część</h2></div><span className={styles.progress}>{representedCategories} <i>/ 8</i></span></div>
+          <div className={styles.categoryGrid} role="group" aria-label="Kategorie podzespołów">
+            {categories.map((category) => {
+              const part = selected.get(category);
+              return <button key={category} type="button" aria-pressed={activeCategory === category} aria-label={`${componentCategoryLabels[category]}${activeCategory === category ? ", aktualnie przeglądana" : ""}${part ? `, wybrano ${part.source === "own" ? "własną część" : part.name}` : ", nie wybrano"}`} className={`${styles.category} ${activeCategory === category ? styles.categoryActive : ""} ${part ? styles.categoryChosen : ""}`} onClick={() => activateCategory(category)}>
+                <span className={styles.categoryIcon}>{categoryIcons[category]}</span><span className={styles.categoryText}><strong>{componentCategoryLabels[category]}</strong><small>{part ? (part.source === "own" ? "Mam własną część" : part.name) : "Nie wybrano"}</small></span><span className={styles.categoryArrow}>{part ? "✓" : "＋"}</span>
+              </button>;
+            })}
+          </div>
+
+          <div className={styles.catalogPanel} id="parts-catalog">
+            <div className={styles.catalogHead}><div><p className={styles.eyebrow}>KATALOG CZĘŚCI</p><h3>{componentCategoryLabels[activeCategory]}</h3></div><label className={styles.search}><span>⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Szukaj modelu" aria-label="Szukaj części" /></label></div>
+            <div className={`${styles.ownCatalogRow} ${activePart?.source === "own" ? styles.ownCatalogRowSelected : ""}`}>
+              <span className={styles.ownCatalogIcon}><PartCategoryIcon category={activeVisualCategory} /></span>
+              <span className={styles.ownCatalogCopy}><strong>Własna część</strong><small>Użyj posiadanego podzespołu. Nie doliczamy go do ceny zestawu.</small></span>
+              {activePart?.source === "own" ? <><span className={styles.ownCatalogStatus}>Mam własną ✓</span><button type="button" className={styles.ownCatalogRemove} onClick={() => updateParts(draft.components.filter((part) => part.category !== activeCategory))}>Usuń</button></> : <button type="button" className={styles.ownCatalogChoose} onClick={() => chooseOwnPart(activeCategory)}>Mam własną część</button>}
+            </div>
+            {canSuggestNextCategory && nextCategory && <div className={styles.nextPart}><span>Następny krok</span><button type="button" onClick={() => { activateCategory(nextCategory); focusCatalog(); }}>Dalej: {componentCategoryLabels[nextCategory]} <span aria-hidden="true">→</span></button></div>}
+            {loading ? <div className={styles.state}><span className={styles.spinner} /><strong>Pobieramy części z bazy</strong><span>Za chwilę pokażemy dostępne modele.</span></div> : catalogError ? <div className={styles.state}><span className={styles.stateIcon}>!</span><strong>Katalog jest chwilowo niedostępny</strong><span>{catalogError}</span><button type="button" className={styles.retry} onClick={() => void loadCatalog()}>Spróbuj ponownie ↗</button></div> : listedParts.length === 0 ? <div className={styles.state}><span className={styles.stateIcon}>⌕</span><strong>{catalog.length ? "Brak pasujących części" : "Baza nie zawiera jeszcze części"}</strong><span>{catalog.length ? "Zmień wyszukiwaną frazę albo wybierz inną kategorię." : "Gdy dodasz produkty do bazy, pojawią się tutaj."}</span></div> : <div className={styles.productList} role="region" aria-label="Wyniki katalogu części" tabIndex={0}>
+              {listedParts.map((part) => {
+                const isSelected = activePart?.id === part.id;
+                return <article key={part.id} className={`${styles.product} ${isSelected ? styles.productSelected : ""}`}><span className={styles.productIcon}>{categoryIcons[part.category]}</span><div className={styles.productInfo}><span className={styles.maker}>{part.manufacturer || componentCategoryLabels[part.category]}</span><strong>{part.name}</strong><p>{part.description || [part.socket && `Socket ${part.socket}`, part.memoryType].filter(Boolean).join(" · ") || "Szczegóły produktu nie są dostępne"}</p></div><div className={styles.productBuy}>{typeof part.price === "number" && Number.isFinite(part.price) ? <strong>{money(part.price)}</strong> : <strong className={styles.unknownPrice}>Brak ceny</strong>}<button type="button" onClick={() => choosePart(part)}>{isSelected ? "Wybrano ✓" : activePart ? "Zamień" : "Wybierz"}</button></div></article>;
+              })}
+            </div>}
+          </div>
+        </div>
+
+        <aside className={styles.summary}>
+          <div className={styles.summaryTop}><p className={styles.eyebrow}>02 / TWÓJ ZESTAW</p><span className={styles.countBadge}>{representedCategories} / 8</span></div>
+          <h2>Podsumowanie</h2>
+          <p className={styles.summaryIntro}>Wybrane podzespoły, suma cen i wstępna kontrola zestawu.</p>
+          <div className={styles.summaryRule} />
+          <div className={styles.totalRow}><span>Suma części z ceną</span><strong>{money(total)}</strong></div>
+          {(ownCount > 0 || missingPrices > 0) && <p className={styles.priceNote}>{[ownCount > 0 ? `Niewliczone: ${ownCount === 1 ? "część własna" : "części własne"}.` : "", missingPrices > 0 ? catalogError ? "Ceny zapisanych części są nieaktualne i nie są teraz wliczane." : `${missingPrices} ${missingPrices === 1 ? "część bez aktualnej ceny" : "części bez aktualnej ceny"} nie jest wliczana.` : ""].filter(Boolean).join(" ")}</p>}
+          <div className={styles.progressBlock}><div><span>Kompletność</span><strong>{Math.round(representedCategories / categories.length * 100)}%</strong></div><div className={styles.progressTrack}><i style={{ width: `${representedCategories / categories.length * 100}%` }} /></div><div className={styles.progressCaption}>{representedCategories === 8 ? "Wszystkie główne części dodane" : `Dodaj jeszcze ${8 - representedCategories} ${representedCategories === 7 ? "część" : "części"}`}</div></div>
+          <div className={styles.checks}><div className={styles.checkHead}><span>Wstępna kontrola</span><span className={styles.beta}>BETA</span></div>{checks.map((check) => <div key={check.title} className={styles.checkRow}><i className={`${styles.checkDot} ${check.state === "compatible" ? styles.checkGood : check.state === "warning" ? styles.checkWarn : ""}`} /><div><strong>{check.title}</strong><span>{check.detail}</span></div></div>)}<p className={styles.checkDisclaimer}>Kontrola obejmuje socket procesora i typ pamięci. Pozostałe parametry sprawdź przed zakupem.</p></div>
+        </aside>
+      </section>
       <dialog
         ref={savedDialogRef}
         className={`${styles.savedDialog} ${savedConfigurationDialog?.type === "delete" ? styles.savedDeleteDialog : ""}`}
@@ -769,6 +859,16 @@ export default function Configurator() {
           </header>
           {savedConfigurationDialog.type === "details" ? <>
             <div className={styles.savedDialogBody}>
+              <dl className={styles.savedDialogDates}>
+                <div>
+                  <dt>Utworzono</dt>
+                  <dd><time dateTime={savedConfigurationDialog.saved.createdAt}>{displayDate(savedConfigurationDialog.saved.createdAt)}</time></dd>
+                </div>
+                <div>
+                  <dt>Ostatni zapis</dt>
+                  <dd><time dateTime={savedConfigurationDialog.saved.updatedAt}>{displayDate(savedConfigurationDialog.saved.updatedAt)}</time></dd>
+                </div>
+              </dl>
               {savedConfigurationDialog.saved.description?.trim() && <p className={styles.savedDescription}>{savedConfigurationDialog.saved.description}</p>}
               <ul className={styles.savedPartsList}>{categories.map((category) => {
                 const part = savedConfigurationDialog.saved.components.find((item) => item.category === category);
@@ -793,65 +893,6 @@ export default function Configurator() {
         </>}
       </dialog>
 
-      <section className={styles.studio} aria-label="Interaktywny podgląd komputera">
-        <div className={styles.previewPane}><PcPreview selectedParts={previewParts} activeCategory={activeCategory} onSelectCategory={activateCategory} onCategoryThumbnail={receiveCategoryThumbnail} /></div>
-        <aside className={styles.stageInspector} aria-live="polite">
-          <div className={styles.inspectorHeader}><p className={styles.eyebrow}>AKTYWNY ELEMENT</p><span className={`${styles.inspectorBadge} ${activePart ? styles.inspectorBadgeChosen : ""}`}>{activePart ? "W ZESTAWIE" : "DO WYBORU"}</span></div>
-          <h2 className={styles.inspectorTitle}>{componentCategoryLabels[activeCategory]}</h2>
-          {activePart ? <><div className={`${styles.inspectorProduct} ${activePart.source === "own" ? styles.ownPartCard : ""}`}><span className={styles.productIcon}>{categoryIcons[activeCategory]}</span><div><small>{activePart.source === "own" ? "MAM WŁASNĄ CZĘŚĆ" : "WYBRANO"}</small><strong>{activePart.source === "own" ? `Własna część · ${componentCategoryLabels[activeCategory]}` : activePart.name}</strong>{activePart.source === "own" ? <span>Poza katalogiem i sumą ceny. Sprawdź parametry przed zakupem.</span> : activePart.manufacturer && <span>{activePart.manufacturer}</span>}</div></div><div className={styles.inspectorActions}><button type="button" className={styles.inspectorPrimary} onClick={focusCatalog}>Zobacz opcje z katalogu <span>↓</span></button><button type="button" className={styles.removePart} onClick={() => updateParts(draft.components.filter((part) => part.category !== activeCategory))}>Usuń wybraną część ×</button></div></> : <><div className={styles.inspectorEmpty}><span className={styles.focusPlus}>＋</span><div><strong>Jeszcze nie wybrano</strong><span>Kliknij model albo wybierz część z katalogu.</span></div></div><button type="button" className={styles.inspectorPrimary} onClick={() => chooseOwnPart(activeCategory)}>Mam własną część</button><button type="button" className={styles.inspectorPrimary} onClick={focusCatalog}>Dobierz {componentCategoryLabels[activeCategory].toLocaleLowerCase("pl-PL")} z katalogu <span>↓</span></button></>}
-          <div className={styles.categoryInfo} data-active-category={activeCategory}>
-            <div className={styles.categoryInfoArt}>
-              {categoryThumbnails[activeVisualCategory] ? <img src={categoryThumbnails[activeVisualCategory]} alt={`Poglądowy model kategorii: ${componentCategoryLabels[activeVisualCategory]}`} className={styles.categoryInfoModel} draggable={false} /> : <PartCategoryIcon category={activeVisualCategory} className={styles.categoryInfoIcon} />}
-              <span className={styles.categoryInfoHint}>MODEL POGLĄDOWY</span>
-            </div>
-            <div className={styles.categoryInfoCopy}>
-              <span>FUNKCJA CZĘŚCI</span>
-              <p>{categoryDescriptions[activeVisualCategory]}</p>
-            </div>
-          </div>
-          <div className={styles.modelLegend}><span><i className={styles.legendBright} /> Wybrano</span><span><i className={styles.legendDim} /> Do wyboru</span></div>
-        </aside>
-      </section>
-
-      <section className={styles.builder}>
-        <div className={styles.builderMain}>
-          <div className={styles.sectionHead}><div><p className={styles.eyebrow}>01 / PODZESPOŁY</p><h2>Wybierz część</h2></div><span className={styles.progress}>{representedCategories} <i>/ 8</i></span></div>
-          <div className={styles.categoryGrid} role="group" aria-label="Kategorie podzespołów">
-            {categories.map((category) => {
-              const part = selected.get(category);
-              return <button key={category} type="button" aria-pressed={activeCategory === category} className={`${styles.category} ${activeCategory === category ? styles.categoryActive : ""} ${part ? styles.categoryChosen : ""}`} onClick={() => activateCategory(category)}>
-                <span className={styles.categoryIcon}>{categoryIcons[category]}</span><span className={styles.categoryText}><strong>{componentCategoryLabels[category]}</strong><small>{part ? (part.source === "own" ? "Mam własną część" : part.name) : "Nie wybrano"}</small></span><span className={styles.categoryArrow}>{part ? "✓" : "＋"}</span>
-              </button>;
-            })}
-          </div>
-
-          <div className={styles.catalogPanel} id="parts-catalog">
-            <div className={styles.catalogHead}><div><p className={styles.eyebrow}>KATALOG CZĘŚCI</p><h3>{componentCategoryLabels[activeCategory]}</h3></div><label className={styles.search}><span>⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Szukaj modelu" aria-label="Szukaj części" /></label></div>
-            <div className={`${styles.ownCatalogRow} ${activePart?.source === "own" ? styles.ownCatalogRowSelected : ""}`}>
-              <span className={styles.ownCatalogIcon}><PartCategoryIcon category={activeVisualCategory} /></span>
-              <span className={styles.ownCatalogCopy}><strong>Własna część</strong><small>Użyj posiadanego podzespołu. Nie doliczamy go do ceny zestawu.</small></span>
-              {activePart?.source === "own" ? <><span className={styles.ownCatalogStatus}>Mam własną ✓</span><button type="button" className={styles.ownCatalogRemove} onClick={() => updateParts(draft.components.filter((part) => part.category !== activeCategory))}>Usuń</button></> : <button type="button" className={styles.ownCatalogChoose} onClick={() => chooseOwnPart(activeCategory)}>Mam własną część</button>}
-            </div>
-            {loading ? <div className={styles.state}><span className={styles.spinner} /><strong>Pobieramy części z bazy</strong><span>Za chwilę pokażemy dostępne modele.</span></div> : catalogError ? <div className={styles.state}><span className={styles.stateIcon}>!</span><strong>Katalog jest chwilowo niedostępny</strong><span>{catalogError}</span><button type="button" className={styles.retry} onClick={() => void loadCatalog()}>Spróbuj ponownie ↗</button></div> : listedParts.length === 0 ? <div className={styles.state}><span className={styles.stateIcon}>⌕</span><strong>{catalog.length ? "Brak pasujących części" : "Baza nie zawiera jeszcze części"}</strong><span>{catalog.length ? "Zmień wyszukiwaną frazę albo wybierz inną kategorię." : "Gdy dodasz produkty do bazy, pojawią się tutaj."}</span></div> : <div className={styles.productList}>
-              {listedParts.map((part) => {
-                const isSelected = activePart?.id === part.id;
-                return <article key={part.id} className={`${styles.product} ${isSelected ? styles.productSelected : ""}`}><span className={styles.productIcon}>{categoryIcons[part.category]}</span><div className={styles.productInfo}><span className={styles.maker}>{part.manufacturer || componentCategoryLabels[part.category]}</span><strong>{part.name}</strong><p>{part.description || [part.socket && `Socket ${part.socket}`, part.memoryType].filter(Boolean).join(" · ") || "Szczegóły produktu nie są dostępne"}</p></div><div className={styles.productBuy}>{typeof part.price === "number" && Number.isFinite(part.price) ? <strong>{money(part.price)}</strong> : <strong className={styles.unknownPrice}>Brak ceny</strong>}<button type="button" onClick={() => choosePart(part)}>{isSelected ? "Wybrano ✓" : activePart ? "Zamień" : "Wybierz"}</button></div></article>;
-              })}
-            </div>}
-          </div>
-        </div>
-
-        <aside className={styles.summary}>
-          <div className={styles.summaryTop}><p className={styles.eyebrow}>02 / TWÓJ ZESTAW</p><span className={styles.countBadge}>{representedCategories} / 8</span></div>
-          <h2>Podsumowanie</h2>
-          <p className={styles.summaryIntro}>Wybrane podzespoły, suma cen i wstępna kontrola zestawu.</p>
-          <div className={styles.summaryRule} />
-          <div className={styles.totalRow}><span>Suma części z ceną</span><strong>{money(total)}</strong></div>
-          {(ownCount > 0 || missingPrices > 0) && <p className={styles.priceNote}>{[ownCount > 0 ? `Niewliczone: ${ownCount === 1 ? "część własna" : "części własne"}.` : "", missingPrices > 0 ? catalogError ? "Ceny zapisanych części są nieaktualne i nie są teraz wliczane." : `${missingPrices} ${missingPrices === 1 ? "część bez aktualnej ceny" : "części bez aktualnej ceny"} nie jest wliczana.` : ""].filter(Boolean).join(" ")}</p>}
-          <div className={styles.progressBlock}><div><span>Kompletność</span><strong>{Math.round(representedCategories / categories.length * 100)}%</strong></div><div className={styles.progressTrack}><i style={{ width: `${representedCategories / categories.length * 100}%` }} /></div><div className={styles.progressCaption}>{representedCategories === 8 ? "Wszystkie główne części dodane" : `Dodaj jeszcze ${8 - representedCategories} ${representedCategories === 7 ? "część" : "części"}`}</div></div>
-          <div className={styles.checks}><div className={styles.checkHead}><span>Wstępna kontrola</span><span className={styles.beta}>BETA</span></div>{checks.map((check) => <div key={check.title} className={styles.checkRow}><i className={`${styles.checkDot} ${check.state === "compatible" ? styles.checkGood : check.state === "warning" ? styles.checkWarn : ""}`} /><div><strong>{check.title}</strong><span>{check.detail}</span></div></div>)}<p className={styles.checkDisclaimer}>Kontrola obejmuje socket procesora i typ pamięci. Pozostałe parametry sprawdź przed zakupem.</p></div>
-        </aside>
-      </section>
       <p className={styles.footnote}>Ceny i dostępność pochodzą z katalogu bazy danych. Model komputera jest wizualizacją poglądową.</p>
     </div>
   );

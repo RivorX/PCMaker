@@ -84,7 +84,7 @@ test("reads the previous working-draft format for explicit recovery", () => {
 
 test("preserves optional descriptions while keeping older drafts valid", () => {
   assert.equal(MAX_CONFIGURATION_DESCRIPTION_LENGTH, 300);
-  assert.equal(MAX_SAVED_CONFIGURATIONS, 4);
+  assert.equal(MAX_SAVED_CONFIGURATIONS, 8);
   assert.equal(parseConfigurationDraft(JSON.stringify(draft))?.description, "");
 
   const describedDraft = { ...draft, description: "Komputer do pracy i gier" };
