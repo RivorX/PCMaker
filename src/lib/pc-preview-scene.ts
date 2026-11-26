@@ -255,7 +255,12 @@ function markMaterials(
           if (hasStandardSurface) {
             if (materialIsGlass) {
               physical.metalness = 0;
-              physical.roughness = Math.max(physical.roughness, 0.42);
+              physical.roughness = Math.min(physical.roughness, 0.16);
+              physical.envMapIntensity = Math.max(physical.envMapIntensity, 1.5);
+              if (physical instanceof THREE.MeshPhysicalMaterial) {
+                physical.clearcoat = Math.max(physical.clearcoat, 0.7);
+                physical.clearcoatRoughness = Math.min(physical.clearcoatRoughness, 0.1);
+              }
               if ("transmission" in physical) physical.transmission = 0;
             } else if ((category === "motherboard" || category === "gpu") && /pcb|fr.?4|laminate|solder mask/i.test(materialName)) {
               // Board finishes and solder masks are matte; their source roughness
@@ -296,7 +301,7 @@ function markMaterials(
             isGlass: materialIsGlass,
           };
           if (materialIsGlass) {
-            state.opacity = Math.min(state.opacity, 0.1);
+            state.opacity = Math.min(state.opacity, 0.24);
             state.transparent = true;
             state.depthWrite = false;
             if (material.side !== THREE.DoubleSide) {
@@ -444,7 +449,7 @@ export async function createPcPreviewScene(
     key.shadow.camera.top = 1.5;
     key.shadow.camera.bottom = -1.5;
     scene.add(key);
-    const rim = new THREE.DirectionalLight(0x83c9c5, isMobileQuality ? 0.4 : 0.48);
+    const rim = new THREE.DirectionalLight(0xb5c4d1, isMobileQuality ? 0.24 : 0.32);
     rim.position.set(-3, 2.2, -3.2);
     scene.add(rim);
     const warm = new THREE.PointLight(0xe6b77d, isMobileQuality ? 0.45 : 0.55, 2.5, 2);
