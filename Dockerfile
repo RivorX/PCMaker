@@ -3,13 +3,14 @@
 FROM node:24-alpine AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
+COPY src/lib/dataconnect-generated ./src/lib/dataconnect-generated
 RUN npm ci
 
 FROM node:24-alpine AS builder
 WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN --mount=type=secret,id=firebase_build_env,target=/app/.env.local,required=true npm run build
 
 FROM node:24-alpine AS runner
 WORKDIR /app

@@ -19,10 +19,12 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [isAdminSession, setIsAdminSession] = useState(
     () => pathname.startsWith("/admin")
   );
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     if (pathname === "/") {
       setIsAdminSession(false);
+      setIsAuthenticated(false);
       return;
     }
 
@@ -39,14 +41,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
       .then((data) => {
         if (controller.signal.aborted) return;
 
-        setIsAdminSession(
-          data?.authenticated === true &&
-          data?.user?.role === "ADMIN"
-        );
+        setIsAuthenticated(data?.authenticated === true && data?.user?.canSaveConfigurations === true);
+        setIsAdminSession(data?.authenticated === true && data?.user?.role === "ADMIN");
       })
       .catch(() => {
         if (!controller.signal.aborted) {
           setIsAdminSession(false);
+          setIsAuthenticated(false);
         }
       });
 
@@ -113,10 +114,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
             <span className="status-dot" />
             <div>
               <strong>
-                {isAdminMode ? "Sesja administratora" : "Tryb roboczy"}
+                {isAdminMode ? "Sesja administratora" : isAuthenticated ? "Konto użytkownika" : "Tryb gościa"}
               </strong>
               <small>
-                {isAdminMode ? "Uwierzytelnianie JWT" : "Dane lokalne, bez konta"}
+                {isAdminMode ? "Konto administratora" : isAuthenticated ? "Zestawy zapisane w Firebase" : "Zaloguj się, aby zapisywać"}
               </small>
             </div>
           </div>
@@ -125,10 +126,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
             <span className="avatar">{isAdminMode ? "AD" : "TY"}</span>
             <span>
               <strong>
-                {isAdminMode ? "Administrator" : "Twój workspace"}
+                {isAdminMode ? "Administrator" : isAuthenticated ? "Twoje konto" : "Tryb gościa"}
               </strong>
               <small>
-                {isAdminMode ? "PCMaker Admin" : "wersja demonstracyjna"}
+                {isAdminMode ? "PCMaker Admin" : isAuthenticated ? "Zapis zestawów online" : "Zestawy po zalogowaniu"}
               </small>
             </span>
           </div>
@@ -152,7 +153,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
           <div className="topbar-actions">
             <span className="environment-pill">
-              <span className="status-dot" /> szkic lokalny
+              <span className="status-dot" />{isAdminMode ? "sesja administratora" : isAuthenticated ? "konto aktywne" : "wymagane logowanie"}
             </span>
 
             <form

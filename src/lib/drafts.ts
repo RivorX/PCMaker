@@ -1,6 +1,7 @@
 export const CONFIGURATION_DRAFT_VERSION = 1;
 export const SERVICE_DRAFT_VERSION = 1;
-const CONFIGURATION_STORAGE_KEY = "pcmaker:configuration-draft:v1";
+export const CONFIGURATION_STORAGE_KEY = "pcmaker:configuration-draft:v1";
+export const MAX_CONFIGURATION_DESCRIPTION_LENGTH = 300;
 const SERVICE_STORAGE_KEY = "pcmaker:service-draft:v1";
 
 export type ComponentCategory =
@@ -30,14 +31,20 @@ export interface ManualComponent {
   id: string;
   category: ComponentCategory;
   name: string;
+  source?: "catalog" | "own";
   socket: string;
   memoryType: string;
   note: string;
+  /** Snapshot of the catalog data, retained when a product is no longer available. */
+  manufacturer?: string;
+  description?: string;
+  price?: number | null;
 }
 
 export interface ConfigurationDraft {
   version: typeof CONFIGURATION_DRAFT_VERSION;
   title: string;
+  description?: string;
   components: ManualComponent[];
   updatedAt: string;
 }
@@ -54,6 +61,7 @@ export interface ServiceDraft {
 export const emptyConfigurationDraft = (): ConfigurationDraft => ({
   version: CONFIGURATION_DRAFT_VERSION,
   title: "Mój zestaw",
+  description: "",
   components: [],
   updatedAt: new Date().toISOString(),
 });
@@ -81,9 +89,13 @@ const isManualComponent = (value: unknown): value is ManualComponent => {
     isString(value.id) &&
     isComponentCategory(value.category) &&
     isString(value.name) &&
+    (value.source === undefined || value.source === "catalog" || value.source === "own") &&
     isString(value.socket) &&
     isString(value.memoryType) &&
-    isString(value.note)
+    isString(value.note) &&
+    (value.manufacturer === undefined || isString(value.manufacturer)) &&
+    (value.description === undefined || isString(value.description)) &&
+    (value.price === undefined || value.price === null || (typeof value.price === "number" && Number.isFinite(value.price) && value.price >= 0))
   );
 };
 
@@ -94,9 +106,11 @@ export const parseConfigurationDraft = (raw: string | null): ConfigurationDraft 
     if (!isRecord(parsed) || parsed.version !== CONFIGURATION_DRAFT_VERSION) return null;
     if (!isString(parsed.title) || !Array.isArray(parsed.components)) return null;
     if (!parsed.components.every(isManualComponent)) return null;
+    if (parsed.description !== undefined && (!isString(parsed.description) || parsed.description.length > MAX_CONFIGURATION_DESCRIPTION_LENGTH)) return null;
     return {
       version: CONFIGURATION_DRAFT_VERSION,
       title: parsed.title.slice(0, 80),
+      description: typeof parsed.description === "string" ? parsed.description : "",
       components: parsed.components.slice(0, 30),
       updatedAt: isString(parsed.updatedAt) ? parsed.updatedAt : new Date().toISOString(),
     };

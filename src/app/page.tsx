@@ -4,6 +4,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { hasGuestConfigurationDraft, readConfigurationHandoff } from "@/lib/configuration-handoff";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -87,7 +88,23 @@ export default function LoginPage() {
         return;
       }
 
-      router.replace(result.role === "ADMIN" ? "/admin" : "/home");
+      const returnTo = new URLSearchParams(window.location.search).get("returnTo");
+      const accountCanSaveConfigurations = result.accountBacked === true;
+      let hasLocalDraft = false;
+      if (accountCanSaveConfigurations) {
+        try {
+          hasLocalDraft = hasGuestConfigurationDraft(window.localStorage);
+          if (!hasLocalDraft) hasLocalDraft = readConfigurationHandoff(window.sessionStorage) !== null;
+        } catch {
+          // Keep the normal post-login destination when browser storage is unavailable.
+        }
+      }
+      const destination = accountCanSaveConfigurations && (returnTo === "/konfigurator" || hasLocalDraft)
+        ? "/konfigurator"
+        : result.role === "ADMIN"
+          ? "/admin"
+          : "/home";
+      router.replace(destination);
       router.refresh();
     } catch {
       setMessage("Nie udało się połączyć z serwerem. Spróbuj ponownie.");

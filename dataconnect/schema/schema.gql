@@ -161,6 +161,9 @@ type PcConfiguration @table(name: "pc_configurations") {
   totalPrice: Float! @default(value: 0.0) @col(name: "total_price", dataType: "decimal(12,2)")
   estimatedPerformance: Float @col(name: "estimated_performance", dataType: "decimal(10,2)")
   isPublic: Boolean! @default(value: false) @col(name: "is_public")
+  # Nullable so existing and public configurations remain unchanged. The app
+  # stores the complete draft here because not every part has a catalog UUID.
+  savedSnapshot: Any @col(name: "saved_snapshot")
   createdAt: Timestamp! @default(expr: "request.time") @col(name: "created_at")
   updatedAt: Timestamp @col(name: "updated_at")
 }

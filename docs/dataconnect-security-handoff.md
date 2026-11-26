@@ -73,3 +73,26 @@ firebase dataconnect:sdk:generate --service pcmaker-service --location europe-ce
 ```
 
 Następnie sprawdź aplikację poleceniami `npm run typecheck` i `npm run build`.
+
+## Wdrożenie prywatnych zapisanych zestawów
+
+`PcConfiguration.savedSnapshot` jest opcjonalnym polem `Any`, przechowywanym
+przez Data Connect jako JSONB. Nowe wpisy mają `isPublic: false` i zapisują
+pełny szkic zestawu, w tym własne części i ceny nieznane. Operacje biblioteki
+są `NO_ACCESS` i wywołuje je wyłącznie serwer aplikacji po sprawdzeniu sesji
+oraz własności wpisu. Pole jest nullable, więc istniejące konfiguracje
+pozostają czytelne.
+
+Przed włączeniem nowych endpointów sprawdź migrację i wdroż schemat wraz z
+konektorem dla skonfigurowanego projektu oraz usługi:
+
+```powershell
+firebase --project pcmaker-b0b0a dataconnect:sql:diff --service pcmaker-service --location europe-central2
+firebase --project pcmaker-b0b0a deploy --only dataconnect:pcmaker-service
+firebase dataconnect:sdk:generate --service pcmaker-service --location europe-central2
+```
+
+Przed zatwierdzeniem migracji sprawdź, że dodaje nullable `saved_snapshot`
+bez usuwania ani przebudowywania istniejących danych. Wdróż ten schemat i
+konektor przed aplikacją korzystającą z nowych operacji. Wdrożenie wykonuj bez
+flagi `--force`.
