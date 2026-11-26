@@ -89,7 +89,7 @@
 .categoryInfoArt { position: relative; display: grid; min-height: 146px; place-items: center; overflow: hidden; border: 1px solid rgba(113,204,197,.18); border-radius: 11px; background: radial-gradient(ellipse at 50% 58%, rgba(39,131,128,.22), transparent 68%), linear-gradient(150deg, rgba(20,48,66,.75), rgba(12,29,44,.48)); }
 .categoryInfoArt::after { position: absolute; right: 12%; bottom: 13px; left: 12%; height: 1px; background: linear-gradient(90deg, transparent, rgba(104,207,198,.28), transparent); content: ""; }
 .categoryInfoIcon { width: min(100%, 166px); height: 120px; filter: drop-shadow(0 7px 12px rgba(54,188,176,.12)); }
-.categoryInfoModel { position: relative; z-index: 1; width: min(100%, 100%); height: 142px; object-fit: contain; filter: drop-shadow(0 7px 12px rgba(54,188,176,.12)); }
+.categoryThumbnail { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; box-sizing: border-box; padding: 8px; object-fit: contain; pointer-events: none; }
 .categoryInfoHint { position: absolute; top: 10px; right: 11px; color: #82a6b2; font-size: 7px; font-weight: 850; letter-spacing: 1px; }
 .categoryInfoCopy { display: grid; gap: 5px; }
 .categoryInfoCopy > span { color: #79cfc6; font-size: 8px; font-weight: 850; letter-spacing: 1.05px; }
@@ -97,14 +97,12 @@
 @media(max-width:1050px) {
   .categoryInfoArt { min-height: 136px; }
   .categoryInfoIcon { width: min(100%, 150px); height: 112px; }
-  .categoryInfoModel { height: 130px; }
 }
 @media(max-width:760px) {
   .categoryInfo { display: grid; grid-template-columns: 62px minmax(0,1fr); align-items: center; gap: 13px; flex: 0 0 auto; margin-top: 22px; }
   .categoryInfoArt { width: 62px; min-height: 62px; height: 62px; border-radius: 10px; }
   .categoryInfoArt::after, .categoryInfoHint { display: none; }
   .categoryInfoIcon { width: 58px; height: 50px; }
-  .categoryInfoModel { width: 60px; height: 58px; }
   .categoryInfoCopy { gap: 4px; }
   .categoryInfoCopy > span { font-size: 8px; }
   .categoryInfoCopy p { font-size: 10px; line-height: 1.45; }
@@ -113,7 +111,6 @@
   .categoryInfo { grid-template-columns: 54px minmax(0,1fr); gap: 10px; margin-top: 18px; }
   .categoryInfoArt { width: 54px; min-height: 54px; height: 54px; }
   .categoryInfoIcon { width: 50px; height: 44px; }
-  .categoryInfoModel { width: 52px; height: 50px; }
 }
 
 .savedLibrary { margin: 0 0 18px; padding: 15px 17px 14px; border: 1px solid #dce7eb; border-radius: 13px; background: linear-gradient(145deg,#fff 0%,#f7fbfb 100%); box-shadow: 0 7px 22px rgba(24,46,68,.05); }

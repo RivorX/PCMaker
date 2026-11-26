@@ -15,6 +15,7 @@ import {
   type PcMechanicalPlan,
   type PcMechanicalPose,
 } from "@/lib/pc-mechanical-layout";
+import { batchPcPreviewMeshes } from "@/lib/pc-preview-batching";
 
 export type PcPreviewTransform = PcMechanicalPose;
 
@@ -33,13 +34,6 @@ type ModelMaterialState = {
   emissive: THREE.Color | null;
   emissiveIntensity: number;
   isGlass: boolean;
-  thumbnailOpacity: number;
-  thumbnailTransparent: boolean;
-  thumbnailDepthWrite: boolean;
-  thumbnailSide: THREE.Side;
-  thumbnailColor: THREE.Color | null;
-  thumbnailEmissive: THREE.Color | null;
-  thumbnailEmissiveIntensity: number;
 };
 
 export type PcPreviewRuntime = {
@@ -57,7 +51,6 @@ export type PcPreviewRuntime = {
   zoomMultiplier: number;
   setZoomMultiplier: (value: number, minimum?: number) => void;
   invalidate: () => void;
-  getCategoryThumbnail: (category: ComponentCategory) => string | null;
   applyAppearance: (selected: ComponentCategory[], active: ComponentCategory, fullPreview: boolean) => void;
   dispose: () => void;
 };
@@ -83,9 +76,43 @@ export class PcPreviewSceneError extends Error {
   }
 }
 
+function updateCameraDepthRange(
+  camera: THREE.PerspectiveCamera,
+  bounds: THREE.Box3,
+  margin: number,
+  point: THREE.Vector3,
+  direction: THREE.Vector3,
+  minimumFar = 0,
+): void {
+  camera.getWorldDirection(direction);
+  let nearestDepth = Number.POSITIVE_INFINITY;
+  let farthestDepth = Number.NEGATIVE_INFINITY;
+
+  for (let corner = 0; corner < 8; corner += 1) {
+    point.set(
+      corner & 1 ? bounds.max.x : bounds.min.x,
+      corner & 2 ? bounds.max.y : bounds.min.y,
+      corner & 4 ? bounds.max.z : bounds.min.z,
+    ).sub(camera.position);
+    const depth = point.dot(direction);
+    nearestDepth = Math.min(nearestDepth, depth);
+    farthestDepth = Math.max(farthestDepth, depth);
+  }
+
+  const near = Math.max(0.001, nearestDepth - margin);
+  const far = Math.max(near + 0.1, farthestDepth + margin, minimumFar);
+  if (Math.abs(camera.near - near) < 0.001 && Math.abs(camera.far - far) < 0.01) return;
+  camera.near = near;
+  camera.far = far;
+  camera.updateProjectionMatrix();
+}
+
 const categories: PcModelCategory[] = ["case", "motherboard", "cpu", "memory", "gpu", "storage", "psu", "cooling"];
 const minZoomMultiplier = 0.62;
 const maxZoomMultiplier = 1.35;
+const dielectricSurfaceHints = /plastic|rubber|powder.?coat|coated steel|pcb|solder|fr.?4|laminate|label|sticker|cavity|diffuser|fan blades|frosted|paint|nylon/i;
+const metalSurfaceHints = /steel|alumin(?:ium|um)|copper|nickel|zinc|brass|gold|plated|metal|contacts?|screws?|heat pipes?|fins?|heatsink|capacitor can/i;
+const glassSurfaceHints = /glass|window|tempered|transmissive/i;
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const smoothStep = (value: number) => {
@@ -123,7 +150,9 @@ function disposeSceneResources(scene: THREE.Scene): void {
 function findNamedObject(root: THREE.Object3D, pattern: RegExp): THREE.Object3D | null {
   let match: THREE.Object3D | null = null;
   root.traverse((object) => {
-    if (!match && pattern.test(object.name)) match = object;
+    const normalizedName = object.name.replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+    pattern.lastIndex = 0;
+    if (!match && pattern.test(normalizedName)) match = object;
   });
   return match;
 }
@@ -131,6 +160,55 @@ function findNamedObject(root: THREE.Object3D, pattern: RegExp): THREE.Object3D 
 function boundsOf(root: THREE.Object3D): THREE.Box3 {
   root.updateWorldMatrix(true, true);
   return new THREE.Box3().setFromObject(root);
+}
+
+/** Split the one expansion blank aligned with the GPU I/O block out of the case's merged mesh. */
+function splitGpuSlotCover(caseGroup: THREE.Group, gpuGroup: THREE.Group): THREE.Mesh | null {
+  const cover = findNamedObject(caseGroup, /^Expansion slot covers 1$/i) as THREE.Mesh | null;
+  const outputs = findNamedObject(gpuGroup, /^Display output receptacles$/i);
+  const position = cover?.geometry.getAttribute("position");
+  const index = cover?.geometry.index;
+  if (!cover?.parent || !position || !index || !outputs) return null;
+
+  const outputCenterY = boundsOf(outputs).getCenter(new THREE.Vector3()).y;
+  const coverIndices: number[] = [];
+  const remainingIndices: number[] = [];
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  const c = new THREE.Vector3();
+  const world = cover.matrixWorld;
+  // Adjacent blank rows are about 20 mm apart; this window keeps the target
+  // row's folded edges while leaving every neighboring row in the case mesh.
+  const rowHalfHeight = 0.012;
+  for (let offset = 0; offset < index.count; offset += 3) {
+    a.fromBufferAttribute(position, index.getX(offset)).applyMatrix4(world);
+    b.fromBufferAttribute(position, index.getX(offset + 1)).applyMatrix4(world);
+    c.fromBufferAttribute(position, index.getX(offset + 2)).applyMatrix4(world);
+    const rowAligned = Math.abs((a.y + b.y + c.y) / 3 - outputCenterY) <= rowHalfHeight;
+    const destination = rowAligned ? coverIndices : remainingIndices;
+    destination.push(index.getX(offset), index.getX(offset + 1), index.getX(offset + 2));
+  }
+  if (!coverIndices.length || !remainingIndices.length) return null;
+
+  const makeGeometry = (indices: number[]) => {
+    const geometry = cover.geometry.clone();
+    const values = index.array.slice(0, indices.length);
+    indices.forEach((value, index) => { values[index] = value; });
+    geometry.setIndex(new THREE.BufferAttribute(values, 1));
+    geometry.clearGroups();
+    geometry.computeBoundingBox();
+    geometry.computeBoundingSphere();
+    return geometry;
+  };
+
+  const originalGeometry = cover.geometry;
+  cover.geometry = makeGeometry(remainingIndices);
+  const row = cover.clone(false);
+  row.name = "Expansion slot GPU cover row";
+  row.geometry = makeGeometry(coverIndices);
+  cover.parent.add(row);
+  originalGeometry.dispose();
+  return row;
 }
 
 function centeredAsset(part: LoadedPcPart, rotation: THREE.Quaternion, unitScale: number): THREE.Box3 {
@@ -150,7 +228,7 @@ function markMaterials(
   materialStates: Map<THREE.Material, ModelMaterialState>,
 ): void {
   const visit = (object: THREE.Object3D, insideGlass = false) => {
-    const isGlass = insideGlass || (category === "case" && /glass|window|tempered/i.test(object.name));
+    const isGlass = insideGlass || (category === "case" && glassSurfaceHints.test(object.name));
     object.userData.category = category;
     if (isGlass) object.userData.raycastIgnored = true;
     const mesh = object as THREE.Mesh;
@@ -159,14 +237,11 @@ function markMaterials(
       for (const material of list) {
         if (!materialStates.has(material)) {
           const physical = material as THREE.MeshStandardMaterial;
+          const hasStandardSurface = physical.isMeshStandardMaterial === true;
           const hasEmissive = physical.emissive instanceof THREE.Color;
-          const thumbnailOpacity = material.opacity;
-          const thumbnailTransparent = material.transparent;
-          const thumbnailDepthWrite = material.depthWrite;
-          const thumbnailSide = material.side;
-          const thumbnailColor = physical.color instanceof THREE.Color ? physical.color.clone() : null;
-          const thumbnailEmissive = hasEmissive ? physical.emissive.clone() : null;
-          const thumbnailEmissiveIntensity = hasEmissive ? physical.emissiveIntensity : 0;
+          const materialName = `${object.name} ${material.name}`;
+          const materialIsGlass = isGlass || (category === "case" && glassSurfaceHints.test(material.name));
+          if (materialIsGlass) object.userData.raycastIgnored = true;
           if (category === "memory" && /ram-stick_body/i.test(object.name) && physical.color instanceof THREE.Color) {
             physical.color.multiply(new THREE.Color(0.5, 0.57, 0.6));
           }
@@ -177,26 +252,57 @@ function markMaterials(
               physical.emissiveIntensity = Math.max(physical.emissiveIntensity, 0.3);
             }
           }
+          if (hasStandardSurface) {
+            if (materialIsGlass) {
+              physical.metalness = 0;
+              physical.roughness = Math.max(physical.roughness, 0.42);
+              if ("transmission" in physical) physical.transmission = 0;
+            } else if ((category === "motherboard" || category === "gpu") && /pcb|fr.?4|laminate|solder mask/i.test(materialName)) {
+              // Board finishes and solder masks are matte; their source roughness
+              // values are too low for a studio-lit assembled preview.
+              physical.metalness = 0;
+              physical.roughness = Math.max(physical.roughness, 0.8);
+            } else if ((category === "motherboard" || category === "gpu") && /gold.?plated contacts?/i.test(materialName)) {
+              // Keep connector contacts metallic while softening sharp glints.
+              physical.metalness = Math.min(physical.metalness, 0.42);
+              physical.roughness = Math.max(physical.roughness, 0.4);
+            } else if ((category === "motherboard" || category === "gpu") && metalSurfaceHints.test(materialName)) {
+              // Brushed backplates and heatsinks should read as metal without
+              // reflecting the studio as bright, mirror-like streaks.
+              physical.metalness = Math.min(physical.metalness, 0.2);
+              physical.roughness = Math.max(physical.roughness, 0.6);
+            } else if (category === "motherboard" || category === "gpu") {
+              // Connector housings, shrouds, fan parts, and chip packages are
+              // mostly molded or coated surfaces rather than polished metal.
+              physical.metalness = 0;
+              physical.roughness = Math.max(physical.roughness, 0.7);
+            } else if (dielectricSurfaceHints.test(materialName)) {
+              physical.metalness = 0;
+              physical.roughness = Math.max(physical.roughness, 0.62);
+            } else if (metalSurfaceHints.test(materialName)) {
+              physical.metalness = Math.min(physical.metalness, 0.34);
+              physical.roughness = Math.max(physical.roughness, 0.52);
+            } else {
+              physical.metalness = 0;
+              physical.roughness = Math.max(physical.roughness, 0.62);
+            }
+          }
           const state: ModelMaterialState = {
             opacity: material.opacity,
             transparent: material.transparent,
             depthWrite: material.depthWrite,
             emissive: hasEmissive ? physical.emissive.clone() : null,
             emissiveIntensity: hasEmissive ? physical.emissiveIntensity : 0,
-            isGlass,
-            thumbnailOpacity,
-            thumbnailTransparent,
-            thumbnailDepthWrite,
-            thumbnailSide,
-            thumbnailColor,
-            thumbnailEmissive,
-            thumbnailEmissiveIntensity,
+            isGlass: materialIsGlass,
           };
-          if (isGlass) {
-            state.opacity = Math.min(state.opacity, 0.16);
+          if (materialIsGlass) {
+            state.opacity = Math.min(state.opacity, 0.1);
             state.transparent = true;
             state.depthWrite = false;
-            material.side = THREE.DoubleSide;
+            if (material.side !== THREE.DoubleSide) {
+              material.side = THREE.DoubleSide;
+              material.needsUpdate = true;
+            }
           }
           materialStates.set(material, state);
         }
@@ -205,6 +311,28 @@ function markMaterials(
     for (const child of object.children) visit(child, isGlass);
   };
   visit(root);
+}
+
+async function waitForPreviewVisibility(host: HTMLElement, signal: AbortSignal): Promise<void> {
+  if (signal.aborted) throw new PcPreviewSceneError("assets");
+  if (typeof IntersectionObserver === "undefined") return;
+
+  await new Promise<void>((resolve, reject) => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.target === host && entry.isIntersecting)) finish();
+    });
+    const abort = () => {
+      observer.disconnect();
+      reject(new PcPreviewSceneError("assets"));
+    };
+    const finish = () => {
+      observer.disconnect();
+      signal.removeEventListener("abort", abort);
+      resolve();
+    };
+    signal.addEventListener("abort", abort, { once: true });
+    observer.observe(host);
+  });
 }
 
 export async function createPcPreviewScene(
@@ -216,6 +344,7 @@ export async function createPcPreviewScene(
   let controls: OrbitControls | null = null;
   let scene: THREE.Scene | null = null;
   let resizeObserver: ResizeObserver | null = null;
+  let intersectionObserver: IntersectionObserver | null = null;
   let environmentTarget: THREE.WebGLRenderTarget | null = null;
   let roomEnvironment: RoomEnvironment | null = null;
   let pmrem: THREE.PMREMGenerator | null = null;
@@ -225,6 +354,7 @@ export async function createPcPreviewScene(
   let pointerStart: { x: number; y: number; id: number; maxDistance: number } | null = null;
   let animationFrameId: number | null = null;
   let requestRender: () => void = () => {};
+  let isInViewport = true;
   let orbitChangePending = false;
   let orbitChangeHandler: (() => void) | null = null;
   let renderingFrame = false;
@@ -234,11 +364,14 @@ export async function createPcPreviewScene(
   let orbitStartHandler: (() => void) | null = null;
   let resizeFitPending = false;
   let resizeLimitsPending = false;
+  let viewportWidth = 1;
+  let viewportHeight = 1;
 
   const dispose = () => {
     if (isDisposed) return;
     isDisposed = true;
     resizeObserver?.disconnect();
+    intersectionObserver?.disconnect();
     if (controls && orbitStartHandler) controls.removeEventListener("start", orbitStartHandler);
     if (controls && orbitChangeHandler) controls.removeEventListener("change", orbitChangeHandler);
     if (visibilityHandler) document.removeEventListener("visibilitychange", visibilityHandler);
@@ -257,27 +390,31 @@ export async function createPcPreviewScene(
   };
 
   try {
+    await waitForPreviewVisibility(host, options.signal);
+    viewportWidth = Math.max(1, host.clientWidth);
+    viewportHeight = Math.max(1, host.clientHeight);
+    const isMobileQuality = window.matchMedia("(max-width: 760px), (pointer: coarse)").matches;
     try {
-      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
+      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: !isMobileQuality, powerPreference: "high-performance" });
     } catch {
       throw new PcPreviewSceneError("webgl");
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(Math.max(1, host.clientWidth), Math.max(1, host.clientHeight), false);
+    renderer.setPixelRatio(isMobileQuality ? 1 : Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.setSize(viewportWidth, viewportHeight, false);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
-    renderer.shadowMap.enabled = true;
+    renderer.toneMappingExposure = 1;
+    renderer.shadowMap.enabled = !isMobileQuality;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.shadowMap.autoUpdate = false;
-    renderer.shadowMap.needsUpdate = true;
+    renderer.shadowMap.needsUpdate = !isMobileQuality;
     renderer.domElement.setAttribute("aria-hidden", "true");
     host.appendChild(renderer.domElement);
 
     scene = new THREE.Scene();
     const studioFog = new THREE.Fog(0x101c2d, 1, 8);
     scene.fog = studioFog;
-    const camera = new THREE.PerspectiveCamera(36, Math.max(1, host.clientWidth) / Math.max(1, host.clientHeight), 0.001, 120);
+    const camera = new THREE.PerspectiveCamera(36, viewportWidth / viewportHeight, 0.001, 120);
     const assembledDirection = new THREE.Vector3(4.55, 2.81, 5.2).normalize();
     camera.position.copy(assembledDirection).multiplyScalar(1.8);
     const orbit = new OrbitControls(camera, renderer.domElement);
@@ -297,30 +434,32 @@ export async function createPcPreviewScene(
     orbitStartHandler = () => { options.onOrbitStart(); requestRender(); };
     orbit.addEventListener("start", orbitStartHandler);
 
-    scene.add(new THREE.HemisphereLight(0xdce9f6, 0x182230, 1.2));
-    const key = new THREE.DirectionalLight(0xf4f6fa, 2.4);
+    scene.add(new THREE.HemisphereLight(0xdce9f6, 0x182230, isMobileQuality ? 1.05 : 1.1));
+    const key = new THREE.DirectionalLight(0xf4f6fa, 2);
     key.position.set(3.5, 5.5, 4.5);
-    key.castShadow = true;
+    key.castShadow = !isMobileQuality;
     key.shadow.mapSize.set(1024, 1024);
     key.shadow.camera.left = -1.5;
     key.shadow.camera.right = 1.5;
     key.shadow.camera.top = 1.5;
     key.shadow.camera.bottom = -1.5;
     scene.add(key);
-    const rim = new THREE.DirectionalLight(0x83c9c5, 0.9);
+    const rim = new THREE.DirectionalLight(0x83c9c5, isMobileQuality ? 0.4 : 0.48);
     rim.position.set(-3, 2.2, -3.2);
     scene.add(rim);
-    const warm = new THREE.PointLight(0xe6b77d, 1.2, 2.5, 2);
+    const warm = new THREE.PointLight(0xe6b77d, isMobileQuality ? 0.45 : 0.55, 2.5, 2);
     warm.position.set(-0.27, 0.2, 0.42);
     scene.add(warm);
 
-    pmrem = new THREE.PMREMGenerator(renderer);
-    roomEnvironment = new RoomEnvironment();
-    environmentTarget = pmrem.fromScene(roomEnvironment, 0.04);
-    scene.environment = environmentTarget.texture;
-    scene.environmentIntensity = 0.72;
-    roomEnvironment.dispose();
-    roomEnvironment = null;
+    if (!isMobileQuality) {
+      pmrem = new THREE.PMREMGenerator(renderer);
+      roomEnvironment = new RoomEnvironment();
+      environmentTarget = pmrem.fromScene(roomEnvironment, 0.04);
+      scene.environment = environmentTarget.texture;
+      roomEnvironment.dispose();
+      roomEnvironment = null;
+    }
+    scene.environmentIntensity = isMobileQuality ? 0 : 0.28;
 
     const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x0d1723, metalness: 0.18, roughness: 0.68, transparent: true, opacity: 0.45 });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), floorMaterial);
@@ -391,6 +530,25 @@ export async function createPcPreviewScene(
     memoryGroup.add(secondMemory);
     const mechanicalPlan: PcMechanicalPlan = preparePcMechanicalLayout(groups, localBoundsByCategory);
     sceneRoot.updateMatrixWorld(true);
+    const gpuSlotCoverRow = splitGpuSlotCover(groups.get("case")!, groups.get("gpu")!);
+    sceneRoot.updateMatrixWorld(true);
+    const hasShadowCasters = [...groups.values()].some((group) => {
+      let foundCaster = false;
+      group.traverse((object) => {
+        if ((object as THREE.Mesh).isMesh && object.castShadow) foundCaster = true;
+      });
+      return foundCaster;
+    });
+    if (isMobileQuality || !hasShadowCasters) {
+      renderer.shadowMap.enabled = false;
+      renderer.shadowMap.needsUpdate = false;
+      key.castShadow = false;
+      floor.receiveShadow = false;
+    }
+    const setCategoryBatched = batchPcPreviewMeshes(groups, [
+      mechanicalPlan.panel.object,
+      ...(gpuSlotCoverRow ? [gpuSlotCoverRow] : []),
+    ]);
     const geometry = new Map<PcModelCategory, PcPreviewGeometry>();
     const gridPoses = new Map<PcModelCategory, PcMechanicalPose>();
     for (const category of categories) {
@@ -449,7 +607,8 @@ export async function createPcPreviewScene(
       return columns;
     };
 
-    let gridColumns = setGridTargets(Math.max(1, host.clientWidth), Math.max(1, host.clientHeight));
+    let gridColumns = setGridTargets(viewportWidth, viewportHeight);
+    let gridLayoutDirty = false;
     const raycaster = new THREE.Raycaster();
     raycaster.params.Line = { threshold: 0.01 };
     const pointer = new THREE.Vector2();
@@ -471,6 +630,24 @@ export async function createPcPreviewScene(
     let hoverPending = false;
     let hoverX = 0;
     let hoverY = 0;
+    let hoverFrameId: number | null = null;
+    const cancelHoverFrame = () => {
+      if (hoverFrameId === null) return;
+      cancelAnimationFrame(hoverFrameId);
+      hoverFrameId = null;
+    };
+    pointerCleanups.push(cancelHoverFrame);
+    const scheduleHover = () => {
+      if (hoverFrameId !== null || animationFrameId !== null || renderingFrame || !isInViewport || document.visibilityState === "hidden" || isDisposed) return;
+      hoverFrameId = requestAnimationFrame(() => {
+        hoverFrameId = null;
+        if (isDisposed || !isInViewport || document.visibilityState === "hidden") return;
+        if (animationFrameId !== null || renderingFrame) return;
+        if (!hoverPending) return;
+        hoverPending = false;
+        renderer!.domElement.style.cursor = findCategoryAt(hoverX, hoverY) ? "pointer" : "grab";
+      });
+    };
     const onPointerDown = (event: PointerEvent) => {
       activePointers.add(event.pointerId);
       if (!event.isPrimary || activePointers.size > 1) { pointerStart = null; return; }
@@ -495,9 +672,9 @@ export async function createPcPreviewScene(
       hoverX = event.clientX;
       hoverY = event.clientY;
       hoverPending = true;
-      requestRender();
+      scheduleHover();
     };
-    const onPointerLeave = () => { pointerStart = null; hoverPending = false; renderer!.domElement.style.cursor = "grab"; };
+    const onPointerLeave = () => { pointerStart = null; hoverPending = false; cancelHoverFrame(); renderer!.domElement.style.cursor = "grab"; };
     const onPointerCancel = (event: PointerEvent) => { activePointers.delete(event.pointerId); pointerStart = null; };
     const addPointerHandler = <K extends keyof HTMLElementEventMap>(type: K, handler: (event: HTMLElementEventMap[K]) => void) => {
       renderer!.domElement.addEventListener(type, handler as EventListener);
@@ -510,12 +687,14 @@ export async function createPcPreviewScene(
     addPointerHandler("pointercancel", onPointerCancel);
 
     const resize = () => {
-      const width = Math.max(1, host.clientWidth);
-      const height = Math.max(1, host.clientHeight);
+      const width = viewportWidth = Math.max(1, host.clientWidth);
+      const height = viewportHeight = Math.max(1, host.clientHeight);
       renderer!.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      gridColumns = setGridTargets(width, height);
+      const nextGridColumns = setGridTargets(width, height);
+      if (nextGridColumns !== gridColumns) gridLayoutDirty = true;
+      gridColumns = nextGridColumns;
       if (options.isManualCamera()) {
         resizeLimitsPending = true;
         resizeFitPending = false;
@@ -545,6 +724,8 @@ export async function createPcPreviewScene(
     const previousCameraPosition = new THREE.Vector3();
     const previousOrbitTarget = new THREE.Vector3();
     const boundsByCategory = new Map<PcModelCategory, THREE.Box3>(categories.map((category) => [category, new THREE.Box3()]));
+    const cameraClipPoint = new THREE.Vector3();
+    const cameraClipDirection = new THREE.Vector3();
     const cameraHalfFov = THREE.MathUtils.degToRad(camera.fov / 2);
     const measureFitDistance = (direction: THREE.Vector3, width: number, screenHeight: number, normalized: number) => {
       worldBounds.getCenter(focus);
@@ -590,13 +771,19 @@ export async function createPcPreviewScene(
     };
     let frameTime = performance.now();
     let currentProgress = 0;
+    const layoutSnapEpsilon = 0.18;
+    const layoutEasingRate = 15;
+    const autoFramingFollowRate = 9;
+    let hasAppliedLayout = false;
+    let hasMeasuredWorldBounds = false;
+    let labelPositionsInitialized = false;
     let lastAppliedDistance = camera.position.distanceTo(orbit.target);
     let nominalFitDistance = Math.max(lastAppliedDistance, 0.45);
     let zoomMultiplier = 1;
     const autoFrameDirection = initialDirection.clone();
     let frameCallback: FrameRequestCallback = () => {};
     requestRender = () => {
-      if (animationFrameId !== null || document.visibilityState === "hidden" || isDisposed) return;
+      if (animationFrameId !== null || !isInViewport || document.visibilityState === "hidden" || isDisposed) return;
       animationFrameId = requestAnimationFrame(frameCallback);
     };
     orbitChangeHandler = () => {
@@ -608,198 +795,82 @@ export async function createPcPreviewScene(
       if (document.visibilityState === "hidden") {
         if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
-      } else requestRender();
+        cancelHoverFrame();
+      } else {
+        frameTime = performance.now();
+        requestRender();
+        scheduleHover();
+      }
     };
     document.addEventListener("visibilitychange", visibilityHandler);
+    if (typeof IntersectionObserver !== "undefined") {
+      intersectionObserver = new IntersectionObserver((entries) => {
+        const isVisible = entries.some((entry) => entry.target === host && entry.isIntersecting);
+        isInViewport = isVisible;
+        if (isVisible) {
+          frameTime = performance.now();
+          requestRender();
+          scheduleHover();
+        } else if (animationFrameId !== null) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+          cancelHoverFrame();
+        }
+      });
+      intersectionObserver.observe(host);
+    }
     const activeEmissive = new THREE.Color(0x176d68);
+    const desiredEmissive = new THREE.Color();
+    const appliedVisibility = new Map<PcModelCategory, boolean>();
+    const appliedHighlight = new Map<PcModelCategory, boolean>();
     const applyAppearance = (selected: ComponentCategory[], active: ComponentCategory, fullPreview: boolean) => {
+      const selectedSet = new Set(selected);
+      let appearanceChanged = false;
+      const gpuVisible = fullPreview || selectedSet.has("gpu");
+      const slotCoverVisible = !gpuVisible;
+      if (gpuSlotCoverRow && gpuSlotCoverRow.visible !== slotCoverVisible) {
+        gpuSlotCoverRow.visible = slotCoverVisible;
+        gpuSlotCoverRow.userData.raycastIgnored = gpuVisible;
+        appearanceChanged = true;
+      }
       for (const category of categories) {
-        const visible = fullPreview || selected.includes(category);
+        const visible = fullPreview || selectedSet.has(category);
+        const highlighted = visible && category === active;
+        const visibilityChanged = appliedVisibility.get(category) !== visible;
+        const highlightChanged = appliedHighlight.get(category) !== highlighted;
+        if (!visibilityChanged && !highlightChanged) continue;
+
+        appearanceChanged = true;
+        if (visibilityChanged) setCategoryBatched(category, visible);
         for (const [material, state] of materials.get(category)!) {
-          material.opacity = visible ? state.opacity : Math.min(state.opacity, 0.05);
-          material.transparent = state.transparent || !visible || state.isGlass;
-          material.depthWrite = state.isGlass ? false : visible ? state.depthWrite : false;
+          if (visibilityChanged) {
+            const opacity = visible ? state.opacity : Math.min(state.opacity, 0.05);
+            const transparent = state.transparent || !visible || state.isGlass;
+            const depthWrite = state.isGlass ? false : visible ? state.depthWrite : false;
+            if (material.opacity !== opacity) material.opacity = opacity;
+            if (material.transparent !== transparent) {
+              material.transparent = transparent;
+              material.needsUpdate = true;
+            }
+            if (material.depthWrite !== depthWrite) material.depthWrite = depthWrite;
+          }
           const standard = material as THREE.MeshStandardMaterial;
-          if (state.emissive && standard.emissive instanceof THREE.Color) {
-            standard.emissive.copy(state.emissive);
-            standard.emissiveIntensity = state.emissiveIntensity;
-            if (category === active && visible && !state.isGlass) {
-              standard.emissive.lerp(activeEmissive, 0.14);
-              standard.emissiveIntensity = Math.max(standard.emissiveIntensity, 0.12);
+          if ((visibilityChanged || highlightChanged) && state.emissive && standard.emissive instanceof THREE.Color) {
+            const shouldGlow = highlighted && !state.isGlass;
+            desiredEmissive.copy(state.emissive);
+            let emissiveIntensity = visible ? state.emissiveIntensity : 0;
+            if (shouldGlow) {
+              desiredEmissive.lerp(activeEmissive, 0.14);
+              emissiveIntensity = Math.max(emissiveIntensity, 0.12);
             }
+            if (!standard.emissive.equals(desiredEmissive)) standard.emissive.copy(desiredEmissive);
+            if (standard.emissiveIntensity !== emissiveIntensity) standard.emissiveIntensity = emissiveIntensity;
           }
-          material.needsUpdate = true;
         }
+        appliedVisibility.set(category, visible);
+        appliedHighlight.set(category, highlighted);
       }
-      renderer!.shadowMap.needsUpdate = true;
-      requestRender();
-    };
-    const thumbnailCache = new Map<PcModelCategory, string>();
-    const getCategoryThumbnail = (requestedCategory: ComponentCategory): string | null => {
-      const category = requestedCategory === "other" ? "cpu" : requestedCategory;
-      if (!categories.includes(category)) return null;
-      const cached = thumbnailCache.get(category);
-      if (cached) return cached;
-      const source = groups.get(category);
-      const assembled = mechanicalPlan.assembled.get(category);
-      if (!source || !assembled) return null;
-
-      const thumbnailWidth = 512;
-      const thumbnailHeight = 384;
-      const thumbnailScene = new THREE.Scene();
-      thumbnailScene.environment = scene!.environment;
-      thumbnailScene.environmentIntensity = scene!.environmentIntensity;
-      const thumbnailModel = source.clone(true);
-      thumbnailModel.position.copy(assembled.position);
-      thumbnailModel.quaternion.copy(assembled.rotation);
-      thumbnailModel.scale.copy(assembled.scale);
-      const materialClones = new Map<THREE.Material, THREE.Material>();
-      thumbnailModel.traverse((object) => {
-        const mesh = object as THREE.Mesh;
-        if (!mesh.isMesh || !mesh.material) return;
-        const cloneMaterial = (material: THREE.Material) => {
-          let clone = materialClones.get(material);
-          if (!clone) {
-            clone = material.clone();
-            const state = materials.get(category)?.get(material);
-            if (state) {
-              clone.opacity = state.thumbnailOpacity;
-              clone.transparent = state.thumbnailTransparent;
-              clone.depthWrite = state.thumbnailDepthWrite;
-              clone.side = state.thumbnailSide;
-              const physical = clone as THREE.MeshStandardMaterial;
-              if (state.thumbnailColor && physical.color instanceof THREE.Color) physical.color.copy(state.thumbnailColor);
-              if (state.thumbnailEmissive && physical.emissive instanceof THREE.Color) physical.emissive.copy(state.thumbnailEmissive);
-              if (physical.emissive instanceof THREE.Color) physical.emissiveIntensity = state.thumbnailEmissiveIntensity;
-            }
-            materialClones.set(material, clone);
-          }
-          return clone;
-        };
-        mesh.material = Array.isArray(mesh.material) ? mesh.material.map(cloneMaterial) : cloneMaterial(mesh.material);
-        mesh.castShadow = false;
-        mesh.receiveShadow = false;
-      });
-
-      if (category === "case") {
-        const clonedPanel = thumbnailModel.getObjectByName(mechanicalPlan.panel.object.name);
-        if (clonedPanel) {
-          clonedPanel.position.copy(mechanicalPlan.panel.closed.position);
-          clonedPanel.quaternion.copy(mechanicalPlan.panel.closed.rotation);
-          clonedPanel.scale.copy(mechanicalPlan.panel.closed.scale);
-        }
-      }
-      thumbnailScene.add(thumbnailModel);
-      scene!.children.forEach((child) => {
-        if (!(child as THREE.Light).isLight) return;
-        const light = child.clone() as THREE.Light;
-        light.castShadow = false;
-        thumbnailScene.add(light);
-      });
-
-      thumbnailModel.updateMatrixWorld(true);
-      const bounds = new THREE.Box3().setFromObject(thumbnailModel);
-      const center = bounds.getCenter(new THREE.Vector3());
-      thumbnailModel.position.sub(center);
-      bounds.translate(center.negate());
-      thumbnailModel.updateMatrixWorld(true);
-
-      const camera = new THREE.PerspectiveCamera(32, thumbnailWidth / thumbnailHeight, 0.001, 100);
-      const viewDirection = category === "gpu"
-        ? new THREE.Vector3(4.2, -3.1, 5.1).normalize()
-        : category === "case"
-          ? new THREE.Vector3(4.5, 2.8, 5.2).normalize()
-          : new THREE.Vector3(4.1, 3.0, 5.1).normalize();
-      const cameraRight = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), viewDirection).normalize();
-      const cameraUp = new THREE.Vector3().crossVectors(viewDirection, cameraRight).normalize();
-      const halfVertical = THREE.MathUtils.degToRad(camera.fov / 2);
-      const tanVertical = Math.tan(halfVertical) * 0.88;
-      const tanHorizontal = tanVertical * camera.aspect;
-      let distance = 0.01;
-      for (let cornerIndex = 0; cornerIndex < 8; cornerIndex += 1) {
-        const corner = new THREE.Vector3(
-          cornerIndex & 1 ? bounds.max.x : bounds.min.x,
-          cornerIndex & 2 ? bounds.max.y : bounds.min.y,
-          cornerIndex & 4 ? bounds.max.z : bounds.min.z,
-        );
-        const depth = corner.dot(viewDirection);
-        distance = Math.max(
-          distance,
-          depth + Math.abs(corner.dot(cameraRight)) / tanHorizontal,
-          depth + Math.abs(corner.dot(cameraUp)) / tanVertical,
-          depth + 0.01,
-        );
-      }
-      distance *= 1.04;
-      camera.position.copy(viewDirection).multiplyScalar(distance);
-      camera.lookAt(0, 0, 0);
-      camera.updateProjectionMatrix();
-
-      const target = new THREE.WebGLRenderTarget(thumbnailWidth, thumbnailHeight, {
-        format: THREE.RGBAFormat,
-        type: THREE.UnsignedByteType,
-        depthBuffer: true,
-        stencilBuffer: false,
-      });
-      target.texture.colorSpace = THREE.SRGBColorSpace;
-      target.texture.generateMipmaps = false;
-      target.texture.minFilter = THREE.LinearFilter;
-      target.texture.magFilter = THREE.LinearFilter;
-      const previousTarget = renderer!.getRenderTarget();
-      const previousViewport = renderer!.getViewport(new THREE.Vector4());
-      const previousScissor = renderer!.getScissor(new THREE.Vector4());
-      const previousScissorTest = renderer!.getScissorTest();
-      const previousClearColor = renderer!.getClearColor(new THREE.Color()).clone();
-      const previousClearAlpha = renderer!.getClearAlpha();
-      const previousAutoClear = renderer!.autoClear;
-      const previousToneMapping = renderer!.toneMapping;
-      const previousToneMappingExposure = renderer!.toneMappingExposure;
-      const previousShadowEnabled = renderer!.shadowMap.enabled;
-      const previousShadowAutoUpdate = renderer!.shadowMap.autoUpdate;
-      const previousShadowNeedsUpdate = renderer!.shadowMap.needsUpdate;
-
-      try {
-        renderer!.shadowMap.enabled = false;
-        renderer!.shadowMap.autoUpdate = false;
-        renderer!.setRenderTarget(target);
-        renderer!.setViewport(0, 0, thumbnailWidth, thumbnailHeight);
-        renderer!.setScissorTest(false);
-        renderer!.autoClear = true;
-        renderer!.setClearColor(0x000000, 0);
-        renderer!.clear(true, true, true);
-        renderer!.render(thumbnailScene, camera);
-        const pixels = new Uint8Array(thumbnailWidth * thumbnailHeight * 4);
-        renderer!.readRenderTargetPixels(target, 0, 0, thumbnailWidth, thumbnailHeight, pixels);
-        const canvas = document.createElement("canvas");
-        canvas.width = thumbnailWidth;
-        canvas.height = thumbnailHeight;
-        const context = canvas.getContext("2d");
-        if (!context) return null;
-        const image = context.createImageData(thumbnailWidth, thumbnailHeight);
-        for (let y = 0; y < thumbnailHeight; y += 1) {
-          const sourceStart = (thumbnailHeight - 1 - y) * thumbnailWidth * 4;
-          image.data.set(pixels.subarray(sourceStart, sourceStart + thumbnailWidth * 4), y * thumbnailWidth * 4);
-        }
-        context.putImageData(image, 0, 0);
-        const dataUrl = canvas.toDataURL("image/png");
-        thumbnailCache.set(category, dataUrl);
-        return dataUrl;
-      } finally {
-        renderer!.setRenderTarget(previousTarget);
-        renderer!.setViewport(previousViewport);
-        renderer!.setScissor(previousScissor);
-        renderer!.setScissorTest(previousScissorTest);
-        renderer!.setClearColor(previousClearColor, previousClearAlpha);
-        renderer!.autoClear = previousAutoClear;
-        renderer!.toneMapping = previousToneMapping;
-        renderer!.toneMappingExposure = previousToneMappingExposure;
-        renderer!.shadowMap.enabled = previousShadowEnabled;
-        renderer!.shadowMap.autoUpdate = previousShadowAutoUpdate;
-        renderer!.shadowMap.needsUpdate = previousShadowNeedsUpdate;
-        target.dispose();
-        materialClones.forEach((material) => material.dispose());
-        thumbnailModel.removeFromParent();
-      }
+      if (appearanceChanged) requestRender();
     };
     const runtime: PcPreviewRuntime = {
       renderer,
@@ -816,7 +887,6 @@ export async function createPcPreviewScene(
       zoomMultiplier,
       setZoomMultiplier: (value, minimum = minZoomMultiplier) => { zoomMultiplier = THREE.MathUtils.clamp(value, minimum, maxZoomMultiplier); },
       invalidate: requestRender,
-      getCategoryThumbnail,
       applyAppearance,
       dispose,
     };
@@ -824,38 +894,50 @@ export async function createPcPreviewScene(
       animationFrameId = null;
       if (isDisposed) return;
       renderingFrame = true;
+      const cameraChanged = orbitChangePending;
       orbitChangePending = false;
-      const delta = Math.min(0.06, Math.max(0.001, (time - frameTime) / 1000));
+      const delta = Math.min(0.2, Math.max(0.001, (time - frameTime) / 1000));
       frameTime = time;
       const destination = options.layoutTarget();
       const progressGap = destination - currentProgress;
       const previousProgress = currentProgress;
-      const easing = 1 - Math.exp(-delta * 8.5);
-      currentProgress = Math.abs(progressGap) < 0.05 ? destination : currentProgress + progressGap * easing;
+      const easing = 1 - Math.exp(-delta * layoutEasingRate);
+      currentProgress = Math.abs(progressGap) <= layoutSnapEpsilon ? destination : currentProgress + progressGap * easing;
       if (currentProgress < 0.02) currentProgress = 0;
       if (currentProgress > 99.98) currentProgress = 100;
       const normalized = currentProgress / 100;
       const gridProgress = smoothStep((normalized - 0.75) / 0.25);
-      const layoutPending = Math.abs(destination - currentProgress) >= 0.05;
+      const layoutPending = Math.abs(destination - currentProgress) > layoutSnapEpsilon;
       const layoutChanged = currentProgress !== previousProgress;
-      const floorOpacity = 0.45 * (1 - smoothStep((gridProgress - 0.68) / 0.32));
-      floorMaterial.opacity = floorOpacity;
-      for (const material of stageGridMaterials) material.opacity = 0.16 * (floorOpacity / 0.45);
+      const width = viewportWidth;
+      const screenHeight = viewportHeight;
+      const nextGridColumns = width < 760 || width / screenHeight < 1.08 ? 2 : 4;
+      if (nextGridColumns !== gridColumns) {
+        gridColumns = setGridTargets(width, screenHeight);
+        gridLayoutDirty = true;
+      }
+      const layoutUpdateNeeded = layoutChanged || gridLayoutDirty || !hasAppliedLayout;
+      if (layoutUpdateNeeded) {
+        hasAppliedLayout = true;
+        gridLayoutDirty = false;
+        applyPcMechanicalLayout(groups, mechanicalPlan, gridPoses, normalized);
+        const floorOpacity = 0.45 * (1 - smoothStep((gridProgress - 0.68) / 0.32));
+        floorMaterial.opacity = floorOpacity;
+        for (const material of stageGridMaterials) material.opacity = 0.16 * (floorOpacity / 0.45);
+        if (!isMobileQuality && !layoutPending) renderer!.shadowMap.needsUpdate = true;
+      }
 
-      const width = Math.max(1, host.clientWidth);
-      const screenHeight = Math.max(1, host.clientHeight);
-      if ((width < 760 || width / screenHeight < 1.08 ? 2 : 4) !== gridColumns) gridColumns = setGridTargets(width, screenHeight);
-      applyPcMechanicalLayout(groups, mechanicalPlan, gridPoses, normalized);
-      if (layoutChanged) renderer!.shadowMap.needsUpdate = true;
-
-      sceneRoot.updateMatrixWorld(true);
-      worldBounds.makeEmpty();
-      for (const category of categories) {
-        const group = groups.get(category)!;
-        const bounds = boundsByCategory.get(category)!;
-        if (category === "case") bounds.setFromObject(group);
-        else bounds.copy(partBounds.copy(geometry.get(category)!.localBounds).applyMatrix4(group.matrixWorld));
-        worldBounds.union(bounds);
+      if (layoutUpdateNeeded || !hasMeasuredWorldBounds) {
+        hasMeasuredWorldBounds = true;
+        sceneRoot.updateMatrixWorld(true);
+        worldBounds.makeEmpty();
+        for (const category of categories) {
+          const group = groups.get(category)!;
+          const bounds = boundsByCategory.get(category)!;
+          if (category === "case") bounds.setFromObject(group);
+          else bounds.copy(partBounds.copy(geometry.get(category)!.localBounds).applyMatrix4(group.matrixWorld));
+          worldBounds.union(bounds);
+        }
       }
 
       orbit.update();
@@ -882,7 +964,7 @@ export async function createPcPreviewScene(
         worldBounds.getSize(worldSize);
         desiredDirection.copy(initialDirection).lerp(frontDirection, smoothStep(normalized / 0.28)).normalize();
         cameraDirection.copy(camera.position).sub(orbit.target).normalize();
-        cameraDirection.lerp(desiredDirection, 1 - Math.exp(-delta * 5.5)).normalize();
+        cameraDirection.lerp(desiredDirection, 1 - Math.exp(-delta * autoFramingFollowRate)).normalize();
         const { fitDistance, halfVerticalFov, safeTop, safeBottom } = measureFitDistance(cameraDirection, width, screenHeight, normalized);
         nominalFitDistance = Math.max(fitDistance, 0.45);
         zoomMultiplier = THREE.MathUtils.clamp(zoomMultiplier, minZoomMultiplier, maxZoomMultiplier);
@@ -899,7 +981,6 @@ export async function createPcPreviewScene(
         camera.position.copy(framingFocus).addScaledVector(cameraDirection, fittedDistance);
         orbit.target.copy(framingFocus);
         orbit.update();
-        camera.updateMatrixWorld(true);
         lastAppliedDistance = camera.position.distanceTo(orbit.target);
         zoomMultiplier = THREE.MathUtils.clamp(lastAppliedDistance / nominalFitDistance, minZoomMultiplier, maxZoomMultiplier);
         runtime.focus.copy(framingFocus);
@@ -911,7 +992,6 @@ export async function createPcPreviewScene(
           resizeFitPending = false;
         }
       } else {
-        camera.updateMatrixWorld(true);
         lastAppliedDistance = liveDistance;
         runtime.nominalFitDistance = nominalFitDistance;
         runtime.currentDistance = liveDistance;
@@ -919,35 +999,55 @@ export async function createPcPreviewScene(
         runtime.focus.copy(orbit.target);
       }
 
-      const revealLabels = smoothStep(gridProgress / 0.65);
-      const labelAnchors = categories.map((category) => {
-        const bounds = boundsByCategory.get(category);
-        if (!bounds) return { x: width / 2, y: screenHeight / 2 };
-        bounds.getCenter(anchor);
-        anchor.y = bounds.min.y - Math.max(0.012, worldSize.y * 0.008);
-        anchor.project(camera);
-        return { x: ((anchor.x + 1) / 2) * width, y: ((1 - anchor.y) / 2) * screenHeight };
-      });
-      for (const [index, category] of categories.entries()) {
-        const label = options.labelForCategory(category);
-        if (!label) continue;
+      updateCameraDepthRange(
+        camera,
+        worldBounds,
+        Math.max(0.003, worldSize.length() * 0.015),
+        cameraClipPoint,
+        cameraClipDirection,
+        camera.position.distanceTo(floor.position) + 15,
+      );
+
+      const shouldUpdateLabels = layoutUpdateNeeded || cameraChanged || options.isAutoFraming() || resizeFitPending || !labelPositionsInitialized;
+      if (shouldUpdateLabels) {
+        const revealLabels = smoothStep(gridProgress / 0.65);
         if (revealLabels < 0.01) {
-          label.style.opacity = "0";
-          label.style.visibility = "hidden";
-          continue;
+          if (labelPositionsInitialized) {
+            for (const category of categories) {
+              const label = options.labelForCategory(category);
+              if (!label || label.style.visibility === "hidden") continue;
+              label.style.opacity = "0";
+              label.style.visibility = "hidden";
+            }
+          }
+          labelPositionsInitialized = true;
+        } else {
+          const labelAnchors = categories.map((category) => {
+            const bounds = boundsByCategory.get(category);
+            if (!bounds) return { x: width / 2, y: screenHeight / 2 };
+            bounds.getCenter(anchor);
+            anchor.y = bounds.min.y - Math.max(0.012, worldSize.y * 0.008);
+            anchor.project(camera);
+            return { x: ((anchor.x + 1) / 2) * width, y: ((1 - anchor.y) / 2) * screenHeight };
+          });
+          for (const [index, category] of categories.entries()) {
+            const label = options.labelForCategory(category);
+            if (!label) continue;
+            const column = index % gridColumns;
+            const neighborIndex = column > 0 ? index - 1 : index + 1;
+            const neighborGap = Math.abs(labelAnchors[index].x - (labelAnchors[neighborIndex]?.x ?? labelAnchors[index].x));
+            const labelWidth = Math.max(56, Math.min(176, neighborGap - 10));
+            label.style.width = `${labelWidth}px`;
+            label.style.minWidth = "0";
+            const halfLabel = Math.min(labelWidth / 2, width / 2 - 5);
+            const left = THREE.MathUtils.clamp(labelAnchors[index].x, halfLabel + 4, width - halfLabel - 4);
+            label.style.left = `${left}px`;
+            label.style.top = `${labelAnchors[index].y}px`;
+            label.style.opacity = String(revealLabels);
+            label.style.visibility = "visible";
+          }
+          labelPositionsInitialized = true;
         }
-        const column = index % gridColumns;
-        const neighborIndex = column > 0 ? index - 1 : index + 1;
-        const neighborGap = Math.abs(labelAnchors[index].x - (labelAnchors[neighborIndex]?.x ?? labelAnchors[index].x));
-        const labelWidth = Math.max(56, Math.min(176, neighborGap - 10));
-        label.style.width = `${labelWidth}px`;
-        label.style.minWidth = "0";
-        const halfLabel = Math.min(labelWidth / 2, width / 2 - 5);
-        const left = THREE.MathUtils.clamp(labelAnchors[index].x, halfLabel + 4, width - halfLabel - 4);
-        label.style.left = `${left}px`;
-        label.style.top = `${labelAnchors[index].y}px`;
-        label.style.opacity = String(revealLabels);
-        label.style.visibility = "visible";
       }
       if (hoverPending) {
         hoverPending = false;

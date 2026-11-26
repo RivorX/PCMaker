@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { componentCategoryLabels, type ComponentCategory } from "@/lib/drafts";
 import { createPcPreviewScene, PcPreviewSceneError, type PcPreviewRuntime } from "@/lib/pc-preview-scene";
@@ -17,7 +17,6 @@ type PcPreviewProps = {
   selectedParts: PcPreviewPart[];
   activeCategory: ComponentCategory;
   onSelectCategory: (category: ComponentCategory) => void;
-  onCategoryThumbnail: (category: Exclude<ComponentCategory, "other">, image: string) => void;
 };
 
 type SceneCategory = Exclude<ComponentCategory, "other">;
@@ -29,7 +28,7 @@ const smoothStep = (value: number) => {
   return t * t * (3 - 2 * t);
 };
 
-export default function PcPreview({ selectedParts, activeCategory, onSelectCategory, onCategoryThumbnail }: PcPreviewProps) {
+function PcPreview({ selectedParts, activeCategory, onSelectCategory }: PcPreviewProps) {
   const selectedCategories = useMemo(() => selectedParts.map((part) => part.category), [selectedParts]);
   const selectedByCategory = useMemo(() => new Map(selectedParts.map((part) => [part.category, part])), [selectedParts]);
   const mountRef = useRef<HTMLDivElement>(null);
@@ -37,7 +36,6 @@ export default function PcPreview({ selectedParts, activeCategory, onSelectCateg
   const selectedRef = useRef(selectedCategories);
   const activeRef = useRef(activeCategory);
   const callbackRef = useRef(onSelectCategory);
-  const thumbnailCallbackRef = useRef(onCategoryThumbnail);
   const layoutTargetRef = useRef(0);
   const autoFramingRef = useRef(true);
   const labelsRef = useRef(new Map<SceneCategory, HTMLDivElement>());
@@ -52,7 +50,6 @@ export default function PcPreview({ selectedParts, activeCategory, onSelectCateg
   useEffect(() => { selectedRef.current = selectedCategories; }, [selectedCategories]);
   useEffect(() => { activeRef.current = activeCategory; }, [activeCategory]);
   useEffect(() => { callbackRef.current = onSelectCategory; }, [onSelectCategory]);
-  useEffect(() => { thumbnailCallbackRef.current = onCategoryThumbnail; }, [onCategoryThumbnail]);
   useEffect(() => { fullPreviewRef.current = fullPreview; }, [fullPreview]);
 
   useEffect(() => {
@@ -103,29 +100,6 @@ export default function PcPreview({ selectedParts, activeCategory, onSelectCateg
   useEffect(() => {
     runtimeRef.current?.applyAppearance(selectedCategories, activeCategory, fullPreview);
   }, [selectedCategories, activeCategory, fullPreview]);
-
-  useEffect(() => {
-    if (loadState !== "ready") return;
-    const category: SceneCategory = activeCategory === "other" ? "cpu" : activeCategory;
-    const render = () => {
-      try {
-        const image = runtimeRef.current?.getCategoryThumbnail(category);
-        if (image) thumbnailCallbackRef.current(category, image);
-      } catch {
-        // The SVG stays visible if an offscreen thumbnail cannot be rendered.
-      }
-    };
-    const idleWindow = window as Window & {
-      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
-      cancelIdleCallback?: (handle: number) => void;
-    };
-    if (idleWindow.requestIdleCallback) {
-      const idleHandle = idleWindow.requestIdleCallback(render, { timeout: 1200 });
-      return () => idleWindow.cancelIdleCallback?.(idleHandle);
-    }
-    const timeout = window.setTimeout(render, 300);
-    return () => window.clearTimeout(timeout);
-  }, [activeCategory, loadState, loadAttempt]);
 
   const setLayout = (value: number) => {
     const next = THREE.MathUtils.clamp(Math.round(value), 0, 100);
@@ -226,3 +200,5 @@ export default function PcPreview({ selectedParts, activeCategory, onSelectCateg
     </div>
   );
 }
+
+export default memo(PcPreview);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PcPreview, { type PcPreviewPart } from "@/components/PcPreview";
 import PartCategoryIcon from "@/components/PartCategoryIcon";
 import { fetchCatalog, type ConfiguratorCatalogComponent } from "@/lib/catalog-client";
@@ -78,6 +78,32 @@ const findCatalogComponent = (items: ConfiguratorCatalogComponent[], id: string)
 };
 
 const money = (value: number) => new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 }).format(value);
+
+type CatalogProductProps = {
+  part: ConfiguratorCatalogComponent;
+  selected: boolean;
+  hasSelection: boolean;
+  onChoose: (part: ConfiguratorCatalogComponent) => void;
+};
+
+const CatalogProduct = memo(function CatalogProduct({ part, selected, hasSelection, onChoose }: CatalogProductProps) {
+  const description = part.description || [part.socket && "Socket " + part.socket, part.memoryType].filter(Boolean).join(" · ") || "Szczegóły produktu nie są dostępne";
+  return (
+    <article className={`${styles.product} ${selected ? styles.productSelected : ""}`}>
+      <span className={styles.productIcon}>{categoryIcons[part.category]}</span>
+      <div className={styles.productInfo}>
+        <span className={styles.maker}>{part.manufacturer || componentCategoryLabels[part.category]}</span>
+        <strong>{part.name}</strong>
+        <p>{description}</p>
+      </div>
+      <div className={styles.productBuy}>
+        {typeof part.price === "number" && Number.isFinite(part.price) ? <strong>{money(part.price)}</strong> : <strong className={styles.unknownPrice}>Brak ceny</strong>}
+        <button type="button" onClick={() => onChoose(part)}>{selected ? "Wybrano ✓" : hasSelection ? "Zamień" : "Wybierz"}</button>
+      </div>
+    </article>
+  );
+});
+
 const browserStorage = (): Storage | null => {
   try {
     return window.localStorage;
@@ -133,8 +159,7 @@ export default function Configurator() {
   const [loading, setLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<ComponentCategory>("cpu");
-  const [categoryThumbnails, setCategoryThumbnails] = useState<Partial<Record<ConfigurableCategory, string>>>({});
-  const categoryThumbnailsRef = useRef<Partial<Record<ConfigurableCategory, string>>>({});
+  const [hasInspectedCategory, setHasInspectedCategory] = useState(false);
   const libraryRequestIdRef = useRef(0);
   const draftRef = useRef(draft);
   const createRequestRef = useRef<{ key: string; id: string } | null>(null);
@@ -147,6 +172,8 @@ export default function Configurator() {
   const [search, setSearch] = useState("");
   const [lastAddedCategory, setLastAddedCategory] = useState<ComponentCategory | null>(null);
   const [previewExpanded, setPreviewExpanded] = useState(true);
+  const [loadedThumbnailCategories, setLoadedThumbnailCategories] = useState<ReadonlySet<ConfigurableCategory>>(() => new Set());
+  const [failedThumbnailCategories, setFailedThumbnailCategories] = useState<ReadonlySet<ConfigurableCategory>>(() => new Set());
   const savedLibraryRef = useRef<HTMLDetailsElement>(null);
 
   useEffect(() => {
@@ -154,6 +181,21 @@ export default function Configurator() {
   }, [libraryNotice]);
 
   useEffect(() => { draftRef.current = draft; }, [draft]);
+
+  useEffect(() => {
+    let cancelled = false;
+    for (const category of categories) {
+      if (category === "other") continue;
+      const image = new Image();
+      image.src = `/models/pc/thumbnails/${category}.webp`;
+      void image.decode().then(() => {
+        if (!cancelled) setLoadedThumbnailCategories((current) => new Set(current).add(category));
+      }).catch(() => {
+        if (!cancelled) setFailedThumbnailCategories((current) => new Set(current).add(category));
+      });
+    }
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     const dialog = savedDialogRef.current;
@@ -389,14 +431,20 @@ export default function Configurator() {
     setLibraryNotice(null);
   };
 
-  const choosePart = (part: ConfiguratorCatalogComponent) => {
+  const choosePart = useCallback((part: ConfiguratorCatalogComponent) => {
     const chosen = asDraftComponent(part);
-    updateParts([...draft.components.filter((item) => item.category !== part.category), chosen]);
+    setDraft((current) => ({
+      ...current,
+      components: [...current.components.filter((item) => item.category !== part.category), chosen],
+      updatedAt: new Date().toISOString(),
+    }));
+    setLibraryNotice(null);
     setLastAddedCategory(part.category);
-  };
+  }, []);
 
   const chooseOwnPart = (category: ComponentCategory) => {
     setActiveCategory(category);
+    setHasInspectedCategory(true);
     setSearch("");
     const current = selected.get(category);
     if (current?.source === "own") {
@@ -687,18 +735,13 @@ export default function Configurator() {
     else if (pendingTransition?.type === "load") loadSavedConfiguration(pendingTransition.id);
   };
 
-  const activateCategory = (category: ComponentCategory) => {
+  const activateCategory = useCallback((category: ComponentCategory) => {
     setActiveCategory(category);
+    setHasInspectedCategory(true);
     setSearch("");
-  };
+  }, []);
 
   const focusCatalog = () => document.getElementById("parts-catalog")?.scrollIntoView({ behavior: "smooth", block: "center" });
-  const receiveCategoryThumbnail = useCallback((category: ConfigurableCategory, image: string) => {
-    if (categoryThumbnailsRef.current[category] === image) return;
-    const next = { ...categoryThumbnailsRef.current, [category]: image };
-    categoryThumbnailsRef.current = next;
-    setCategoryThumbnails(next);
-  }, []);
 
   return (
     <div className={styles.page}>
@@ -709,21 +752,31 @@ export default function Configurator() {
       <details className={styles.previewDisclosure} open={previewExpanded} onToggle={(event) => setPreviewExpanded(event.currentTarget.open)}>
         <summary className={styles.previewToggle}>Zobacz podgląd 3D <span aria-hidden="true">{previewExpanded ? "−" : "+"}</span></summary>
         <section className={styles.studio} aria-label="Interaktywny podgląd komputera">
-          <div className={styles.previewPane}><PcPreview selectedParts={previewParts} activeCategory={activeCategory} onSelectCategory={activateCategory} onCategoryThumbnail={receiveCategoryThumbnail} /></div>
+          <div className={styles.previewPane}><PcPreview selectedParts={previewParts} activeCategory={activeCategory} onSelectCategory={activateCategory} /></div>
           <aside className={styles.stageInspector} aria-live="polite">
             <div className={styles.inspectorHeader}><p className={styles.eyebrow}>AKTYWNY ELEMENT</p><span className={`${styles.inspectorBadge} ${activePart ? styles.inspectorBadgeChosen : ""}`}>{activePart ? "W ZESTAWIE" : "DO WYBORU"}</span></div>
             <h2 className={styles.inspectorTitle}>{componentCategoryLabels[activeCategory]}</h2>
             {activePart ? <><div className={`${styles.inspectorProduct} ${activePart.source === "own" ? styles.ownPartCard : ""}`}><span className={styles.productIcon}>{categoryIcons[activeCategory]}</span><div><small>{activePart.source === "own" ? "MAM WŁASNĄ CZĘŚĆ" : "WYBRANO"}</small><strong>{activePart.source === "own" ? `Własna część · ${componentCategoryLabels[activeCategory]}` : activePart.name}</strong>{activePart.source === "own" ? <span>Poza katalogiem i sumą ceny. Sprawdź parametry przed zakupem.</span> : activePart.manufacturer && <span>{activePart.manufacturer}</span>}</div></div><div className={styles.inspectorActions}><button type="button" className={styles.inspectorPrimary} onClick={focusCatalog}>Zobacz opcje z katalogu <span>↓</span></button><button type="button" className={styles.removePart} onClick={() => updateParts(draft.components.filter((part) => part.category !== activeCategory))}>Usuń wybraną część ×</button></div></> : <><div className={styles.inspectorEmpty}><span className={styles.focusPlus}>＋</span><div><strong>Jeszcze nie wybrano</strong><span>Kliknij model albo wybierz część z katalogu.</span></div></div><button type="button" className={styles.inspectorPrimary} onClick={() => chooseOwnPart(activeCategory)}>Mam własną część</button><button type="button" className={styles.inspectorPrimary} onClick={focusCatalog}>Dobierz {componentCategoryLabels[activeCategory].toLocaleLowerCase("pl-PL")} z katalogu <span>↓</span></button></>}
-            <div className={styles.categoryInfo} data-active-category={activeCategory}>
-              <div className={styles.categoryInfoArt}>
-                {categoryThumbnails[activeVisualCategory] ? <img src={categoryThumbnails[activeVisualCategory]} alt={`Poglądowy model kategorii: ${componentCategoryLabels[activeVisualCategory]}`} className={styles.categoryInfoModel} draggable={false} /> : <PartCategoryIcon category={activeVisualCategory} className={styles.categoryInfoIcon} />}
-                <span className={styles.categoryInfoHint}>MODEL POGLĄDOWY</span>
+            {activeCategory !== "other" && (activePart || hasInspectedCategory) && (
+              <div className={styles.categoryInfo} data-active-category={activeCategory}>
+                <div className={styles.categoryInfoArt}>
+                  {loadedThumbnailCategories.has(activeVisualCategory) && !failedThumbnailCategories.has(activeVisualCategory) && (
+                    <img
+                      key={activeVisualCategory}
+                      className={styles.categoryThumbnail}
+                      src={`/models/pc/thumbnails/${activeVisualCategory}.webp`}
+                      alt={`Poglądowy model kategorii: ${componentCategoryLabels[activeVisualCategory]}`}
+                      decoding="sync"
+                    />
+                  )}
+                  <span className={styles.categoryInfoHint}>MODEL POGLĄDOWY</span>
+                </div>
+                <div className={styles.categoryInfoCopy}>
+                  <span>FUNKCJA CZĘŚCI</span>
+                  <p>{categoryDescriptions[activeVisualCategory]}</p>
+                </div>
               </div>
-              <div className={styles.categoryInfoCopy}>
-                <span>FUNKCJA CZĘŚCI</span>
-                <p>{categoryDescriptions[activeVisualCategory]}</p>
-              </div>
-            </div>
+            )}
             <div className={styles.modelLegend}><span><i className={styles.legendBright} /> Wybrano</span><span><i className={styles.legendDim} /> Do wyboru</span></div>
           </aside>
         </section>
@@ -810,10 +863,7 @@ export default function Configurator() {
             </div>
             {canSuggestNextCategory && nextCategory && <div className={styles.nextPart}><span>Następny krok</span><button type="button" onClick={() => { activateCategory(nextCategory); focusCatalog(); }}>Dalej: {componentCategoryLabels[nextCategory]} <span aria-hidden="true">→</span></button></div>}
             {loading ? <div className={styles.state}><span className={styles.spinner} /><strong>Pobieramy części z bazy</strong><span>Za chwilę pokażemy dostępne modele.</span></div> : catalogError ? <div className={styles.state}><span className={styles.stateIcon}>!</span><strong>Katalog jest chwilowo niedostępny</strong><span>{catalogError}</span><button type="button" className={styles.retry} onClick={() => void loadCatalog()}>Spróbuj ponownie ↗</button></div> : listedParts.length === 0 ? <div className={styles.state}><span className={styles.stateIcon}>⌕</span><strong>{catalog.length ? "Brak pasujących części" : "Baza nie zawiera jeszcze części"}</strong><span>{catalog.length ? "Zmień wyszukiwaną frazę albo wybierz inną kategorię." : "Gdy dodasz produkty do bazy, pojawią się tutaj."}</span></div> : <div className={styles.productList} role="region" aria-label="Wyniki katalogu części" tabIndex={0}>
-              {listedParts.map((part) => {
-                const isSelected = activePart?.id === part.id;
-                return <article key={part.id} className={`${styles.product} ${isSelected ? styles.productSelected : ""}`}><span className={styles.productIcon}>{categoryIcons[part.category]}</span><div className={styles.productInfo}><span className={styles.maker}>{part.manufacturer || componentCategoryLabels[part.category]}</span><strong>{part.name}</strong><p>{part.description || [part.socket && `Socket ${part.socket}`, part.memoryType].filter(Boolean).join(" · ") || "Szczegóły produktu nie są dostępne"}</p></div><div className={styles.productBuy}>{typeof part.price === "number" && Number.isFinite(part.price) ? <strong>{money(part.price)}</strong> : <strong className={styles.unknownPrice}>Brak ceny</strong>}<button type="button" onClick={() => choosePart(part)}>{isSelected ? "Wybrano ✓" : activePart ? "Zamień" : "Wybierz"}</button></div></article>;
-              })}
+              {listedParts.map((part) => <CatalogProduct key={part.id} part={part} selected={activePart?.id === part.id} hasSelection={Boolean(activePart)} onChoose={choosePart} />)}
             </div>}
           </div>
         </div>

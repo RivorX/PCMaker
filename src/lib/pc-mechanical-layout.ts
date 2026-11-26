@@ -163,11 +163,11 @@ function raisePsuShroudRoof(caseRoot: THREE.Group, roofY: number, targetY: numbe
   return moved;
 }
 
-function findRearPsuAperture(panel: THREE.Mesh): { bounds: THREE.Box3; vertexIndices: number[] } | null {
+function findRearPanelApertures(panel: THREE.Mesh): Array<{ bounds: THREE.Box3; vertexIndices: number[] }> {
   const geometry = panel.geometry;
   const position = geometry.getAttribute("position");
   const index = geometry.getIndex();
-  if (!position || !index) return null;
+  if (!position || !index) return [];
   panel.updateWorldMatrix(true, false);
   const edgeUse = new Map<string, { a: number; b: number; count: number }>();
   for (let offset = 0; offset < index.count; offset += 3) {
@@ -211,13 +211,43 @@ function findRearPsuAperture(panel: THREE.Mesh): { bounds: THREE.Box3; vertexInd
     for (const vertex of loop) bounds.expandByPoint(new THREE.Vector3().fromBufferAttribute(position, vertex).applyMatrix4(panel.matrixWorld));
     loops.push({ bounds, vertexIndices: loop });
   }
+  return loops.filter(({ bounds }) => bounds.getSize(new THREE.Vector3()).x < 0.001);
+}
+
+function findRearPsuAperture(panel: THREE.Mesh): { bounds: THREE.Box3; vertexIndices: number[] } | null {
   const panelBounds = boundsOf(panel);
-  return loops
-    .filter(({ bounds }) => bounds.getSize(new THREE.Vector3()).x < 0.001
-      && bounds.min.y > panelBounds.min.y + 0.001
+  return findRearPanelApertures(panel)
+    .filter(({ bounds }) => bounds.min.y > panelBounds.min.y + 0.001
       && bounds.max.y < panelBounds.min.y + 0.12)
     .sort((a, b) => b.bounds.getSize(new THREE.Vector3()).y * b.bounds.getSize(new THREE.Vector3()).z
       - a.bounds.getSize(new THREE.Vector3()).y * a.bounds.getSize(new THREE.Vector3()).z)[0] ?? null;
+}
+
+function findRearIoAperture(
+  panel: THREE.Mesh,
+  shieldBounds: THREE.Box3,
+): { bounds: THREE.Box3; vertexIndices: number[] } | null {
+  const shieldSize = shieldBounds.getSize(new THREE.Vector3());
+  const shieldCenter = centerOf(shieldBounds);
+  const candidates = findRearPanelApertures(panel).map((loop) => {
+    const size = loop.bounds.getSize(new THREE.Vector3());
+    const center = centerOf(loop.bounds);
+    const sizeError = Math.abs(size.y - shieldSize.y) + Math.abs(size.z - shieldSize.z);
+    const centerError = Math.abs(center.y - shieldCenter.y) + Math.abs(center.z - shieldCenter.z);
+    return { ...loop, size, center, sizeError, centerError, score: sizeError + centerError };
+  }).filter(({ size, center, sizeError, centerError }) =>
+    Math.abs(size.y - shieldSize.y) < 0.025
+      && Math.abs(size.z - shieldSize.z) < 0.025
+      && Math.abs(center.y - shieldCenter.y) < 0.025
+      && Math.abs(center.z - shieldCenter.z) < 0.025
+      && sizeError + centerError < 0.04,
+  ).sort((a, b) => a.score - b.score);
+  if (candidates.length === 0) return null;
+  // Require a clear best match so similarly-sized connector or grille loops
+  // can never be mistaken for the rear I/O opening.
+  if (candidates[1] && candidates[1].score - candidates[0].score < 0.005) return null;
+  const { bounds, vertexIndices } = candidates[0];
+  return { bounds, vertexIndices };
 }
 
 function resizeAperture(
@@ -324,6 +354,33 @@ export function preparePcMechanicalLayout(
     boardGroup.position.x += standCenter.x - boardCenter.x;
     boardGroup.position.y += standCenter.y - boardCenter.y;
     boardGroup.position.z += standoffBounds.max.z + CONTACT_GAP - boardBounds.min.z;
+  }
+  const rearIoShield = findObject(boardGroup, /^Rear IO shield$/i);
+  if (rearPanel && rearIoShield) {
+    const rearIoBounds = boundsOf(rearIoShield);
+    const rearIoOffset = rearPlaneX + CONTACT_GAP - rearIoBounds.min.x;
+    setWorldOffset(boardGroup, new THREE.Vector3(rearIoOffset, 0, 0));
+    const alignedShieldBounds = boundsOf(rearIoShield);
+    const ioAperture = findRearIoAperture(rearPanel, alignedShieldBounds);
+    if (ioAperture) {
+      const targetAperture = new THREE.Box3(
+        new THREE.Vector3(
+          ioAperture.bounds.min.x,
+          alignedShieldBounds.min.y - CONTACT_GAP,
+          alignedShieldBounds.min.z - CONTACT_GAP,
+        ),
+        new THREE.Vector3(
+          ioAperture.bounds.max.x,
+          alignedShieldBounds.max.y + CONTACT_GAP,
+          alignedShieldBounds.max.z + CONTACT_GAP,
+        ),
+      );
+      resizeAperture(rearPanel, ioAperture.vertexIndices, ioAperture.bounds, targetAperture);
+    } else {
+      assumptions.push("Rear I/O aperture boundary did not match the measured shield; the case opening was left unchanged.");
+    }
+  } else {
+    assumptions.push("Motherboard rear I/O shield or case rear panel missing; board uses its standoff-aligned position.");
   }
   const pcbAfterMount = pcb ? boundsOf(pcb) : categoryBounds(boardGroup);
   const standoffGapMm = pcbAfterMount.min.z - standoffBounds.max.z;
